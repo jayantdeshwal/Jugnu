@@ -31,6 +31,7 @@ import {
   UserCheck,
   CheckCheck,
   Trash2,
+  UserPlus,
 } from 'lucide-react'
 import { getSupabaseClient } from '@/lib/supabase'
 import {
@@ -41,6 +42,9 @@ import {
   AdminWorkerRow,
   AdminCustomerRow,
   AdminNotificationItem,
+  fetchAdminTeam,
+  createSubAdmin,
+  AdminTeamMember,
 } from '@/services/admin'
 import { getIdProofSignedUrl } from '@/services/storage'
 
@@ -82,13 +86,14 @@ export default function AdminDashboard() {
     | 'customers'
     | 'bookings'
     | 'notifications'
+    | 'admins'
     | null
 
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'workers' | 'customers' | 'bookings' | 'notifications'
+    'overview' | 'workers' | 'customers' | 'bookings' | 'notifications' | 'admins'
   >(
     tabParam &&
-      ['overview', 'workers', 'customers', 'bookings', 'notifications'].includes(tabParam)
+      ['overview', 'workers', 'customers', 'bookings', 'notifications', 'admins'].includes(tabParam)
       ? tabParam
       : 'overview'
   )
@@ -97,7 +102,7 @@ export default function AdminDashboard() {
     const tab = searchParams.get('tab') as any
     if (
       tab &&
-      ['overview', 'workers', 'customers', 'bookings', 'notifications'].includes(tab)
+      ['overview', 'workers', 'customers', 'bookings', 'notifications', 'admins'].includes(tab)
     ) {
       setActiveTab(tab)
     }
@@ -150,6 +155,19 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [isLoadingStats, setIsLoadingStats] = useState(true)
   const [statsError, setStatsError] = useState('')
+
+  // Administrator Team Management state
+  const [adminTeam, setAdminTeam] = useState<AdminTeamMember[]>([])
+  const [isLoadingAdminTeam, setIsLoadingAdminTeam] = useState(false)
+  const [adminTeamError, setAdminTeamError] = useState('')
+  const [showAddAdminModal, setShowAddAdminModal] = useState(false)
+  const [newAdminFullName, setNewAdminFullName] = useState('')
+  const [newAdminEmail, setNewAdminEmail] = useState('')
+  const [newAdminPhone, setNewAdminPhone] = useState('')
+  const [newAdminPassword, setNewAdminPassword] = useState('')
+  const [isSubmittingNewAdmin, setIsSubmittingNewAdmin] = useState(false)
+  const [addAdminError, setAddAdminError] = useState('')
+  const [addAdminSuccess, setAddAdminSuccess] = useState('')
 
   // Filter & Search states
   const [workerSearch, setWorkerSearch] = useState('')
@@ -366,6 +384,71 @@ export default function AdminDashboard() {
     }
   }
 
+  const loadAdminTeamData = async () => {
+    setIsLoadingAdminTeam(true)
+    setAdminTeamError('')
+    try {
+      const data = await fetchAdminTeam()
+      setAdminTeam(data)
+    } catch (err) {
+      setAdminTeamError(err instanceof Error ? err.message : 'Unable to load administrator team')
+      setAdminTeam([])
+    } finally {
+      setIsLoadingAdminTeam(false)
+    }
+  }
+
+  const handleCreateAdmin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setAddAdminError('')
+    setAddAdminSuccess('')
+
+    const trimmedName = newAdminFullName.trim()
+    const trimmedEmail = newAdminEmail.trim()
+    const trimmedPhone = newAdminPhone.replace(/\D/g, '')
+
+    if (!trimmedName) {
+      setAddAdminError('Please provide the administrator full name.')
+      return
+    }
+    if (!trimmedEmail || !/^\S+@\S+\.\S+$/.test(trimmedEmail)) {
+      setAddAdminError('Please provide a valid administrator email address.')
+      return
+    }
+    if (trimmedPhone.length !== 10) {
+      setAddAdminError('A valid 10-digit mobile number is mandatory for 2FA security OTP verification.')
+      return
+    }
+    if (!newAdminPassword || newAdminPassword.length < 6) {
+      setAddAdminError('Temporary password must be at least 6 characters long.')
+      return
+    }
+
+    setIsSubmittingNewAdmin(true)
+    try {
+      await createSubAdmin({
+        email: trimmedEmail,
+        password: newAdminPassword,
+        fullName: trimmedName,
+        phone: trimmedPhone,
+      })
+      setAddAdminSuccess(`Administrator "${trimmedName}" provisioned successfully!`)
+      setNewAdminFullName('')
+      setNewAdminEmail('')
+      setNewAdminPhone('')
+      setNewAdminPassword('')
+      await loadAdminTeamData()
+      setTimeout(() => {
+        setShowAddAdminModal(false)
+        setAddAdminSuccess('')
+      }, 2000)
+    } catch (err) {
+      setAddAdminError(err instanceof Error ? err.message : 'Failed to provision administrator')
+    } finally {
+      setIsSubmittingNewAdmin(false)
+    }
+  }
+
   const refreshAll = async () => {
     await Promise.all([
       loadWorkersData(),
@@ -373,6 +456,7 @@ export default function AdminDashboard() {
       loadBookings(),
       loadStats(),
       loadNotificationsData(),
+      loadAdminTeamData(),
     ])
   }
 
@@ -679,6 +763,12 @@ export default function AdminDashboard() {
               label: t('admin.notifications', 'Notifications'),
               icon: Bell,
               badge: unreadNotifsCount > 0 ? unreadNotifsCount : undefined,
+            },
+            {
+              key: 'admins',
+              label: 'Administrators',
+              icon: Shield,
+              badge: adminTeam.length > 0 ? adminTeam.length : undefined,
             },
           ].map(tab => (
             <button
@@ -1468,6 +1558,134 @@ export default function AdminDashboard() {
             </Card>
           </div>
         )}
+
+        {/* 6. ADMINISTRATORS TAB */}
+        {activeTab === 'admins' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-xl font-bold text-semantic-text-primary flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-amber-400" />
+                  Platform Administrator Directory
+                </h3>
+                <p className="text-sm text-semantic-text-secondary mt-0.5">
+                  Only existing platform administrators can create and manage platform administrator privileges.
+                </p>
+              </div>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setAddAdminError('')
+                  setAddAdminSuccess('')
+                  setShowAddAdminModal(true)
+                }}
+                className="bg-brand-500 hover:bg-brand-600 text-surface-950 font-semibold flex items-center gap-2 self-start sm:self-auto shadow-lg shadow-brand-500/20"
+              >
+                <UserPlus className="w-4 h-4" />
+                Add Administrator
+              </Button>
+            </div>
+
+            {/* Security Notice Card */}
+            <div className="p-4 bg-surface-100 border border-amber-500/20 rounded-xl flex items-start gap-3 shadow-sm">
+              <div className="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0 text-amber-400">
+                <Shield className="w-5 h-5" />
+              </div>
+              <div className="text-xs text-semantic-text-secondary leading-relaxed">
+                <span className="font-semibold text-semantic-text-primary block mb-0.5">
+                  Administrative Access Control & Security
+                </span>
+                Public signup for administrator accounts is completely closed. New administrator accounts can only be provisioned by an existing administrator through this portal. Every administrator must complete MSG91 two-factor SMS OTP verification upon signing in.
+              </div>
+            </div>
+
+            {adminTeamError && (
+              <div className="p-4 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 text-sm">
+                {adminTeamError}
+              </div>
+            )}
+
+            <Card className="p-6 bg-surface-100 border border-semantic-border-light">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-semantic-border-light">
+                <h4 className="font-semibold text-semantic-text-primary">
+                  Active Administrators ({adminTeam.length})
+                </h4>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={loadAdminTeamData}
+                  className="text-xs text-semantic-text-secondary hover:text-semantic-text-primary"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 mr-1" />
+                  Refresh List
+                </Button>
+              </div>
+
+              {isLoadingAdminTeam ? (
+                <div className="py-12 text-center text-semantic-text-secondary">
+                  <RefreshCw className="w-8 h-8 mx-auto animate-spin text-brand-400 mb-3" />
+                  <p className="text-sm">Loading administrator team...</p>
+                </div>
+              ) : adminTeam.length === 0 ? (
+                <div className="py-12 text-center text-semantic-text-secondary">
+                  <Shield className="w-8 h-8 mx-auto text-semantic-text-tertiary mb-2" />
+                  <p className="text-sm">No administrators found.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-semantic-border-light/60">
+                  {adminTeam.map(admin => {
+                    const isCurrentUser = admin.id === user?.id
+                    return (
+                      <div
+                        key={admin.id}
+                        className="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                      >
+                        <div className="flex items-center gap-3.5">
+                          <Avatar
+                            name={admin.full_name || 'Admin'}
+                            src={admin.avatar_url || undefined}
+                            size="md"
+                          />
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-semantic-text-primary text-sm">
+                                {admin.full_name || 'Unnamed Administrator'}
+                              </span>
+                              {isCurrentUser && (
+                                <Badge variant="primary" size="sm" className="text-[10px]">
+                                  You
+                                </Badge>
+                              )}
+                              <Badge variant="outline" size="sm" className="text-[10px] border-amber-500/30 text-amber-400">
+                                Administrator
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-semantic-text-tertiary mt-0.5">
+                              {admin.email || 'No email set'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-4 text-xs">
+                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-200/80 border border-semantic-border-light text-semantic-text-secondary">
+                            <Phone className="w-3.5 h-3.5 text-brand-400" />
+                            <span>+91 {admin.phone}</span>
+                            <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 ml-1" title="2FA Enabled" />
+                          </div>
+
+                          <div className="text-semantic-text-tertiary flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5" />
+                            <span>Joined {new Date(admin.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </Card>
+          </div>
+        )}
       </div>
 
       {/* WORKER INSPECTION DOSSIER MODAL */}
@@ -2028,6 +2246,136 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* ADD ADMINISTRATOR MODAL */}
+      <Modal
+        isOpen={showAddAdminModal}
+        onClose={() => {
+          if (!isSubmittingNewAdmin) {
+            setShowAddAdminModal(false)
+            setAddAdminError('')
+            setAddAdminSuccess('')
+          }
+        }}
+        title="Provision New Administrator"
+        description="Add a trusted team member as an administrator"
+        size="md"
+      >
+        <form onSubmit={handleCreateAdmin} className="space-y-4 pt-2">
+          {/* Security Alert */}
+          <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-start gap-2.5">
+            <Shield className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+            <div className="text-xs text-amber-200">
+              <strong className="block text-amber-300 font-semibold mb-0.5">High-Privilege Account</strong>
+              New administrators will have full platform permissions including worker approval and profile inspection. They will be required to verify OTP via the mobile number provided below.
+            </div>
+          </div>
+
+          {addAdminError && (
+            <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{addAdminError}</span>
+            </div>
+          )}
+
+          {addAdminSuccess && (
+            <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-300 text-xs flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 shrink-0" />
+              <span>{addAdminSuccess}</span>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider mb-1">
+              Full Name *
+            </label>
+            <input
+              type="text"
+              required
+              value={newAdminFullName}
+              onChange={e => setNewAdminFullName(e.target.value)}
+              placeholder="e.g. Ramesh Sharma"
+              className="w-full px-3.5 py-2.5 bg-surface-200/80 border border-semantic-border-light rounded-xl text-semantic-text-primary text-sm focus:outline-none focus:border-brand-500 transition-colors"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider mb-1">
+              Official Email Address *
+            </label>
+            <input
+              type="email"
+              required
+              value={newAdminEmail}
+              onChange={e => setNewAdminEmail(e.target.value)}
+              placeholder="admin@muzaffarnagar-kaamgar.in"
+              className="w-full px-3.5 py-2.5 bg-surface-200/80 border border-semantic-border-light rounded-xl text-semantic-text-primary text-sm focus:outline-none focus:border-brand-500 transition-colors"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider mb-1">
+              2FA Mobile Number (10 digits) *
+            </label>
+            <div className="relative">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-semantic-text-tertiary text-sm font-medium">
+                +91
+              </span>
+              <input
+                type="tel"
+                required
+                maxLength={10}
+                value={newAdminPhone}
+                onChange={e => setNewAdminPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                placeholder="9876543210"
+                className="w-full pl-12 pr-3.5 py-2.5 bg-surface-200/80 border border-semantic-border-light rounded-xl text-semantic-text-primary text-sm focus:outline-none focus:border-brand-500 transition-colors tracking-wider"
+              />
+            </div>
+            <p className="mt-1 text-[11px] text-semantic-text-tertiary">
+              Mandatory: A 6-digit OTP will be dispatched to this mobile number via MSG91 every time they sign in.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider mb-1">
+              Initial Password *
+            </label>
+            <input
+              type="password"
+              required
+              minLength={6}
+              value={newAdminPassword}
+              onChange={e => setNewAdminPassword(e.target.value)}
+              placeholder="Minimum 6 characters"
+              className="w-full px-3.5 py-2.5 bg-surface-200/80 border border-semantic-border-light rounded-xl text-semantic-text-primary text-sm focus:outline-none focus:border-brand-500 transition-colors"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2.5 pt-3 border-t border-semantic-border-light">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setShowAddAdminModal(false)
+                setAddAdminError('')
+                setAddAdminSuccess('')
+              }}
+              disabled={isSubmittingNewAdmin}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              loading={isSubmittingNewAdmin}
+              className="bg-brand-500 hover:bg-brand-600 text-surface-950 font-semibold"
+            >
+              <UserPlus className="w-4 h-4 mr-1.5" />
+              Provision Administrator
+            </Button>
+          </div>
+        </form>
       </Modal>
     </div>
   )

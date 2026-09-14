@@ -18,6 +18,12 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  // Customer / Worker Sign-in Method: 'otp' | 'email'
+  const [customerAuthMode, setCustomerAuthMode] = useState<'otp' | 'email'>('otp')
+  const [customerEmail, setCustomerEmail] = useState('')
+  const [customerPassword, setCustomerPassword] = useState('')
+  const [customerEmailLoading, setCustomerEmailLoading] = useState(false)
+
   // Auth Mode: 'otp' for standard customers/workers, 'admin' for email+password admin login
   const [authMode, setAuthMode] = useState<'otp' | 'admin'>('otp')
   const [adminEmail, setAdminEmail] = useState('')
@@ -56,6 +62,11 @@ export default function Login() {
             setAdmin2faStep('phone_setup')
           }
         }
+      } else if (user.role === 'worker') {
+        const timer = setTimeout(() => {
+          navigate('/worker/dashboard')
+        }, 800)
+        return () => clearTimeout(timer)
       } else if (user.phone && user.phone.trim().length >= 10) {
         const timer = setTimeout(() => {
           navigate('/')
@@ -91,7 +102,7 @@ export default function Login() {
 
       if (!widgetOpened) {
         setAdminLoading(false)
-        setAdminError('2FA OTP widget could not be launched automatically (often blocked by pop-up or ad-blockers). Please pause ad-blockers and click "Open OTP Widget" below.')
+        setAdminError('2FA OTP widget could not be launched automatically. Please pause ad-blockers and click "Open OTP Widget" below.')
       }
     } catch (err) {
       setAdminLoading(false)
@@ -148,6 +159,56 @@ export default function Login() {
       setAdminError(err instanceof Error ? err.message : 'Invalid administrator email or password')
     } finally {
       setAdminLoading(false)
+    }
+  }
+
+  // Handle Customer / Worker Email & Password Login
+  const handleCustomerEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+
+    if (!customerEmail.trim()) {
+      setError('Please enter your email address')
+      return
+    }
+    if (!customerPassword) {
+      setError('Please enter your password')
+      return
+    }
+
+    setCustomerEmailLoading(true)
+    try {
+      await signInWithEmail(customerEmail.trim(), customerPassword)
+
+      // Check role & navigate accordingly
+      const supabase = getSupabaseClient()
+      const { data: sessionData } = await supabase.auth.getSession()
+      if (sessionData.session?.user) {
+        const { data: profile } = await (supabase.from('profiles') as any)
+          .select('role, phone')
+          .eq('id', sessionData.session.user.id)
+          .maybeSingle()
+
+        if (profile?.role === 'worker') {
+          navigate('/worker/dashboard')
+        } else if (profile?.role === 'admin') {
+          setAuthMode('admin')
+          setAdmin2faStep('otp_challenge')
+          const cleanPhone = (profile.phone || '').replace(/\D/g, '').slice(-10)
+          if (cleanPhone.length === 10) {
+            setAdminPhone(cleanPhone)
+            await launchAdmin2faOtp(cleanPhone)
+          } else {
+            setAdmin2faStep('phone_setup')
+          }
+        } else {
+          navigate('/')
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Invalid email or password')
+    } finally {
+      setCustomerEmailLoading(false)
     }
   }
 
@@ -352,8 +413,8 @@ export default function Login() {
           <p className="mt-2 text-semantic-text-secondary mb-6">
             Signed in with verified mobile: <span className="text-brand-400 font-semibold">{user.phone}</span>
           </p>
-          <Button variant="primary" onClick={() => navigate('/')}>
-            Go to Home
+          <Button variant="primary" onClick={() => navigate(user.role === 'worker' ? '/worker/dashboard' : '/')}>
+            Go to {user.role === 'worker' ? 'Worker Dashboard' : 'Home'}
           </Button>
         </div>
       </div>
@@ -381,7 +442,7 @@ export default function Login() {
             }`}
           >
             <Phone className="w-3.5 h-3.5" />
-            <span>Customer (OTP)</span>
+            <span>Customer & Worker</span>
           </button>
           <button
             type="button"
@@ -467,7 +528,7 @@ export default function Login() {
                     onClick={() => setAuthMode('otp')}
                     className="text-xs text-semantic-text-secondary hover:text-brand-300 transition-colors"
                   >
-                    ← Back to Customer Mobile OTP Sign In
+                    ← Back to Customer & Worker Sign In
                   </button>
                 </div>
               </div>
@@ -593,75 +654,146 @@ export default function Login() {
             )}
           </div>
         ) : (
-          /* ================= CUSTOMER MOBILE OTP LOGIN ================= */
+          /* ================= CUSTOMER & WORKER DUAL LOGIN (MOBILE OTP OR EMAIL) ================= */
           <div>
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 mx-auto mb-4 bg-brand-500/10 border border-brand-500/20 rounded-2xl flex items-center justify-center">
+            <div className="text-center mb-5">
+              <div className="w-16 h-16 mx-auto mb-3 bg-brand-500/10 border border-brand-500/20 rounded-2xl flex items-center justify-center">
                 <ShieldCheck className="w-8 h-8 text-brand-400" />
               </div>
               <h1 className="text-2xl font-bold text-semantic-text-primary">
                 {t('auth.loginTitle', 'Customer & Worker Login')}
               </h1>
-              <p className="mt-1.5 text-sm text-semantic-text-secondary">
-                Enter your mobile number to verify via secure OTP
+              <p className="mt-1 text-xs text-semantic-text-secondary">
+                Sign in with your mobile number via OTP or registered email & password.
               </p>
             </div>
 
+            {/* Sub-toggle: Mobile OTP vs Email */}
+            <div className="flex bg-surface-200/90 p-1 rounded-xl mb-5 border border-semantic-border-light text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => {
+                  setCustomerAuthMode('otp')
+                  setError('')
+                }}
+                className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                  customerAuthMode === 'otp'
+                    ? 'bg-brand-500 text-white shadow-sm'
+                    : 'text-semantic-text-secondary hover:text-semantic-text-primary'
+                }`}
+              >
+                <Phone className="w-3.5 h-3.5" />
+                <span>Mobile Number (OTP)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setCustomerAuthMode('email')
+                  setError('')
+                }}
+                className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                  customerAuthMode === 'email'
+                    ? 'bg-brand-500 text-white shadow-sm'
+                    : 'text-semantic-text-secondary hover:text-semantic-text-primary'
+                }`}
+              >
+                <Mail className="w-3.5 h-3.5" />
+                <span>Email & Password</span>
+              </button>
+            </div>
+
             {error && (
-              <div className="mb-6 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2 text-red-400 text-sm">
-                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+              <div className="mb-5 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2 text-red-400 text-xs">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>{error}</span>
               </div>
             )}
 
-            <form onSubmit={handleVerifyPhoneAndLogin} className="space-y-4">
-              <Input
-                label={t('auth.nameLabel', 'Full Name')}
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="Your Full Name"
-                required
-                autoFocus
-              />
-
-              <div>
+            {customerAuthMode === 'email' ? (
+              /* Email & Password Form */
+              <form onSubmit={handleCustomerEmailLogin} className="space-y-4">
                 <Input
-                  label={t('auth.phoneLabel', 'Mobile Number (10 digits)')}
-                  value={phone}
-                  onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                  placeholder="9876543210"
-                  leftIcon={<span className="text-sm font-semibold text-semantic-text-secondary">+91</span>}
+                  label="Registered Email Address"
+                  type="email"
+                  value={customerEmail}
+                  onChange={e => setCustomerEmail(e.target.value)}
+                  placeholder="yourname@gmail.com"
+                  leftIcon={<Mail className="w-5 h-5 text-semantic-text-tertiary" />}
+                  required
+                  autoFocus
+                />
+
+                <Input
+                  label="Password"
+                  type="password"
+                  value={customerPassword}
+                  onChange={e => setCustomerPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  leftIcon={<Lock className="w-5 h-5 text-semantic-text-tertiary" />}
                   required
                 />
-                <p className="mt-1 text-xs text-semantic-text-tertiary">
-                  We will send a 6-digit verification code to this number.
-                </p>
-              </div>
 
-              <div>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="w-full mt-2"
+                  size="lg"
+                  loading={customerEmailLoading}
+                >
+                  Sign In with Email
+                </Button>
+              </form>
+            ) : (
+              /* Mobile Number OTP Form */
+              <form onSubmit={handleVerifyPhoneAndLogin} className="space-y-4">
                 <Input
-                  label={t('auth.emailOptional', 'Email Address (Optional)')}
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="name@gmail.com"
-                  leftIcon={<Mail className="w-5 h-5 text-semantic-text-tertiary" />}
+                  label={t('auth.nameLabel', 'Full Name')}
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  placeholder="Your Full Name"
+                  required
+                  autoFocus
                 />
-                <p className="mt-1 text-xs text-semantic-text-tertiary">
-                  Optional: For receipts and booking updates.
-                </p>
-              </div>
 
-              <Button
-                type="submit"
-                variant="primary"
-                className="w-full mt-2"
-                size="lg"
-                loading={loading}
-              >
-                {t('auth.verifyViaOtp', 'Verify Mobile via OTP & Sign In')}
-              </Button>
-            </form>
+                <div>
+                  <Input
+                    label={t('auth.phoneLabel', 'Mobile Number (10 digits)')}
+                    value={phone}
+                    onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    placeholder="9876543210"
+                    leftIcon={<span className="text-sm font-semibold text-semantic-text-secondary">+91</span>}
+                    required
+                  />
+                  <p className="mt-1 text-xs text-semantic-text-tertiary">
+                    We will send a 6-digit verification code to this number.
+                  </p>
+                </div>
+
+                <div>
+                  <Input
+                    label={t('auth.emailOptional', 'Email Address (Optional)')}
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="name@gmail.com"
+                    leftIcon={<Mail className="w-5 h-5 text-semantic-text-tertiary" />}
+                  />
+                  <p className="mt-1 text-xs text-semantic-text-tertiary">
+                    Optional: For receipts and booking updates.
+                  </p>
+                </div>
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="w-full mt-2"
+                  size="lg"
+                  loading={loading}
+                >
+                  {t('auth.verifyViaOtp', 'Verify Mobile via OTP & Sign In')}
+                </Button>
+              </form>
+            )}
 
             {/* Optional Google Auto-fill helper */}
             <div className="mt-4 pt-3 border-t border-semantic-border-light/60 text-center">

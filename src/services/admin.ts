@@ -280,3 +280,61 @@ export async function deleteProfilePermanently(targetProfileId: string): Promise
 
   return data || { success: true }
 }
+
+export interface AdminTeamMember {
+  id: string
+  full_name: string
+  email: string
+  phone: string
+  avatar_url?: string | null
+  created_at: string
+}
+
+export interface CreateAdminParams {
+  email: string
+  password: string
+  fullName: string
+  phone: string
+}
+
+export async function fetchAdminTeam(): Promise<AdminTeamMember[]> {
+  const supabase = getSupabaseClient()
+  const { data, error } = await (supabase as any).rpc('get_admin_team')
+  if (error) {
+    const { data: directData, error: directError } = await (supabase.from('profiles') as any)
+      .select('id, full_name, email, phone, avatar_url, created_at')
+      .eq('role', 'admin')
+      .order('created_at', { ascending: true })
+    if (directError) throw directError
+    return (directData || []).map((adm: any) => ({
+      id: adm.id,
+      full_name: adm.full_name || 'Admin User',
+      email: adm.email || 'No email',
+      phone: adm.phone || 'No phone',
+      avatar_url: adm.avatar_url || null,
+      created_at: adm.created_at,
+    }))
+  }
+  return (data || []).map((adm: any) => ({
+    id: adm.id,
+    full_name: adm.full_name || 'Admin User',
+    email: adm.email || 'No email',
+    phone: adm.phone || 'No phone',
+    avatar_url: adm.avatar_url || null,
+    created_at: adm.created_at,
+  }))
+}
+
+export async function createSubAdmin(params: CreateAdminParams): Promise<{ success: boolean; message?: string }> {
+  const supabase = getSupabaseClient()
+  const { data, error } = await (supabase as any).rpc('admin_create_sub_admin', {
+    admin_email: params.email.trim(),
+    admin_password: params.password,
+    admin_full_name: params.fullName.trim(),
+    admin_phone: params.phone.trim(),
+  })
+  if (error) {
+    throw new Error(error.message || 'Failed to create administrator account.')
+  }
+  return data || { success: true }
+}
