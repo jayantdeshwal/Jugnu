@@ -1,6 +1,13 @@
 // Supabase Edge Function: send-booking-sms
 // Dispatches transactional booking SMS alerts via MSG91 Flow / SMS API
 
+// Ambient Deno type declaration for IDE compatibility
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined
+  }
+}
+
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 
 interface BookingSmsPayload {
@@ -22,7 +29,7 @@ const MSG91_FLOW_BOOKING_ACCEPTED = Deno.env.get('MSG91_FLOW_BOOKING_ACCEPTED') 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || ''
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 
-serve(async (req) => {
+serve(async (req: Request) => {
   // CORS Headers
   if (req.method === 'OPTIONS') {
     return new Response('ok', {
