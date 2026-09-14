@@ -11,7 +11,7 @@ interface AuthContextType {
   signInWithEmail: (email: string, password: string) => Promise<void>
   signUpWithEmail: (email: string, password: string, fullName: string) => Promise<{ needsConfirmation: boolean }>
   signInWithGoogle: (redirectTo?: string) => Promise<void>
-  loginWithVerifiedPhone: (name: string, phone: string, role?: UserRole, email?: string) => Promise<User>
+  loginWithVerifiedPhone: (name: string, phone: string, role?: UserRole, email?: string, customPassword?: string) => Promise<User>
   updatePhone: (phone: string) => Promise<void>
   updateEmail: (email: string) => Promise<void>
   isAuthenticated: boolean
@@ -194,7 +194,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     name: string,
     rawPhone: string,
     role: UserRole = 'customer',
-    optionalEmail?: string
+    optionalEmail?: string,
+    customPassword?: string
   ): Promise<User> => {
     const cleanPhone = rawPhone.replace(/\D/g, '').slice(-10)
     const formattedPhone = `+91${cleanPhone}`
@@ -208,7 +209,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 2. If no session, create or sign into dedicated phone account
     if (!authUser) {
       const phoneEmail = cleanEmail || `${cleanPhone}@phone.kaamgar.local`
-      const phonePassword = `kaamgar_phone_${cleanPhone}_secure`
+      const phonePassword = customPassword || `kaamgar_phone_${cleanPhone}_secure`
 
       try {
         const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
@@ -235,6 +236,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } catch (e) {
         console.warn('Supabase phone-credential auth notice:', e)
+      }
+    } else if (customPassword) {
+      try {
+        await supabase.auth.updateUser({ password: customPassword })
+      } catch (e) {
+        console.warn('Could not update user password:', e)
       }
     }
 

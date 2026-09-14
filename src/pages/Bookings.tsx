@@ -40,7 +40,7 @@ const statusConfig = {
 }
 
 export default function Bookings() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { user } = useAuth()
   const [allBookings, setAllBookings] = useState<BookingRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -84,7 +84,7 @@ export default function Bookings() {
 
   const handleOpenContactModal = (booking: BookingRow) => {
     const cat = CATEGORIES.find(c => c.id === booking.category_id)
-    const categoryName = cat ? getCategoryName(cat, 'en') : booking.category_id
+    const categoryName = cat ? getCategoryName(cat, i18n.language === 'hi' ? 'hi' : 'en') : booking.category_id
     const formattedDate = formatDate(booking.scheduled_at)
     const formattedTime = formatTime(booking.scheduled_at)
     const message = buildCustomerToWorkerWhatsAppMessage({
@@ -100,7 +100,7 @@ export default function Bookings() {
       name: booking.worker?.name || 'Worker',
       phone: booking.worker?.phone,
       avatar: booking.worker?.avatar,
-      roleLabel: 'Service Professional',
+      roleLabel: t('bookings.serviceProfessional', 'Service Professional'),
       whatsappMessage: message,
       bookingContext: {
         category: categoryName,
@@ -295,7 +295,7 @@ export default function Bookings() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-semantic-text-primary">{t('bookings.title')}</h1>
-            <p className="text-semantic-text-secondary mt-1">Manage your service bookings</p>
+            <p className="text-semantic-text-secondary mt-1">{t('bookings.subtitle', 'Manage your service bookings')}</p>
           </div>
           <Button
             variant="outline"
@@ -305,7 +305,7 @@ export default function Bookings() {
             className="flex items-center gap-2"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
+            {t('common.refresh', 'Refresh')}
           </Button>
         </div>
 
@@ -323,7 +323,7 @@ export default function Bookings() {
         )}
 
         {isLoading && (
-          <div className="py-12 text-center text-semantic-text-secondary">Loading bookings...</div>
+          <div className="py-12 text-center text-semantic-text-secondary">{t('bookings.loading', 'Loading bookings...')}</div>
         )}
         
         {!isLoading && (
@@ -355,8 +355,8 @@ export default function Bookings() {
             </h3>
             <p className="text-semantic-text-secondary mb-6">
               {activeTab === 'upcoming' 
-                ? 'Book a service to see upcoming appointments'
-                : 'Completed or cancelled bookings will appear here'}
+                ? t('bookings.bookServicePrompt', 'Book a service to see upcoming appointments')
+                : t('bookings.pastEmptyPrompt', 'Completed or cancelled bookings will appear here')}
             </p>
             <Link to="/search">
               <Button variant="primary">
@@ -394,12 +394,12 @@ export default function Bookings() {
                           <h3 className="font-semibold text-semantic-text-primary truncate">{booking.worker?.name || 'Worker'}</h3>
                           <Badge variant={config.color as any} className="whitespace-nowrap text-sm px-3 py-1">
                             <Icon className="w-3 h-3 mr-1" />
-                            {config.label}
+                            {t(`booking.status.${booking.status === 'in_progress' ? 'inProgress' : booking.status}`, config.label)}
                           </Badge>
                         </div>
 
                         {booking.status === 'accepted' && (
-                          <p className="mt-3 text-sm font-semibold text-success-300">Your booking request was accepted by the worker.</p>
+                          <p className="mt-3 text-sm font-semibold text-success-300">{t('bookings.acceptedMsg', 'Your booking request was accepted by the worker.')}</p>
                         )}
                         {booking.status === 'in_progress' && (
                           <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-sm font-medium">
@@ -407,14 +407,14 @@ export default function Bookings() {
                               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                               <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
                             </span>
-                            <span>Worker has started the service. Job is currently in progress.</span>
+                            <span>{t('bookings.inProgressMsg', 'Worker has started the service. Job is currently in progress.')}</span>
                           </div>
                         )}
                         {booking.status === 'completed' && (
-                          <p className="mt-3 text-sm font-semibold text-emerald-400">Service has been completed successfully.</p>
+                          <p className="mt-3 text-sm font-semibold text-emerald-400">{t('bookings.completedMsg', 'Service has been completed successfully.')}</p>
                         )}
                         {booking.status === 'rejected' && (
-                          <p className="mt-3 text-sm font-semibold text-danger-400">This booking request was declined by the worker.</p>
+                          <p className="mt-3 text-sm font-semibold text-danger-400">{t('bookings.rejectedMsg', 'This booking request was declined by the worker.')}</p>
                         )}
                         {booking.status === 'cancelled' && (
                           <p className="mt-3 text-sm font-semibold text-semantic-text-secondary">{t('bookings.cancelledByCustomer')}</p>
@@ -422,20 +422,20 @@ export default function Bookings() {
 
                         <div className="mt-3 flex flex-wrap items-center gap-3 text-sm font-medium text-semantic-text-primary">
                           <span className="flex items-center gap-1 text-brand-300">
-                            {cat ? getCategoryName(cat, 'en') : booking.category_id}
+                            {cat ? getCategoryName(cat, i18n.language === 'hi' ? 'hi' : 'en') : booking.category_id}
                           </span>
                           <span className="flex items-center gap-1">
                             <Calendar className="w-3.5 h-3.5 text-semantic-text-tertiary" />
-                            <span><span className="text-semantic-text-tertiary">Date:</span> {formatDate(booking.scheduled_at)}</span>
+                            <span><span className="text-semantic-text-tertiary">{t('common.date')}:</span> {formatDate(booking.scheduled_at)}</span>
                           </span>
                           <span className="flex items-center gap-1">
                             <Clock className="w-3.5 h-3.5 text-semantic-text-tertiary" />
-                            <span><span className="text-semantic-text-tertiary">Time:</span> {formatTime(booking.scheduled_at)}</span>
+                            <span><span className="text-semantic-text-tertiary">{t('common.time')}:</span> {formatTime(booking.scheduled_at)}</span>
                           </span>
                         </div>
                         <div className="mt-2 flex items-start gap-2 text-sm font-medium text-semantic-text-primary">
                           <MapPin className="w-3.5 h-3.5 text-semantic-text-tertiary mt-0.5" />
-                          <span><span className="text-semantic-text-tertiary">Address:</span> {booking.address}</span>
+                          <span><span className="text-semantic-text-tertiary">{t('common.address')}:</span> {booking.address}</span>
                         </div>
                       </div>
                     </div>
@@ -443,7 +443,7 @@ export default function Bookings() {
                     {booking.notes && (
                       <div className="mt-4 p-3 bg-surface-200/60 border border-semantic-border-light rounded-lg">
                         <p className="text-sm text-semantic-text-secondary whitespace-pre-line">
-                          <span className="font-medium text-semantic-text-primary">Notes:</span> {booking.notes}
+                          <span className="font-medium text-semantic-text-primary">{t('common.notes')}:</span> {booking.notes}
                         </p>
                       </div>
                     )}
@@ -468,7 +468,7 @@ export default function Bookings() {
                               className="flex items-center gap-1.5 text-brand-300 border-brand-500/30 hover:bg-brand-500/10 hover:border-brand-500/50"
                             >
                               <MessageSquare className="w-4 h-4" />
-                              WhatsApp
+                              {t('common.whatsapp', 'WhatsApp')}
                             </Button>
                           </>
                         )}
@@ -490,7 +490,7 @@ export default function Bookings() {
                         {booking.status === 'pending' && (
                           <span className="flex items-center gap-1 text-sm font-medium text-semantic-text-secondary">
                             <Loader2 className="w-4 h-4 animate-spin text-brand-400" />
-                            Waiting for worker response...
+                            {t('bookings.waitingForWorker', 'Waiting for worker response...')}
                           </span>
                         )}
                       </div>
@@ -542,11 +542,11 @@ export default function Bookings() {
                   {cancellingBooking.worker?.name || 'Worker'}
                 </span>
                 <Badge variant={cancellingBooking.status === 'pending' ? 'warning' : 'info'}>
-                  {cancellingBooking.status}
+                  {t(`booking.status.${cancellingBooking.status === 'in_progress' ? 'inProgress' : cancellingBooking.status}`, cancellingBooking.status)}
                 </Badge>
               </div>
               <p className="text-xs text-semantic-text-secondary mt-1">
-                Scheduled for {formatDate(cancellingBooking.scheduled_at)} at {formatTime(cancellingBooking.scheduled_at)}
+                {t('bookings.scheduled', 'Scheduled')} {formatDate(cancellingBooking.scheduled_at)} {t('common.at', 'at')} {formatTime(cancellingBooking.scheduled_at)}
               </p>
             </div>
           )}
@@ -554,18 +554,23 @@ export default function Bookings() {
           <div>
             <label className="label text-semantic-text-secondary mb-2 block">{t('bookings.cancelReasonPlaceholder')}</label>
             <div className="flex flex-wrap gap-1.5 mb-2.5">
-              {['Change of plans', 'Found another service', 'Wrong date/time selected', 'Emergency'].map(quickReason => (
+              {[
+                { label: t('bookings.reasonChangePlans', 'Change of plans'), value: 'Change of plans' },
+                { label: t('bookings.reasonFoundAnother', 'Found another service'), value: 'Found another service' },
+                { label: t('bookings.reasonWrongDateTime', 'Wrong date/time selected'), value: 'Wrong date/time selected' },
+                { label: t('bookings.reasonEmergency', 'Emergency'), value: 'Emergency' },
+              ].map(quickReason => (
                 <button
-                  key={quickReason}
+                  key={quickReason.value}
                   type="button"
-                  onClick={() => setCancellationReason(quickReason)}
+                  onClick={() => setCancellationReason(quickReason.value)}
                   className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                    cancellationReason === quickReason
+                    cancellationReason === quickReason.value
                       ? 'bg-brand-500/20 border-brand-500/50 text-brand-300 font-medium'
                       : 'bg-surface-200 border-semantic-border-light text-semantic-text-secondary hover:text-semantic-text-primary hover:border-semantic-border-medium'
                   }`}
                 >
-                  {quickReason}
+                  {quickReason.label}
                 </button>
               ))}
             </div>
@@ -667,7 +672,7 @@ export default function Bookings() {
               onClick={handleReviewSubmit}
               className="flex-1"
             >
-              {isSubmittingReview ? 'Submitting...' : t('review.submit')}
+              {isSubmittingReview ? t('common.submitting', 'Submitting...') : t('review.submit')}
             </Button>
           </div>
         </div>

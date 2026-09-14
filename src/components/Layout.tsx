@@ -1,10 +1,11 @@
-import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useLanguage } from '../context/LanguageContext'
 import { useAuth } from '../context/AuthContext'
 import { useNotifications } from '../context/NotificationContext'
 import { Button, Avatar, Badge } from '@kaamgar/ui'
-import { Menu, X, Bell, User, LogOut, Settings, Shield, Home, Search, List, UserPlus, Truck, Star, Briefcase, ChevronDown, Globe } from 'lucide-react'
+import { Menu, X, Bell, User, LogOut, Settings, Shield, Home, Search, List, UserPlus, Truck, Star, Briefcase, ChevronDown, Globe, Phone, Mail, MapPin, ShieldCheck, ArrowRight, Heart } from 'lucide-react'
+import { CATEGORIES, getCategoryName } from '@kaamgar/shared'
 import { useState, useRef, useEffect } from 'react'
 import NetworkStatus from './NetworkStatus'
 
@@ -207,7 +208,7 @@ export default function Layout() {
                       <span className={`text-[11px] font-medium leading-none ${
                         isAdmin ? 'text-rose-400' : isWorker ? 'text-emerald-400' : 'text-blue-400'
                       }`}>
-                        {isAdmin ? 'Admin' : isWorker ? 'Worker' : 'Customer'}
+                        {isAdmin ? t('nav.roleAdmin', 'Admin') : isWorker ? t('nav.roleWorker', 'Worker') : t('nav.roleCustomer', 'Customer')}
                       </span>
                     </div>
                     <ChevronDown className={`w-4 h-4 text-semantic-text-tertiary transition-transform duration-200 ${
@@ -230,9 +231,9 @@ export default function Layout() {
                             <p className="text-sm font-bold text-semantic-text-primary truncate">{user?.name}</p>
                             <p className="text-xs text-semantic-text-secondary truncate mt-0.5">{user?.phone || 'Logged In'}</p>
                             <div className="mt-1.5">
-                              {isAdmin && <Badge variant="danger" size="sm">Admin</Badge>}
-                              {isWorker && !isAdmin && <Badge variant="success" size="sm">Worker / कारीगर</Badge>}
-                              {!isWorker && !isAdmin && <Badge variant="info" size="sm">Customer</Badge>}
+                              {isAdmin && <Badge variant="danger" size="sm">{t('nav.roleAdmin', 'Admin')}</Badge>}
+                              {isWorker && !isAdmin && <Badge variant="success" size="sm">{t('nav.roleWorker', 'Worker')}</Badge>}
+                              {!isWorker && !isAdmin && <Badge variant="info" size="sm">{t('nav.roleCustomer', 'Customer')}</Badge>}
                             </div>
                           </div>
                         </div>
@@ -252,7 +253,7 @@ export default function Layout() {
                           </div>
                           <div className="flex flex-col text-left">
                             <span className="font-semibold">{t('nav.profile')}</span>
-                            <span className="text-[11px] text-semantic-text-tertiary font-normal">Account & preferences</span>
+                            <span className="text-[11px] text-semantic-text-tertiary font-normal">{t('nav.accountPreferences', 'Account & preferences')}</span>
                           </div>
                         </NavLink>
 
@@ -275,7 +276,7 @@ export default function Layout() {
                                 <span className="font-semibold">{t('nav.becomeWorker')}</span>
                                 <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Earn</span>
                               </div>
-                              <span className="text-[11px] text-semantic-text-tertiary font-normal">Register to get customer jobs</span>
+                              <span className="text-[11px] text-semantic-text-tertiary font-normal">{t('nav.registerToGetJobs', 'Register to get customer jobs')}</span>
                             </div>
                           </button>
                         )}
@@ -293,7 +294,7 @@ export default function Layout() {
                             </div>
                             <div className="flex flex-col text-left">
                               <span className="font-semibold">{t('nav.workerDashboard')}</span>
-                              <span className="text-[11px] text-semantic-text-tertiary font-normal">Manage jobs & availability</span>
+                              <span className="text-[11px] text-semantic-text-tertiary font-normal">{t('nav.manageJobsAvailability', 'Manage jobs & availability')}</span>
                             </div>
                           </NavLink>
                         )}
@@ -311,10 +312,37 @@ export default function Layout() {
                             </div>
                             <div className="flex flex-col text-left">
                               <span className="font-semibold">{t('nav.adminDashboard')}</span>
-                              <span className="text-[11px] text-semantic-text-tertiary font-normal">Platform management</span>
+                              <span className="text-[11px] text-semantic-text-tertiary font-normal">{t('nav.platformManagement', 'Platform management')}</span>
                             </div>
                           </NavLink>
                         )}
+                      </div>
+
+                      {/* Language Switch Section */}
+                      <div className="pt-1 mt-1 border-t border-semantic-border-light">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            toggleLanguage()
+                          }}
+                          className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-semantic-text-secondary hover:bg-surface-200 hover:text-semantic-text-primary transition-colors text-left"
+                          role="menuitem"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-surface-200 flex items-center justify-center text-brand-400">
+                              <Globe className="w-4 h-4" />
+                            </div>
+                            <div className="flex flex-col text-left">
+                              <span className="font-semibold text-semantic-text-primary">{t('common.language', 'Language')}</span>
+                              <span className="text-[11px] text-semantic-text-tertiary font-normal">
+                                {language === 'en' ? 'Switch to हिन्दी' : 'Switch to English'}
+                              </span>
+                            </div>
+                          </div>
+                          <Badge variant="outline" size="sm" className="font-semibold text-brand-400 border-brand-500/30">
+                            {language === 'en' ? 'EN' : 'हि'}
+                          </Badge>
+                        </button>
                       </div>
 
                       {/* Sign Out Section */}
@@ -333,7 +361,7 @@ export default function Layout() {
                           </div>
                           <div className="flex flex-col text-left">
                             <span className="font-semibold">{t('nav.logout')}</span>
-                            <span className="text-[11px] text-semantic-text-tertiary font-normal">Securely sign out</span>
+                            <span className="text-[11px] text-semantic-text-tertiary font-normal">{t('nav.securelySignOut', 'Securely sign out')}</span>
                           </div>
                         </button>
                       </div>
@@ -342,8 +370,8 @@ export default function Layout() {
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
-                    {t('nav.login')}
+                  <Button variant="ghost" size="sm" onClick={() => navigate('/auth')}>
+                    {t('nav.loginSignup', 'Login / Sign Up')}
                   </Button>
                   <Button variant="primary" size="sm" onClick={() => navigate('/register/worker')}>
                     {t('nav.becomeWorker')}
@@ -377,9 +405,9 @@ export default function Layout() {
                           <p className="text-xs text-semantic-text-secondary">{user?.phone || 'Logged In'}</p>
                         </div>
                       </div>
-                      {isAdmin && <Badge variant="danger" size="sm">Admin</Badge>}
-                      {isWorker && !isAdmin && <Badge variant="success" size="sm">Worker</Badge>}
-                      {!isWorker && !isAdmin && <Badge variant="info" size="sm">Customer</Badge>}
+                      {isAdmin && <Badge variant="danger" size="sm">{t('nav.roleAdmin', 'Admin')}</Badge>}
+                      {isWorker && !isAdmin && <Badge variant="success" size="sm">{t('nav.roleWorker', 'Worker')}</Badge>}
+                      {!isWorker && !isAdmin && <Badge variant="info" size="sm">{t('nav.roleCustomer', 'Customer')}</Badge>}
                     </div>
 
                     {currentNavItems.map(({ path, label, icon: Icon, badge }) => (
@@ -425,6 +453,23 @@ export default function Layout() {
                       </Button>
                     )}
 
+                    {/* Language Switch in Mobile Drawer */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        toggleLanguage()
+                      }}
+                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-semantic-text-secondary hover:bg-surface-100 hover:text-semantic-text-primary transition-colors border border-semantic-border-light/40 mt-1"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Globe className="w-4 h-4 text-brand-400" />
+                        <span>{t('common.language', 'Language')}</span>
+                      </div>
+                      <Badge variant="primary" size="sm">
+                        {language === 'en' ? 'English (EN)' : 'हिंदी (HI)'}
+                      </Badge>
+                    </button>
+
                     {/* Sign Out Button in Mobile */}
                     <Button
                       variant="ghost"
@@ -452,10 +497,28 @@ export default function Layout() {
                         <span>{label}</span>
                       </NavLink>
                     ))}
+
+                    {/* Language Switch for Guest Mobile Drawer */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        toggleLanguage()
+                      }}
+                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-semantic-text-secondary hover:bg-surface-100 hover:text-semantic-text-primary transition-colors border border-semantic-border-light/40 mt-1"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Globe className="w-4 h-4 text-brand-400" />
+                        <span>{t('common.language', 'Language')}</span>
+                      </div>
+                      <Badge variant="primary" size="sm">
+                        {language === 'en' ? 'English (EN)' : 'हिंदी (HI)'}
+                      </Badge>
+                    </button>
+
                     <div className="pt-4 border-t border-semantic-border-light flex flex-col gap-2">
-                      <Button variant="outline" className="w-full justify-start" onClick={() => { setMobileMenuOpen(false); navigate('/login') }}>
+                      <Button variant="outline" className="w-full justify-start" onClick={() => { setMobileMenuOpen(false); navigate('/auth') }}>
                         <User className="w-5 h-5 mr-2" />
-                        {t('nav.login')}
+                        {t('nav.loginSignup', 'Login / Sign Up')}
                       </Button>
                       <Button variant="primary" className="w-full justify-start" onClick={() => { setMobileMenuOpen(false); navigate('/register/worker') }}>
                         <Briefcase className="w-5 h-5 mr-2" />
@@ -474,48 +537,142 @@ export default function Layout() {
         <Outlet />
       </main>
       
-      <footer className="bg-surface-950 text-semantic-text-secondary border-t border-semantic-border-light">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                  <Truck className="w-5 h-5 text-white" />
+      <footer className="bg-surface-950 text-semantic-text-secondary border-t border-semantic-border-light pt-14 pb-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 pb-12 border-b border-surface-800/80">
+            {/* Column 1: Brand & Identity (spans 2 cols on lg) */}
+            <div className="lg:col-span-2 space-y-4">
+              <Link to="/" className="inline-flex items-center gap-3 group">
+                <div className="w-10 h-10 bg-brand-500 rounded-xl flex items-center justify-center shadow-lg shadow-brand-500/20 group-hover:scale-105 transition-transform">
+                  <Truck className="w-5 h-5 text-surface-950" />
                 </div>
-                <span className="font-bold text-xl text-white">{t('app.name')}</span>
+                <div>
+                  <span className="font-extrabold text-xl tracking-tight text-white block">
+                    {t('app.name')}
+                  </span>
+                  <span className="text-xs text-brand-400 font-medium">
+                    Muzaffarnagar Verified Artisans
+                  </span>
+                </div>
+              </Link>
+              <p className="text-sm text-semantic-text-secondary max-w-sm leading-relaxed">
+                {t('footer.tagline')}
+              </p>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-900 border border-semantic-border-light/60 text-xs text-semantic-text-tertiary">
+                <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>{t('footer.pilotNotice')}</span>
               </div>
-              <p className="text-sm">{t('footer.madeWith')}</p>
             </div>
+
+            {/* Column 2: Quick Links / Explore */}
             <div>
-              <h4 className="font-medium text-white mb-3">{t('footer.about')}</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">{t('footer.contact')}</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">{t('footer.privacy')}</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">{t('footer.terms')}</a></li>
+              <h4 className="font-semibold text-white text-sm tracking-wide uppercase mb-4">
+                {t('footer.explore')}
+              </h4>
+              <ul className="space-y-2.5 text-sm">
+                <li>
+                  <Link to="/search" className="hover:text-brand-400 transition-colors flex items-center gap-1.5 group">
+                    <ArrowRight className="w-3.5 h-3.5 text-semantic-text-tertiary group-hover:text-brand-400 transition-colors" />
+                    <span>{t('nav.search')}</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/bookings" className="hover:text-brand-400 transition-colors flex items-center gap-1.5 group">
+                    <ArrowRight className="w-3.5 h-3.5 text-semantic-text-tertiary group-hover:text-brand-400 transition-colors" />
+                    <span>{t('nav.bookings')}</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/register/worker" className="hover:text-brand-400 transition-colors flex items-center gap-1.5 group">
+                    <ArrowRight className="w-3.5 h-3.5 text-semantic-text-tertiary group-hover:text-brand-400 transition-colors" />
+                    <span>{t('nav.becomeWorker')}</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/auth" className="hover:text-brand-400 transition-colors flex items-center gap-1.5 group">
+                    <ArrowRight className="w-3.5 h-3.5 text-semantic-text-tertiary group-hover:text-brand-400 transition-colors" />
+                    <span>{t('nav.loginSignup', 'Login / Sign Up')}</span>
+                  </Link>
+                </li>
               </ul>
             </div>
+
+            {/* Column 3: Popular Trades (Direct search filter links) */}
             <div>
-              <h4 className="font-medium text-white mb-3">{t('nav.categories')}</h4>
-              <ul className="space-y-2 text-sm">
-                <li>{t('categories.electrician')}</li>
-                <li>{t('categories.plumber')}</li>
-                <li>{t('categories.carpenter')}</li>
-                <li>{t('categories.ac')}</li>
-                <li>{t('categories.painter')}</li>
+              <h4 className="font-semibold text-white text-sm tracking-wide uppercase mb-4">
+                {t('nav.categories')}
+              </h4>
+              <ul className="space-y-2.5 text-sm">
+                {CATEGORIES.map(cat => (
+                  <li key={cat.id}>
+                    <Link
+                      to={`/search?category=${cat.id}`}
+                      className="hover:text-brand-400 transition-colors flex items-center gap-1.5"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-brand-400/60" />
+                      <span>{getCategoryName(cat, language === 'hi' ? 'hi' : 'en')}</span>
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
+
+            {/* Column 4: Localities & Support */}
             <div>
-              <h4 className="font-medium text-white mb-3">Muzaffarnagar</h4>
-              <ul className="space-y-2 text-sm">
-                <li>251001 - City</li>
-                <li>251002 - Cantt</li>
-                <li>New Mandi</li>
-                <li>Civil Lines</li>
+              <h4 className="font-semibold text-white text-sm tracking-wide uppercase mb-4">
+                {t('footer.localities')}
+              </h4>
+              <ul className="space-y-2 text-xs mb-5">
+                <li>
+                  <Link
+                    to="/search?area=251001"
+                    className="hover:text-brand-400 transition-colors flex items-center gap-1.5"
+                  >
+                    <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>251001 - City / New Mandi</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/search?area=251002"
+                    className="hover:text-brand-400 transition-colors flex items-center gap-1.5"
+                  >
+                    <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>251002 - Cantt / Civil Lines</span>
+                  </Link>
+                </li>
               </ul>
+
+              {/* Helpline direct links */}
+              <div className="pt-3 border-t border-surface-800/80 space-y-1.5">
+                <a
+                  href="tel:+919876543210"
+                  className="flex items-center gap-2 text-xs text-brand-400 hover:text-brand-300 font-medium transition-colors"
+                >
+                  <Phone className="w-3.5 h-3.5 shrink-0" />
+                  <span>{t('footer.emergencyCall')}</span>
+                </a>
+                <a
+                  href="mailto:support@muzaffarnagar-kaamgar.in"
+                  className="flex items-center gap-2 text-xs text-semantic-text-secondary hover:text-white transition-colors"
+                >
+                  <Mail className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">{t('footer.supportEmail')}</span>
+                </a>
+                <p className="text-[11px] text-semantic-text-tertiary">
+                  {t('footer.supportHelplineHours')}
+                </p>
+              </div>
             </div>
           </div>
-          <div className="mt-8 pt-8 border-t border-gray-800 text-center text-sm">
-            {t('footer.copyright')}
+
+          {/* Bottom Bar: Copyright, Made with love, Disclaimers */}
+          <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-semantic-text-tertiary">
+            <p>{t('footer.copyright')}</p>
+            <div className="flex items-center gap-1 text-semantic-text-secondary">
+              <Heart className="w-3.5 h-3.5 text-red-400 fill-red-400/20" />
+              <span>{t('footer.madeWith')}</span>
+            </div>
           </div>
         </div>
       </footer>

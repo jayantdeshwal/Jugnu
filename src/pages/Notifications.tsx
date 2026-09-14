@@ -210,7 +210,7 @@ export default function Notifications() {
               className="flex items-center gap-1.5"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing || isLoadingNotifications ? 'animate-spin' : ''}`} />
-              <span>{isRefreshing ? 'Refreshing...' : refreshSuccess ? 'Updated' : 'Refresh'}</span>
+              <span>{isRefreshing ? t('common.loading', 'Refreshing...') : refreshSuccess ? t('common.done', 'Updated') : t('common.refresh', 'Refresh')}</span>
             </Button>
 
             {unreadCount > 0 && (
@@ -230,7 +230,7 @@ export default function Notifications() {
         {isLoadingNotifications && dbNotifications.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-semantic-text-secondary">
             <RefreshCw className="w-8 h-8 animate-spin text-brand-400 mb-3" />
-            <p>Loading notifications...</p>
+            <p>{t('common.loading', 'Loading notifications...')}</p>
           </div>
         ) : dbNotifications.length === 0 ? (
           <div className="text-center py-16 bg-surface-100 border border-semantic-border-light rounded-2xl p-8">
@@ -241,7 +241,7 @@ export default function Notifications() {
               {t('notifications.empty', 'No notifications')}
             </h3>
             <p className="text-semantic-text-secondary text-sm max-w-sm mx-auto">
-              You'll see real-time alerts here when booking requests, status changes, or account approvals occur.
+              {t('notifications.noNotificationsDesc', "You'll see real-time alerts here when booking requests, status changes, or account approvals occur.")}
             </p>
           </div>
         ) : (
@@ -315,7 +315,7 @@ export default function Notifications() {
                               }}
                               className="text-xs text-semantic-text-tertiary hover:text-semantic-text-primary"
                             >
-                              Mark as read
+                              {t('notifications.markRead', 'Mark as read')}
                             </Button>
                           )}
                         </div>

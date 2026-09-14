@@ -17,7 +17,7 @@ const iconComponents = {
 }
 
 export default function WorkerProfile() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [worker, setWorker] = useState<any>(null)
@@ -103,7 +103,7 @@ export default function WorkerProfile() {
         <div className="container-app py-4">
           <Link to="/search" className="inline-flex items-center gap-2 text-semantic-text-secondary hover:text-semantic-text-primary text-sm font-medium transition-colors">
             <ArrowLeft className="w-4 h-4" />
-            Back to Search
+            <span>{t('common.back', 'Back')} / {t('nav.search', 'Find Workers')}</span>
           </Link>
         </div>
       </div>
@@ -129,7 +129,7 @@ export default function WorkerProfile() {
                     <div className="absolute bottom-2 right-2">
                       <Badge variant="brand" dot className="px-2 py-1">
                         <Shield className="w-3 h-3 mr-1" />
-                        Verified
+                        {t('workerCard.verified', 'Verified')}
                       </Badge>
                     </div>
                   )}
@@ -139,7 +139,7 @@ export default function WorkerProfile() {
                   <div className="mt-2 flex flex-wrap items-center justify-center sm:justify-start gap-4 text-semantic-text-secondary">
                     <span className="flex items-center gap-1">
                       <Icon className="w-4 h-4" />
-                      {cat ? getCategoryName(cat, 'en') : worker.category}
+                      {cat ? getCategoryName(cat, i18n.language === 'hi' ? 'hi' : 'en') : worker.category}
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
@@ -190,7 +190,7 @@ export default function WorkerProfile() {
                 <Card className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold text-semantic-text-primary">{t('workerProfile.services')}</h2>
-                    <Badge variant="brand">{worker.services.length} Services</Badge>
+                    <Badge variant="brand">{t('workerProfile.servicesCount', { count: worker.services.length })}</Badge>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {worker.services.map((service: string) => (
@@ -205,18 +205,18 @@ export default function WorkerProfile() {
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold text-semantic-text-primary">{t('workerProfile.reviews')}</h2>
                     <span className="text-sm text-semantic-text-tertiary">
-                      {reviewsList.length} {reviewsList.length === 1 ? 'Review' : 'Reviews'}
+                      {reviewsList.length === 1 ? t('workerProfile.singleReview', '1 Review') : t('workerProfile.multipleReviews', { count: reviewsList.length })}
                     </span>
                   </div>
 
                   {isLoadingReviews ? (
-                    <div className="py-8 text-center text-semantic-text-secondary">Loading reviews...</div>
+                    <div className="py-8 text-center text-semantic-text-secondary">{t('common.loading', 'Loading reviews...')}</div>
                   ) : reviewsList.length === 0 ? (
                     <div className="py-10 text-center">
                       <Star className="w-10 h-10 mx-auto text-semantic-text-tertiary/60 mb-3" />
-                      <p className="text-semantic-text-primary font-medium">No reviews yet</p>
+                      <p className="text-semantic-text-primary font-medium">{t('workerProfile.noReviews', 'No reviews yet')}</p>
                       <p className="text-sm text-semantic-text-secondary mt-1 max-w-sm mx-auto">
-                        Be the first customer to book and share your feedback for this worker!
+                        {t('workerProfile.beFirstReview', 'Be the first customer to book and share your feedback for this worker!')}
                       </p>
                     </div>
                   ) : (
@@ -267,9 +267,9 @@ export default function WorkerProfile() {
             >
               <Card className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-semantic-text-primary">Book Service</h2>
+                  <h2 className="text-lg font-semibold text-semantic-text-primary">{t('booking.title', 'Book Service')}</h2>
                   <Badge variant={worker.available ? 'success' : 'warning'}>
-                    {worker.available ? 'Available' : t('workerProfile.unavailable', 'Currently Unavailable')}
+                    {worker.available ? t('workerCard.available', 'Available') : t('workerProfile.unavailable', 'Currently Unavailable')}
                   </Badge>
                 </div>
 
@@ -348,13 +348,13 @@ export default function WorkerProfile() {
                     <Truck className="w-5 h-5 text-brand-600" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-semantic-text-primary">Need Help?</h3>
-                    <p className="text-sm text-semantic-text-secondary">Call us for assistance</p>
+                    <h3 className="font-semibold text-semantic-text-primary">{t('workerProfile.needHelp', 'Need Help?')}</h3>
+                    <p className="text-sm text-semantic-text-secondary">{t('workerProfile.helpSubtitle', 'Call us for assistance')}</p>
                   </div>
                 </div>
                 <Button variant="primary" className="w-full">
                   <Phone className="w-5 h-5 mr-2" />
-                  Call Support
+                  {t('workerProfile.callSupport', 'Call Support')}
                 </Button>
               </Card>
             </motion.div>
@@ -370,21 +370,21 @@ export default function WorkerProfile() {
                     <TrendingUp className="w-6 h-6 text-brand-600" />
                   </div>
                   <p className="text-2xl font-bold text-semantic-text-primary">{worker.completedJobs}</p>
-                  <p className="text-sm text-semantic-text-secondary">Completed Jobs</p>
+                  <p className="text-sm text-semantic-text-secondary">{t('workerProfile.completedJobs', 'Completed Jobs')}</p>
                 </Card>
                 <Card className="p-4 text-center">
                   <div className="w-12 h-12 mx-auto mb-2 bg-brand-100 dark:bg-brand-900/30 rounded-xl flex items-center justify-center">
                     <Award className="w-6 h-6 text-brand-600" />
                   </div>
                   <p className="text-2xl font-bold text-semantic-text-primary">{worker.responseRate}%</p>
-                  <p className="text-sm text-semantic-text-secondary">Response Rate</p>
+                  <p className="text-sm text-semantic-text-secondary">{t('workerProfile.responseRate', 'Response Rate')}</p>
                 </Card>
                 <Card className="p-4 text-center">
                   <div className="w-12 h-12 mx-auto mb-2 bg-brand-100 dark:bg-brand-900/30 rounded-xl flex items-center justify-center">
                     <Clock className="w-6 h-6 text-brand-600" />
                   </div>
                   <p className="text-2xl font-bold text-semantic-text-primary">{worker.avgResponseTime}</p>
-                  <p className="text-sm text-semantic-text-secondary">Avg Response</p>
+                  <p className="text-sm text-semantic-text-secondary">{t('workerProfile.avgResponse', 'Avg Response')}</p>
                 </Card>
               </div>
             </motion.div>
@@ -396,15 +396,15 @@ export default function WorkerProfile() {
       <Modal
         isOpen={showContactNotice}
         onClose={() => setShowContactNotice(false)}
-        title="Direct Contact & Booking"
-        description="Worker privacy & verified connections"
+        title={t('workerProfile.directContactTitle', 'Direct Contact & Booking')}
+        description={t('workerProfile.directContactDesc', 'Worker privacy & verified connections')}
         size="sm"
       >
         <div className="space-y-4">
           <div className="p-4 rounded-xl bg-surface-200/80 border border-semantic-border-light flex items-start gap-3 text-sm">
             <Shield className="w-5 h-5 text-brand-400 shrink-0 mt-0.5" />
             <p className="text-semantic-text-secondary leading-relaxed">
-              To protect local service professionals from unsolicited calls, direct phone numbers and WhatsApp links are provided immediately once a booking request is made.
+              {t('workerProfile.directContactNote', 'To protect local service professionals from unsolicited calls, direct phone numbers and WhatsApp links are provided immediately once a booking request is made.')}
             </p>
           </div>
 
@@ -419,10 +419,10 @@ export default function WorkerProfile() {
               }}
             >
               <Truck className="w-4 h-4" />
-              <span>Book Service Now</span>
+              <span>{t('workerProfile.bookServiceNow', 'Book Service Now')}</span>
             </Button>
             <Button variant="ghost" size="sm" onClick={() => setShowContactNotice(false)}>
-              Close
+              {t('common.close', 'Close')}
             </Button>
           </div>
         </div>

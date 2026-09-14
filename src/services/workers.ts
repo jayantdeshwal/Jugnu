@@ -67,3 +67,30 @@ export async function fetchApprovedWorker(workerId: string): Promise<PublicWorke
     verified: true,
   } as PublicWorker
 }
+
+export interface CategoryWorkerStat {
+  total: number
+  available: number
+}
+
+export async function fetchCategoryWorkerStats(): Promise<Record<string, CategoryWorkerStat>> {
+  try {
+    const workers = await fetchApprovedWorkers()
+    const stats: Record<string, CategoryWorkerStat> = {}
+    for (const worker of workers) {
+      for (const catId of worker.categories) {
+        if (!stats[catId]) {
+          stats[catId] = { total: 0, available: 0 }
+        }
+        stats[catId].total += 1
+        if (worker.available) {
+          stats[catId].available += 1
+        }
+      }
+    }
+    return stats
+  } catch (err) {
+    console.warn('Unable to load category worker stats:', err)
+    return {}
+  }
+}

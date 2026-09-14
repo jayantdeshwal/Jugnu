@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
+import { CATEGORIES, getCategoryName } from '@kaamgar/shared'
 import { ArrowLeft, Briefcase, Check, CheckCircle, Clock3, MapPin, Play, Power, RefreshCw, ShieldAlert, X, AlertCircle, Phone, MessageSquare } from 'lucide-react'
 import { Badge, Button, Card, Skeleton, Avatar } from '@/ui'
 import { useAuth } from '@/context/AuthContext'
@@ -38,29 +39,8 @@ interface BookingUpdateQuery {
   maybeSingle(): Promise<{ data: { id: string } | null; error: { message: string } | null }>
 }
 
-const statusContent = {
-  pending: {
-    title: 'Profile under review',
-    description: 'Our team will verify your details before your profile becomes visible to customers.',
-    icon: Clock3,
-    tone: 'warning' as const,
-  },
-  approved: {
-    title: 'Profile approved',
-    description: 'Your profile is visible to customers in your selected service areas.',
-    icon: CheckCircle,
-    tone: 'success' as const,
-  },
-  rejected: {
-    title: 'Profile needs changes',
-    description: 'Please review the reason below and update your registration details.',
-    icon: ShieldAlert,
-    tone: 'danger' as const,
-  },
-}
-
 export default function WorkerDashboard() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { user } = useAuth()
   const [profile, setProfile] = useState<WorkerProfileRow | null>(null)
   const [bookings, setBookings] = useState<WorkerBookingRow[]>([])
@@ -100,10 +80,13 @@ export default function WorkerDashboard() {
       minute: '2-digit',
     })
 
+    const cat = CATEGORIES.find(c => c.id === booking.category_id)
+    const categoryName = cat ? getCategoryName(cat, i18n.language === 'hi' ? 'hi' : 'en') : booking.category_id
+
     const message = buildWorkerToCustomerWhatsAppMessage({
       customerName: booking.customer?.name,
       workerName: user?.name || 'your service professional',
-      categoryName: booking.category_id,
+      categoryName,
       date: formattedDate,
       time: formattedTime,
     })
@@ -113,10 +96,10 @@ export default function WorkerDashboard() {
       name: booking.customer?.name || 'Customer',
       phone: booking.customer?.phone,
       avatar: booking.customer?.avatar,
-      roleLabel: 'Customer',
+      roleLabel: t('bookings.customer', 'Customer'),
       whatsappMessage: message,
       bookingContext: {
-        category: booking.category_id,
+        category: categoryName,
         scheduledAt: `${formattedDate} at ${formattedTime}`,
         address: booking.address,
       },
@@ -260,8 +243,8 @@ export default function WorkerDashboard() {
       setProfile(prev => (prev ? { ...prev, is_available: newStatus } : null))
       setAvailabilitySuccessMsg(
         newStatus
-          ? 'You are now Online and ready to accept bookings!'
-          : 'You are now Off-duty. Customers cannot book you until you go online again.'
+          ? t('workerDashboard.onlineSuccess', 'You are now Online and ready to accept bookings!')
+          : t('workerDashboard.offlineSuccess', 'You are now Off-duty. Customers cannot book you until you go online again.')
       )
       setTimeout(() => setAvailabilitySuccessMsg(''), 5000)
     } catch (toggleError) {
@@ -283,7 +266,27 @@ export default function WorkerDashboard() {
   }
 
   const status = profile?.approval_status ?? 'pending'
-  const content = statusContent[status]
+  const statusDetails = {
+    pending: {
+      title: t('workerDashboard.profileUnderReview', 'Profile under review'),
+      description: t('workerDashboard.profileUnderReviewDesc', 'Our team will verify your details before your profile becomes visible to customers.'),
+      icon: Clock3,
+      tone: 'warning' as const,
+    },
+    approved: {
+      title: t('workerDashboard.profileApproved', 'Profile approved'),
+      description: t('workerDashboard.profileApprovedDesc', 'Your profile is visible to customers in your selected service areas.'),
+      icon: CheckCircle,
+      tone: 'success' as const,
+    },
+    rejected: {
+      title: t('workerDashboard.profileNeedsChanges', 'Profile needs changes'),
+      description: t('workerDashboard.profileNeedsChangesDesc', 'Please review the reason below and update your registration details.'),
+      icon: ShieldAlert,
+      tone: 'danger' as const,
+    },
+  }
+  const content = statusDetails[status] || statusDetails.pending
   const StatusIcon = content.icon
 
   return (
@@ -292,7 +295,7 @@ export default function WorkerDashboard() {
         <div className="container-app py-4">
           <Link to="/" className="inline-flex items-center gap-2 text-semantic-text-secondary hover:text-semantic-text-primary text-sm font-medium">
             <ArrowLeft className="w-4 h-4" />
-            Back to Home
+            {t('common.backToHome', 'Back to Home')}
           </Link>
         </div>
       </div>
@@ -300,9 +303,9 @@ export default function WorkerDashboard() {
       <main className="container-app py-10">
         <div className="max-w-3xl mx-auto space-y-6">
           <div>
-            <p className="text-sm text-brand-500 font-medium">Worker workspace</p>
-            <h1 className="mt-2 text-3xl font-bold text-semantic-text-primary">Welcome, {user?.name}</h1>
-            <p className="mt-2 text-semantic-text-secondary">Manage your worker profile and booking requests here.</p>
+            <p className="text-sm text-brand-500 font-medium">{t('workerDashboard.workspaceSubtitle', 'Worker workspace')}</p>
+            <h1 className="mt-2 text-3xl font-bold text-semantic-text-primary">{t('workerDashboard.welcomeUser', { name: user?.name, defaultValue: `Welcome, ${user?.name}` })}</h1>
+            <p className="mt-2 text-semantic-text-secondary">{t('workerDashboard.subtitle', 'Manage your worker profile and booking requests here.')}</p>
           </div>
 
           {error && <div className="p-4 rounded-lg border border-danger-200 bg-danger-50 text-danger-700">{error}</div>}
@@ -319,7 +322,7 @@ export default function WorkerDashboard() {
                 </div>
                 <p className="mt-2 text-semantic-text-secondary">{content.description}</p>
                 {status === 'rejected' && profile?.rejection_reason && (
-                  <p className="mt-3 text-sm text-danger-700">Reason: {profile.rejection_reason}</p>
+                  <p className="mt-3 text-sm text-danger-700">{t('workerDashboard.rejectionReason', 'Reason')}: {profile.rejection_reason}</p>
                 )}
               </div>
             </div>
@@ -397,19 +400,19 @@ export default function WorkerDashboard() {
           <div className="grid sm:grid-cols-3 gap-4">
             <Card className="p-5">
               <Briefcase className="w-5 h-5 text-brand-500" />
-              <p className="mt-3 text-sm text-semantic-text-tertiary">Experience</p>
-              <p className="mt-1 text-lg font-semibold text-semantic-text-primary">{profile?.experience_years ?? 0} years</p>
+              <p className="mt-3 text-sm text-semantic-text-tertiary">{t('common.experience')}</p>
+              <p className="mt-1 text-lg font-semibold text-semantic-text-primary">{profile?.experience_years ?? 0} {t('common.years')}</p>
             </Card>
             <Card className="p-5">
               <MapPin className="w-5 h-5 text-brand-500" />
-              <p className="mt-3 text-sm text-semantic-text-tertiary">Service area</p>
+              <p className="mt-3 text-sm text-semantic-text-tertiary">{t('workerDashboard.serviceArea', 'Service area')}</p>
               <p className="mt-1 text-lg font-semibold text-semantic-text-primary">Muzaffarnagar</p>
             </Card>
             <Card className="p-5">
               <CheckCircle className={`w-5 h-5 ${profile?.is_available ? 'text-emerald-500' : 'text-amber-500'}`} />
-              <p className="mt-3 text-sm text-semantic-text-tertiary">Current Mode</p>
+              <p className="mt-3 text-sm text-semantic-text-tertiary">{t('workerDashboard.currentMode', 'Current Mode')}</p>
               <p className="mt-1 text-lg font-semibold text-semantic-text-primary">
-                {profile?.is_available ? 'Online (Active)' : 'Off-Duty (Paused)'}
+                {profile?.is_available ? t('workerDashboard.onlineActive', 'Online (Active)') : t('workerDashboard.offDutyPaused', 'Off-Duty (Paused)')}
               </p>
             </Card>
           </div>
@@ -417,8 +420,8 @@ export default function WorkerDashboard() {
           <Card className="p-6">
             <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
               <div>
-                <h2 className="text-xl font-semibold text-semantic-text-primary">Booking requests</h2>
-                <p className="mt-1 text-sm text-semantic-text-secondary">Review requests assigned to you.</p>
+                <h2 className="text-xl font-semibold text-semantic-text-primary">{t('workerDashboard.bookingRequests')}</h2>
+                <p className="mt-1 text-sm text-semantic-text-secondary">{t('workerDashboard.reviewRequests')}</p>
               </div>
               <div className="flex items-center gap-3">
                 <Button
@@ -429,17 +432,20 @@ export default function WorkerDashboard() {
                   className="flex items-center gap-2"
                 >
                   <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-                  Refresh
+                  {t('common.refresh', 'Refresh')}
                 </Button>
-                <Badge variant="warning">{bookings.filter(booking => booking.status === 'pending').length} pending</Badge>
+                <Badge variant="warning">{t('workerDashboard.pendingCount', { count: bookings.filter(booking => booking.status === 'pending').length })}</Badge>
               </div>
             </div>
 
             {bookings.length === 0 ? (
-              <p className="py-8 text-center text-semantic-text-secondary">No booking requests yet.</p>
+              <p className="py-8 text-center text-semantic-text-secondary">{t('workerDashboard.noRequests', 'No booking requests yet.')}</p>
             ) : (
               <div className="space-y-4">
-                {bookings.map(booking => (
+                {bookings.map(booking => {
+                  const cat = CATEGORIES.find(c => c.id === booking.category_id)
+                  const categoryName = cat ? getCategoryName(cat, i18n.language === 'hi' ? 'hi' : 'en') : booking.category_id
+                  return (
                   <div
                     key={booking.id}
                     className={`rounded-xl border p-5 ${
@@ -459,7 +465,7 @@ export default function WorkerDashboard() {
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-3">
-                          <h3 className="text-lg font-bold text-semantic-text-primary">{booking.category_id}</h3>
+                          <h3 className="text-lg font-bold text-semantic-text-primary">{categoryName}</h3>
                           <Badge
                             size="lg"
                             variant={
@@ -471,56 +477,52 @@ export default function WorkerDashboard() {
                               booking.status === 'cancelled' ? 'default' : 'default'
                             }
                           >
-                            {booking.status === 'accepted' ? 'Accepted' :
-                             booking.status === 'in_progress' ? 'In Progress' :
-                             booking.status === 'completed' ? 'Completed' :
-                             booking.status === 'rejected' ? 'Rejected' :
-                             booking.status === 'cancelled' ? 'Cancelled' : booking.status}
+                            {t(`booking.status.${booking.status === 'in_progress' ? 'inProgress' : booking.status}`, booking.status)}
                           </Badge>
                         </div>
                         {booking.status === 'accepted' && (
                           <p className="mt-3 text-sm font-semibold text-brand-300">
-                            Booking accepted. Click "Start Job" when you begin the service.
+                            {t('workerDashboard.jobStarted')}
                           </p>
                         )}
                         {booking.status === 'in_progress' && (
                           <p className="mt-3 text-sm font-semibold text-blue-400 flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                            Work is currently in progress. Click "Complete Job" when finished.
+                            {t('workerDashboard.workInProgress')}
                           </p>
                         )}
                         {booking.status === 'completed' && (
                           <p className="mt-3 text-sm font-semibold text-emerald-400 flex items-center gap-1.5">
                             <CheckCircle className="w-4 h-4" />
-                            Service completed successfully.
+                            {t('workerDashboard.serviceCompleted')}
                           </p>
                         )}
                         {booking.status === 'rejected' && (
-                          <p className="mt-3 text-sm font-semibold text-danger-400">This booking request was rejected.</p>
+                          <p className="mt-3 text-sm font-semibold text-danger-400">{t('workerDashboard.requestRejected')}</p>
                         )}
                         {booking.status === 'cancelled' && (
-                          <p className="mt-3 text-sm font-semibold text-semantic-text-secondary">This booking was cancelled by the customer.</p>
+                          <p className="mt-3 text-sm font-semibold text-semantic-text-secondary">{t('workerDashboard.customerCancelled')}</p>
                         )}
                         <p className="mt-3 text-sm font-medium text-semantic-text-primary">
-                          <span className="text-semantic-text-tertiary">Scheduled:</span>{' '}
+                          <span className="text-semantic-text-tertiary">{t('workerDashboard.scheduled')}:</span>{' '}
                           {new Date(booking.scheduled_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
                         </p>
                         <p className="mt-1 text-sm font-medium text-semantic-text-primary">
-                          <span className="text-semantic-text-tertiary">Address:</span> {booking.address}
+                          <span className="text-semantic-text-tertiary">{t('common.address')}:</span> {booking.address}
                         </p>
-                        {booking.notes && <p className="mt-3 text-sm text-semantic-text-secondary"><span className="font-medium text-semantic-text-primary">Notes:</span> {booking.notes}</p>}
+                        {booking.notes && <p className="mt-3 text-sm text-semantic-text-secondary"><span className="font-medium text-semantic-text-primary">{t('common.notes')}:</span> {booking.notes}</p>}
 
                         {/* Customer Information & Contact Actions */}
                         <div className="mt-4 p-3 rounded-xl bg-surface-200/80 border border-semantic-border-light flex flex-wrap items-center justify-between gap-3">
                           <div className="flex items-center gap-3">
                             <Avatar name={booking.customer?.name || 'Customer'} size="md" src={booking.customer?.avatar || undefined} />
                             <div>
-                              <p className="text-xs text-semantic-text-secondary font-medium">Customer</p>
+                              <p className="text-xs text-semantic-text-secondary font-medium">{t('bookings.customer', 'Customer')}</p>
                               <p className="text-sm font-semibold text-semantic-text-primary">{booking.customer?.name || 'Customer'}</p>
                               {booking.customer?.phone ? (
                                 <p className="text-xs font-mono text-brand-400">{formatPhoneDisplay(booking.customer.phone)}</p>
                               ) : (
-                                <p className="text-xs text-semantic-text-tertiary">No phone registered</p>
+                                <p className="text-xs text-semantic-text-tertiary">{t('contactModal.noPhone', 'No phone registered')}</p>
                               )}
                             </div>
                           </div>
@@ -533,7 +535,7 @@ export default function WorkerDashboard() {
                               className="flex items-center gap-1.5 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 hover:border-emerald-500/50"
                             >
                               <Phone className="w-3.5 h-3.5" />
-                              <span>Call</span>
+                              <span>{t('common.call')}</span>
                             </Button>
                             <Button
                               variant="outline"
@@ -542,7 +544,7 @@ export default function WorkerDashboard() {
                               className="flex items-center gap-1.5 text-brand-300 border-brand-500/30 hover:bg-brand-500/10 hover:border-brand-500/50"
                             >
                               <MessageSquare className="w-3.5 h-3.5" />
-                              <span>WhatsApp</span>
+                              <span>{t('common.whatsapp', 'WhatsApp')}</span>
                             </Button>
                           </div>
                         </div>
@@ -557,7 +559,7 @@ export default function WorkerDashboard() {
                             onClick={() => void updateBookingStatus(booking.id, 'accepted')}
                           >
                             <Check className="w-4 h-4 mr-1" />
-                            Accept
+                            {t('workerDashboard.accept')}
                           </Button>
                           <Button
                             variant="danger"
@@ -566,7 +568,7 @@ export default function WorkerDashboard() {
                             onClick={() => void updateBookingStatus(booking.id, 'rejected')}
                           >
                             <X className="w-4 h-4 mr-1" />
-                            Reject
+                            {t('workerDashboard.reject')}
                           </Button>
                         </div>
                       )}
@@ -581,7 +583,7 @@ export default function WorkerDashboard() {
                             className="bg-blue-600 hover:bg-blue-500 text-white flex items-center gap-1.5"
                           >
                             <Play className="w-4 h-4" />
-                            Start Job
+                            {t('workerDashboard.startJob')}
                           </Button>
                         </div>
                       )}
@@ -596,13 +598,13 @@ export default function WorkerDashboard() {
                             className="bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5"
                           >
                             <CheckCircle className="w-4 h-4" />
-                            Complete Job
+                            {t('workerDashboard.completeJob')}
                           </Button>
                         </div>
                       )}
                     </div>
                   </div>
-                ))}
+                )})}
               </div>
             )}
           </Card>

@@ -10,6 +10,8 @@ import WorkerProfile from './pages/WorkerProfile'
 import Booking from './pages/Booking'
 import Bookings from './pages/Bookings'
 import Login from './pages/Login'
+import AuthChoice from './pages/AuthChoice'
+import Register from './pages/Register'
 import WorkerRegistration from './pages/WorkerRegistration'
 import Profile from './pages/Profile'
 import AdminDashboard from './pages/AdminDashboard'
@@ -27,7 +29,10 @@ function AppRoutes() {
         <Route path="worker/:id" element={<WorkerProfile />} />
         <Route path="booking/:workerId" element={<Booking />} />
         <Route path="bookings" element={<Bookings />} />
+        <Route path="auth" element={<AuthChoice />} />
         <Route path="login" element={<Login />} />
+        <Route path="register" element={<Register />} />
+        <Route path="signup" element={<Navigate to="/register" replace />} />
         <Route path="register/worker" element={<WorkerRegistration />} />
         <Route path="profile" element={<Profile />} />
         <Route path="notifications" element={<Notifications />} />

@@ -1,47 +1,79 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Button, Input, Card } from '@kaamgar/ui'
+import { Button, Input, Card, Badge } from '@kaamgar/ui'
 import { useAuth } from '../context/AuthContext'
 import { openOtpWidget } from '@/services/otp'
 import { getSupabaseClient } from '@/lib/supabase'
-import { Phone, AlertCircle, CheckCircle, ShieldCheck, ArrowRight, Mail, Lock, Shield } from 'lucide-react'
+import {
+  Phone,
+  AlertCircle,
+  CheckCircle,
+  ShieldCheck,
+  ArrowRight,
+  ArrowLeft,
+  Mail,
+  Lock,
+  Shield,
+  User,
+  Truck,
+  Briefcase,
+  Sparkles,
+} from 'lucide-react'
 
 export default function Login() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { user, logout, signInWithEmail, loginWithVerifiedPhone, signInWithGoogle, updatePhone, needsPhoneVerification } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  const [name, setName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [email, setEmail] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const queryRole = searchParams.get('role')
+  const initialRole = queryRole === 'worker' ? 'worker' : queryRole === 'admin' ? 'admin' : 'customer'
+  const [loginRole, setLoginRole] = useState<'customer' | 'worker' | 'admin'>(initialRole)
 
-  // Customer / Worker Sign-in Method: 'otp' | 'email'
-  const [customerAuthMode, setCustomerAuthMode] = useState<'otp' | 'email'>('otp')
-  const [customerEmail, setCustomerEmail] = useState('')
+  const {
+    user,
+    logout,
+    signInWithEmail,
+    loginWithVerifiedPhone,
+    signInWithGoogle,
+    updatePhone,
+  } = useAuth()
+
+  // ---------------- Customer State ----------------
+  const [customerAuthMode, setCustomerAuthMode] = useState<'otp' | 'password'>('otp')
+  const [customerIdentifier, setCustomerIdentifier] = useState('')
   const [customerPassword, setCustomerPassword] = useState('')
-  const [customerEmailLoading, setCustomerEmailLoading] = useState(false)
+  const [customerName, setCustomerName] = useState('')
+  const [customerPhone, setCustomerPhone] = useState('')
+  const [customerLoading, setCustomerLoading] = useState(false)
+  const [customerError, setCustomerError] = useState('')
 
-  // Auth Mode: 'otp' for standard customers/workers, 'admin' for email+password admin login
-  const [authMode, setAuthMode] = useState<'otp' | 'admin'>('otp')
+  // ---------------- Worker State ----------------
+  const [workerAuthMode, setWorkerAuthMode] = useState<'otp' | 'password'>('otp')
+  const [workerIdentifier, setWorkerIdentifier] = useState('')
+  const [workerPassword, setWorkerPassword] = useState('')
+  const [workerPhone, setWorkerPhone] = useState('')
+  const [workerLoading, setWorkerLoading] = useState(false)
+  const [workerError, setWorkerError] = useState('')
+
+  // ---------------- Admin State & 2FA ----------------
   const [adminEmail, setAdminEmail] = useState('')
   const [adminPassword, setAdminPassword] = useState('')
   const [adminLoading, setAdminLoading] = useState(false)
   const [adminError, setAdminError] = useState('')
-
-  // Admin 2FA State
   const [admin2faStep, setAdmin2faStep] = useState<'credentials' | 'otp_challenge' | 'phone_setup'>('credentials')
   const [adminPhone, setAdminPhone] = useState('')
   const [adminSetupPhone, setAdminSetupPhone] = useState('')
 
-  // Mandatory phone verification state for Google sign-in redirect
-  const [googlePhone, setGooglePhone] = useState('')
-  const [googlePhoneLoading, setGooglePhoneLoading] = useState(false)
-  const [googlePhoneError, setGooglePhoneError] = useState('')
+  // Sync role tab from URL params if updated externally
+  useEffect(() => {
+    const roleParam = searchParams.get('role')
+    if (roleParam === 'worker' || roleParam === 'admin' || roleParam === 'customer') {
+      setLoginRole(roleParam)
+    }
+  }, [searchParams])
 
-  // Redirect based on role and verification
+  // Redirect based on role and active verification
   useEffect(() => {
     if (user) {
       if (user.role === 'admin') {
@@ -52,8 +84,7 @@ export default function Login() {
           }, 300)
           return () => clearTimeout(timer)
         } else {
-          // Admin account is logged into Supabase Auth, but 2FA is needed for this browser session
-          setAuthMode('admin')
+          setLoginRole('admin')
           const clean = (user.phone || '').replace(/\D/g, '').slice(-10)
           if (clean.length === 10) {
             setAdminPhone(clean)
@@ -65,18 +96,177 @@ export default function Login() {
       } else if (user.role === 'worker') {
         const timer = setTimeout(() => {
           navigate('/worker/dashboard')
-        }, 800)
+        }, 500)
         return () => clearTimeout(timer)
       } else if (user.phone && user.phone.trim().length >= 10) {
         const timer = setTimeout(() => {
           navigate('/')
-        }, 800)
+        }, 500)
         return () => clearTimeout(timer)
       }
     }
   }, [user, navigate])
 
-  // Helper: Trigger MSG91 OTP Widget for Administrator 2FA
+  // Helper: Resolve phone or email to Supabase email for password authentication
+  const resolveIdentifierToEmail = async (rawIdentifier: string): Promise<string> => {
+    const trimmed = rawIdentifier.trim()
+    if (trimmed.includes('@')) {
+      return trimmed.toLowerCase()
+    }
+    const cleanPhone = trimmed.replace(/\D/g, '').slice(-10)
+    const supabase = getSupabaseClient()
+    const { data: profile } = await (supabase.from('profiles') as any)
+      .select('email')
+      .eq('phone', `+91${cleanPhone}`)
+      .maybeSingle()
+
+    if (profile?.email) {
+      return profile.email.toLowerCase()
+    }
+    return `${cleanPhone}@phone.kaamgar.local`
+  }
+
+  // ---------------- 1. CUSTOMER LOGIN HANDLERS ----------------
+  const handleCustomerOtpLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setCustomerError('')
+
+    const cleanPhone = customerPhone.replace(/\D/g, '')
+    if (cleanPhone.length !== 10) {
+      setCustomerError('Please enter a valid 10-digit mobile number')
+      return
+    }
+
+    setCustomerLoading(true)
+    try {
+      const widgetOpened = await openOtpWidget({
+        identifier: cleanPhone,
+        onSuccess: async () => {
+          try {
+            await loginWithVerifiedPhone(
+              customerName.trim() || 'Customer',
+              cleanPhone,
+              'customer'
+            )
+            navigate('/')
+          } catch (err) {
+            setCustomerError(err instanceof Error ? err.message : 'Sign in failed after OTP verification')
+          } finally {
+            setCustomerLoading(false)
+          }
+        },
+        onFailure: (err) => {
+          setCustomerLoading(false)
+          setCustomerError(typeof err === 'string' ? err : 'OTP verification was cancelled or failed.')
+        },
+      })
+
+      if (!widgetOpened) {
+        setCustomerLoading(false)
+        setCustomerError('OTP verification widget could not be loaded. Please ensure ad-blockers are disabled.')
+      }
+    } catch (err) {
+      setCustomerLoading(false)
+      setCustomerError('Unable to launch OTP verification. Please retry.')
+    }
+  }
+
+  const handleCustomerPasswordLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setCustomerError('')
+
+    if (!customerIdentifier.trim()) {
+      setCustomerError('Please enter your mobile number or email address')
+      return
+    }
+    if (!customerPassword) {
+      setCustomerError('Please enter your password')
+      return
+    }
+
+    setCustomerLoading(true)
+    try {
+      const resolvedEmail = await resolveIdentifierToEmail(customerIdentifier)
+      await signInWithEmail(resolvedEmail, customerPassword)
+      navigate('/')
+    } catch (err) {
+      setCustomerError(err instanceof Error ? err.message : 'Invalid login credentials. Please check and retry.')
+    } finally {
+      setCustomerLoading(false)
+    }
+  }
+
+  // ---------------- 2. WORKER LOGIN HANDLERS ----------------
+  const handleWorkerOtpLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setWorkerError('')
+
+    const cleanPhone = workerPhone.replace(/\D/g, '')
+    if (cleanPhone.length !== 10) {
+      setWorkerError('Please enter a valid 10-digit mobile number')
+      return
+    }
+
+    setWorkerLoading(true)
+    try {
+      const widgetOpened = await openOtpWidget({
+        identifier: cleanPhone,
+        onSuccess: async () => {
+          try {
+            await loginWithVerifiedPhone(
+              'Worker',
+              cleanPhone,
+              'worker'
+            )
+            navigate('/worker/dashboard')
+          } catch (err) {
+            setWorkerError(err instanceof Error ? err.message : 'Worker login failed after OTP verification')
+          } finally {
+            setWorkerLoading(false)
+          }
+        },
+        onFailure: (err) => {
+          setWorkerLoading(false)
+          setWorkerError(typeof err === 'string' ? err : 'OTP verification was cancelled or failed.')
+        },
+      })
+
+      if (!widgetOpened) {
+        setWorkerLoading(false)
+        setWorkerError('OTP verification widget could not be loaded. Please ensure ad-blockers are disabled.')
+      }
+    } catch (err) {
+      setWorkerLoading(false)
+      setWorkerError('Unable to launch OTP verification. Please retry.')
+    }
+  }
+
+  const handleWorkerPasswordLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setWorkerError('')
+
+    if (!workerIdentifier.trim()) {
+      setWorkerError('Please enter your mobile number or email')
+      return
+    }
+    if (!workerPassword) {
+      setWorkerError('Please enter your password')
+      return
+    }
+
+    setWorkerLoading(true)
+    try {
+      const resolvedEmail = await resolveIdentifierToEmail(workerIdentifier)
+      await signInWithEmail(resolvedEmail, workerPassword)
+      navigate('/worker/dashboard')
+    } catch (err) {
+      setWorkerError(err instanceof Error ? err.message : 'Invalid worker credentials. Please check and retry.')
+    } finally {
+      setWorkerLoading(false)
+    }
+  }
+
+  // ---------------- 3. ADMIN 2FA & LOGIN HANDLERS ----------------
   const launchAdmin2faOtp = async (cleanPhone: string) => {
     setAdminLoading(true)
     setAdminError('')
@@ -110,7 +300,6 @@ export default function Login() {
     }
   }
 
-  // Handle Real Admin Email & Password Login -> Initiates 2FA
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setAdminError('')
@@ -127,7 +316,6 @@ export default function Login() {
     try {
       await signInWithEmail(adminEmail.trim(), adminPassword)
 
-      // Strict Administrator Role Verification
       const supabase = getSupabaseClient()
       const { data: sessionData } = await supabase.auth.getSession()
       if (sessionData.session?.user) {
@@ -142,7 +330,6 @@ export default function Login() {
           return
         }
 
-        // Two-Factor Authentication via MSG91
         const rawPhone = profile?.phone || ''
         const cleanPhone = rawPhone.replace(/\D/g, '').slice(-10)
 
@@ -151,7 +338,6 @@ export default function Login() {
           setAdmin2faStep('otp_challenge')
           await launchAdmin2faOtp(cleanPhone)
         } else {
-          // Admin account needs to register & verify a mobile number for 2FA
           setAdmin2faStep('phone_setup')
         }
       }
@@ -162,57 +348,6 @@ export default function Login() {
     }
   }
 
-  // Handle Customer / Worker Email & Password Login
-  const handleCustomerEmailLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-
-    if (!customerEmail.trim()) {
-      setError('Please enter your email address')
-      return
-    }
-    if (!customerPassword) {
-      setError('Please enter your password')
-      return
-    }
-
-    setCustomerEmailLoading(true)
-    try {
-      await signInWithEmail(customerEmail.trim(), customerPassword)
-
-      // Check role & navigate accordingly
-      const supabase = getSupabaseClient()
-      const { data: sessionData } = await supabase.auth.getSession()
-      if (sessionData.session?.user) {
-        const { data: profile } = await (supabase.from('profiles') as any)
-          .select('role, phone')
-          .eq('id', sessionData.session.user.id)
-          .maybeSingle()
-
-        if (profile?.role === 'worker') {
-          navigate('/worker/dashboard')
-        } else if (profile?.role === 'admin') {
-          setAuthMode('admin')
-          setAdmin2faStep('otp_challenge')
-          const cleanPhone = (profile.phone || '').replace(/\D/g, '').slice(-10)
-          if (cleanPhone.length === 10) {
-            setAdminPhone(cleanPhone)
-            await launchAdmin2faOtp(cleanPhone)
-          } else {
-            setAdmin2faStep('phone_setup')
-          }
-        } else {
-          navigate('/')
-        }
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Invalid email or password')
-    } finally {
-      setCustomerEmailLoading(false)
-    }
-  }
-
-  // Handle First-Time Admin Phone Setup & Verification
   const handleAdminPhoneSetupSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setAdminError('')
@@ -254,605 +389,496 @@ export default function Login() {
     }
   }
 
-  // Handle Phone + MSG91 OTP Verification & Sign In for Customers/Workers
-  const handleVerifyPhoneAndLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
+  return (
+    <div className="min-h-[calc(100vh-64px)] bg-semantic-bg-primary flex items-center justify-center py-10 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full">
+        {/* Back Link */}
+        <div className="mb-4">
+          <Link
+            to="/auth"
+            className="inline-flex items-center gap-1.5 text-xs text-semantic-text-tertiary hover:text-brand-400 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>{t('loginPage.backToOptions', 'Back to Login / Sign Up options')}</span>
+          </Link>
+        </div>
 
-    const cleanPhone = phone.replace(/\D/g, '')
-    if (!name.trim()) {
-      setError('Please enter your full name')
-      return
-    }
-    if (cleanPhone.length !== 10) {
-      setError('Please enter a valid 10-digit Indian mobile number')
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const widgetOpened = await openOtpWidget({
-        identifier: cleanPhone,
-        onSuccess: async () => {
-          try {
-            await loginWithVerifiedPhone(name.trim(), cleanPhone, 'customer', email.trim() || undefined)
-            navigate('/')
-          } catch (err) {
-            setError(err instanceof Error ? err.message : 'Login failed after verification')
-          } finally {
-            setLoading(false)
-          }
-        },
-        onFailure: (err) => {
-          setLoading(false)
-          setError(
-            typeof err === 'string'
-              ? err
-              : 'OTP verification failed or was cancelled. Please try again.'
-          )
-        },
-      })
-
-      if (!widgetOpened) {
-        setLoading(false)
-        setError('OTP verification service could not be loaded. Please disable ad-blockers or shields and try again.')
-      }
-    } catch (err) {
-      setLoading(false)
-      setError('Unable to launch OTP verification. Please try again.')
-    }
-  }
-
-  // Optional: Auto-fill details from Google
-  const handleAutoFillFromGoogle = async () => {
-    setError('')
-    setLoading(true)
-    try {
-      await signInWithGoogle(`${window.location.origin}/login`)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google connection could not be initiated')
-      setLoading(false)
-    }
-  }
-
-  // Handle completing mandatory phone verification if arriving from Google
-  const handleGooglePhoneSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setGooglePhoneError('')
-    const cleanPhone = googlePhone.replace(/\D/g, '')
-    if (cleanPhone.length !== 10) {
-      setGooglePhoneError('Please enter a valid 10-digit Indian mobile number')
-      return
-    }
-
-    setGooglePhoneLoading(true)
-    try {
-      const widgetOpened = await openOtpWidget({
-        identifier: cleanPhone,
-        onSuccess: async () => {
-          await updatePhone(cleanPhone)
-          navigate('/')
-        },
-        onFailure: (err) => {
-          setGooglePhoneLoading(false)
-          setGooglePhoneError(typeof err === 'string' ? err : 'OTP verification was cancelled or failed.')
-        },
-      })
-
-      if (!widgetOpened) {
-        setGooglePhoneLoading(false)
-        setGooglePhoneError('OTP verification widget could not be loaded. Please ensure ad-blockers are disabled.')
-      }
-    } catch (err) {
-      setGooglePhoneError(err instanceof Error ? err.message : 'Failed to verify phone')
-      setGooglePhoneLoading(false)
-    }
-  }
-
-  // CASE 1: Logged in via Google but Phone Number is Missing (Mandatory Requirement)
-  if (user && needsPhoneVerification) {
-    return (
-      <div className="min-h-screen bg-semantic-bg-primary flex items-center justify-center py-12 px-4">
-        <Card className="w-full max-w-md p-8 bg-surface-100 border border-semantic-border-light shadow-xl">
+        <Card className="p-6 sm:p-8 bg-surface-100 border border-semantic-border-light shadow-2xl relative">
+          {/* Header Title */}
           <div className="text-center mb-6">
-            <div className="w-16 h-16 mx-auto mb-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-center">
-              <Phone className="w-8 h-8 text-amber-400" />
-            </div>
             <h1 className="text-2xl font-bold text-semantic-text-primary">
-              {t('auth.phoneMandatory', 'Mobile Number Verification Required')}
+              {loginRole === 'admin'
+                ? t('loginPage.adminTitle', 'Administrator Portal')
+                : loginRole === 'worker'
+                ? t('loginPage.workerTitle', 'Kaamgar Worker Login')
+                : t('loginPage.customerTitle', 'Customer Login')}
             </h1>
-            <p className="mt-2 text-sm text-semantic-text-secondary">
-              Welcome, <strong className="text-semantic-text-primary">{user.name}</strong>! In Muzaffarnagar Kaamgar,
-              a verified 10-digit Indian mobile number is mandatory to coordinate bookings with workers.
+            <p className="mt-1 text-xs text-semantic-text-secondary">
+              {loginRole === 'admin'
+                ? t('loginPage.adminSubtitle', 'Sign in with administrator credentials & complete 2FA')
+                : loginRole === 'worker'
+                ? t('loginPage.workerSubtitle', 'Access your jobs, appointments & earnings')
+                : t('loginPage.customerSubtitle', 'Sign in to book verified local services')}
             </p>
           </div>
 
-          {googlePhoneError && (
-            <div className="mb-6 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2 text-red-400 text-sm">
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
-              <span>{googlePhoneError}</span>
+          {/* Role Navigation: 3 Distinct Tabs */}
+          <div className="flex bg-surface-200/90 p-1 rounded-xl mb-6 border border-semantic-border-light text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => {
+                setLoginRole('customer')
+                setSearchParams({ role: 'customer' })
+              }}
+              className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                loginRole === 'customer'
+                  ? 'bg-brand-500 text-white shadow-sm'
+                  : 'text-semantic-text-secondary hover:text-semantic-text-primary'
+              }`}
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>{t('loginPage.tabCustomer', 'Customer')}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setLoginRole('worker')
+                setSearchParams({ role: 'worker' })
+              }}
+              className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                loginRole === 'worker'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-semantic-text-secondary hover:text-semantic-text-primary'
+              }`}
+            >
+              <Truck className="w-3.5 h-3.5" />
+              <span>{t('loginPage.tabWorker', 'Worker')}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setLoginRole('admin')
+                setSearchParams({ role: 'admin' })
+              }}
+              className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                loginRole === 'admin'
+                  ? 'bg-amber-600 text-white shadow-sm'
+                  : 'text-semantic-text-secondary hover:text-semantic-text-primary'
+              }`}
+            >
+              <Shield className="w-3.5 h-3.5" />
+              <span>{t('loginPage.tabAdmin', 'Admin')}</span>
+            </button>
+          </div>
+
+          {/* ================= 1. CUSTOMER LOGIN FORM ================= */}
+          {loginRole === 'customer' && (
+            <div>
+              {/* Toggle: OTP vs Password */}
+              <div className="flex bg-surface-200/60 p-1 rounded-lg mb-4 border border-semantic-border-light/60 text-xs font-medium">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCustomerAuthMode('otp')
+                    setCustomerError('')
+                  }}
+                  className={`flex-1 py-1.5 rounded-md transition-all ${
+                    customerAuthMode === 'otp'
+                      ? 'bg-surface-100 text-brand-400 font-semibold shadow-sm'
+                      : 'text-semantic-text-tertiary hover:text-semantic-text-primary'
+                  }`}
+                >
+                  {t('loginPage.modeOtp', 'Mobile Number (OTP)')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCustomerAuthMode('password')
+                    setCustomerError('')
+                  }}
+                  className={`flex-1 py-1.5 rounded-md transition-all ${
+                    customerAuthMode === 'password'
+                      ? 'bg-surface-100 text-brand-400 font-semibold shadow-sm'
+                      : 'text-semantic-text-tertiary hover:text-semantic-text-primary'
+                  }`}
+                >
+                  {t('loginPage.modePassword', 'Phone / Email & Password')}
+                </button>
+              </div>
+
+              {customerError && (
+                <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2 text-red-400 text-xs">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{customerError}</span>
+                </div>
+              )}
+
+              {customerAuthMode === 'otp' ? (
+                <form onSubmit={handleCustomerOtpLogin} className="space-y-4">
+                  <Input
+                    label={t('loginPage.phoneLabel', 'Mobile Number (10 digits) *')}
+                    value={customerPhone}
+                    onChange={e => setCustomerPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    placeholder="9876543210"
+                    leftIcon={<span className="text-sm font-semibold text-semantic-text-secondary">+91</span>}
+                    required
+                    autoFocus
+                  />
+
+                  <Input
+                    label={t('loginPage.fullNameOptional', 'Full Name (Optional for existing customers)')}
+                    value={customerName}
+                    onChange={e => setCustomerName(e.target.value)}
+                    placeholder="Your Name"
+                    leftIcon={<User className="w-4 h-4 text-semantic-text-tertiary" />}
+                  />
+
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    className="w-full mt-2"
+                    size="lg"
+                    loading={customerLoading}
+                  >
+                    {t('loginPage.verifyOtpBtn', 'Verify Mobile via OTP & Sign In')}
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={handleCustomerPasswordLogin} className="space-y-4">
+                  <Input
+                    label={t('loginPage.identifierLabel', 'Mobile Number or Email Address *')}
+                    value={customerIdentifier}
+                    onChange={e => setCustomerIdentifier(e.target.value)}
+                    placeholder="9876543210 or name@gmail.com"
+                    leftIcon={<User className="w-4 h-4 text-semantic-text-tertiary" />}
+                    required
+                    autoFocus
+                  />
+
+                  <Input
+                    label={t('loginPage.passwordLabel', 'Password *')}
+                    type="password"
+                    value={customerPassword}
+                    onChange={e => setCustomerPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    leftIcon={<Lock className="w-4 h-4 text-semantic-text-tertiary" />}
+                    required
+                  />
+
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    className="w-full mt-2"
+                    size="lg"
+                    loading={customerLoading}
+                  >
+                    {t('loginPage.customerPasswordBtn', 'Sign In as Customer')}
+                  </Button>
+                </form>
+              )}
             </div>
           )}
 
-          <form onSubmit={handleGooglePhoneSubmit} className="space-y-4">
-            <Input
-              label={t('auth.phoneLabel', 'Mobile Number')}
-              value={googlePhone}
-              onChange={e => setGooglePhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-              placeholder="9876543210"
-              leftIcon={<span className="text-sm font-semibold text-semantic-text-secondary">+91</span>}
-              required
-              autoFocus
-            />
+          {/* ================= 2. WORKER LOGIN FORM ================= */}
+          {loginRole === 'worker' && (
+            <div>
+              {/* Toggle: OTP vs Password */}
+              <div className="flex bg-surface-200/60 p-1 rounded-lg mb-4 border border-semantic-border-light/60 text-xs font-medium">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setWorkerAuthMode('otp')
+                    setWorkerError('')
+                  }}
+                  className={`flex-1 py-1.5 rounded-md transition-all ${
+                    workerAuthMode === 'otp'
+                      ? 'bg-surface-100 text-emerald-400 font-semibold shadow-sm'
+                      : 'text-semantic-text-tertiary hover:text-semantic-text-primary'
+                  }`}
+                >
+                  {t('loginPage.modeOtp', 'Mobile Number (OTP)')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setWorkerAuthMode('password')
+                    setWorkerError('')
+                  }}
+                  className={`flex-1 py-1.5 rounded-md transition-all ${
+                    workerAuthMode === 'password'
+                      ? 'bg-surface-100 text-emerald-400 font-semibold shadow-sm'
+                      : 'text-semantic-text-tertiary hover:text-semantic-text-primary'
+                  }`}
+                >
+                  {t('loginPage.modePassword', 'Phone / Email & Password')}
+                </button>
+              </div>
 
-            <Button
-              type="submit"
-              variant="primary"
-              className="w-full"
-              size="lg"
-              loading={googlePhoneLoading}
-            >
-              {t('auth.verifyViaOtp', 'Verify via OTP')}
-            </Button>
-          </form>
-        </Card>
-      </div>
-    )
-  }
-
-  // CASE 2: Already Logged In With Verified Phone (and not an unverified admin session)
-  if (user && user.phone && user.role !== 'admin') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-semantic-bg-primary">
-        <div className="text-center p-6">
-          <CheckCircle className="w-16 h-16 mx-auto text-emerald-400 mb-4 animate-bounce" />
-          <h2 className="text-2xl font-bold text-semantic-text-primary">
-            Welcome back, {user.name}!
-          </h2>
-          <p className="mt-2 text-semantic-text-secondary mb-6">
-            Signed in with verified mobile: <span className="text-brand-400 font-semibold">{user.phone}</span>
-          </p>
-          <Button variant="primary" onClick={() => navigate(user.role === 'worker' ? '/worker/dashboard' : '/')}>
-            Go to {user.role === 'worker' ? 'Worker Dashboard' : 'Home'}
-          </Button>
-        </div>
-      </div>
-    )
-  }
-
-  // CASE 3: Main Authentication Card
-  return (
-    <div className="min-h-screen bg-semantic-bg-primary flex items-center justify-center py-12 px-4">
-      <Card className="w-full max-w-md p-8 bg-surface-100 border border-semantic-border-light shadow-2xl">
-        {/* Auth Mode Segmented Control Tabs */}
-        <div className="flex rounded-xl bg-surface-200/80 p-1 mb-6 border border-semantic-border-light">
-          <button
-            type="button"
-            onClick={() => {
-              setAuthMode('otp')
-              setError('')
-              setAdminError('')
-              setAdmin2faStep('credentials')
-            }}
-            className={`flex-1 py-2 px-3 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-              authMode === 'otp'
-                ? 'bg-brand-500 text-white shadow-md'
-                : 'text-semantic-text-secondary hover:text-semantic-text-primary'
-            }`}
-          >
-            <Phone className="w-3.5 h-3.5" />
-            <span>Customer & Worker</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setAuthMode('admin')
-              setError('')
-              setAdminError('')
-            }}
-            className={`flex-1 py-2 px-3 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-              authMode === 'admin'
-                ? 'bg-amber-600 text-white shadow-md'
-                : 'text-semantic-text-secondary hover:text-semantic-text-primary'
-            }`}
-          >
-            <Lock className="w-3.5 h-3.5" />
-            <span>Admin / Staff Login</span>
-          </button>
-        </div>
-
-        {/* ================= ADMIN SIGN IN FLOW (CREDENTIALS + 2FA) ================= */}
-        {authMode === 'admin' ? (
-          <div>
-            {admin2faStep === 'credentials' && (
-              <div>
-                <div className="text-center mb-6">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-center shadow-inner">
-                    <ShieldCheck className="w-8 h-8 text-amber-400" />
-                  </div>
-                  <span className="inline-block px-2.5 py-0.5 mb-2 text-[10px] font-bold uppercase tracking-wider text-amber-300 bg-amber-500/15 border border-amber-500/30 rounded-full">
-                    2FA Secured Console
-                  </span>
-                  <h1 className="text-2xl font-bold text-semantic-text-primary">
-                    Administrator Sign In
-                  </h1>
-                  <p className="mt-1.5 text-sm text-semantic-text-secondary">
-                    Step 1: Enter your registered credentials. Mobile OTP 2FA will follow automatically.
-                  </p>
+              {workerError && (
+                <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2 text-red-400 text-xs">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{workerError}</span>
                 </div>
+              )}
 
-                {adminError && (
-                  <div className="mb-6 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2 text-red-400 text-sm">
-                    <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                    <span>{adminError}</span>
-                  </div>
-                )}
-
-                <form onSubmit={handleAdminLogin} className="space-y-4">
+              {workerAuthMode === 'otp' ? (
+                <form onSubmit={handleWorkerOtpLogin} className="space-y-4">
                   <Input
-                    label="Admin Email Address"
-                    type="email"
-                    value={adminEmail}
-                    onChange={e => setAdminEmail(e.target.value)}
-                    placeholder="admin@muzaffarnagarkaamgar.com"
-                    leftIcon={<Mail className="w-5 h-5 text-semantic-text-tertiary" />}
+                    label={t('loginPage.phoneLabel', 'Worker Mobile Number (10 digits) *')}
+                    value={workerPhone}
+                    onChange={e => setWorkerPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    placeholder="9876543210"
+                    leftIcon={<span className="text-sm font-semibold text-semantic-text-secondary">+91</span>}
+                    required
+                    autoFocus
+                  />
+
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    className="w-full mt-2 bg-emerald-600 hover:bg-emerald-500 text-white border-none shadow-lg shadow-emerald-600/20"
+                    size="lg"
+                    loading={workerLoading}
+                  >
+                    {t('loginPage.workerOtpBtn', 'Verify via OTP & Access Worker Dashboard')}
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={handleWorkerPasswordLogin} className="space-y-4">
+                  <Input
+                    label={t('loginPage.workerIdentifierLabel', 'Mobile Number or Registered Email *')}
+                    value={workerIdentifier}
+                    onChange={e => setWorkerIdentifier(e.target.value)}
+                    placeholder="9876543210 or worker@gmail.com"
+                    leftIcon={<Truck className="w-4 h-4 text-semantic-text-tertiary" />}
                     required
                     autoFocus
                   />
 
                   <Input
-                    label="Password"
+                    label={t('loginPage.passwordLabel', 'Password *')}
                     type="password"
-                    value={adminPassword}
-                    onChange={e => setAdminPassword(e.target.value)}
+                    value={workerPassword}
+                    onChange={e => setWorkerPassword(e.target.value)}
                     placeholder="••••••••••••"
-                    leftIcon={<Lock className="w-5 h-5 text-semantic-text-tertiary" />}
+                    leftIcon={<Lock className="w-4 h-4 text-semantic-text-tertiary" />}
                     required
                   />
 
                   <Button
                     type="submit"
                     variant="primary"
-                    className="w-full mt-3 bg-amber-600 hover:bg-amber-500 text-white font-medium border-none shadow-lg shadow-amber-600/20"
+                    className="w-full mt-2 bg-emerald-600 hover:bg-emerald-500 text-white border-none shadow-lg shadow-emerald-600/20"
                     size="lg"
-                    loading={adminLoading}
+                    loading={workerLoading}
                   >
-                    Authenticate & Launch 2FA OTP
+                    {t('loginPage.workerPasswordBtn', 'Sign In to Worker Dashboard')}
                   </Button>
                 </form>
+              )}
 
-                <div className="mt-6 pt-4 border-t border-semantic-border-light text-center">
-                  <button
-                    type="button"
-                    onClick={() => setAuthMode('otp')}
-                    className="text-xs text-semantic-text-secondary hover:text-brand-300 transition-colors"
-                  >
-                    ← Back to Customer & Worker Sign In
-                  </button>
-                </div>
+              <div className="mt-4 pt-3 border-t border-semantic-border-light/60 text-center">
+                <p className="text-xs text-semantic-text-tertiary mb-1">
+                  {t('loginPage.newWorkerPrompt', 'New Kaamgar? Register as a verified artisan')}
+                </p>
+                <Link
+                  to="/register?role=worker"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-400 hover:text-emerald-300"
+                >
+                  <span>{t('loginPage.newWorkerLink', 'Register as Worker to get jobs')}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
               </div>
-            )}
+            </div>
+          )}
 
-            {admin2faStep === 'otp_challenge' && (
-              <div>
-                <div className="text-center mb-6">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-center shadow-inner animate-pulse">
-                    <Shield className="w-8 h-8 text-amber-400" />
+          {/* ================= 3. ADMIN LOGIN FORM & 2FA ================= */}
+          {loginRole === 'admin' && (
+            <div>
+              {admin2faStep === 'credentials' && (
+                <div>
+                  <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl mb-4 flex items-start gap-2.5">
+                    <Shield className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                    <div className="text-xs text-amber-200">
+                      <strong className="block font-semibold text-amber-300 mb-0.5">
+                        {t('loginPage.adminConsoleBadge', 'High Security Console')}
+                      </strong>
+                      {t('loginPage.adminConsoleNotice', 'Sign in with your official administrator credentials. A mandatory 2FA OTP will be sent to your mobile.')}
+                    </div>
                   </div>
-                  <span className="inline-block px-2.5 py-0.5 mb-2 text-[10px] font-bold uppercase tracking-wider text-amber-300 bg-amber-500/20 border border-amber-500/30 rounded-full">
-                    Step 2 of 2: Mobile 2FA Verification
+
+                  {adminError && (
+                    <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2 text-red-400 text-xs">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                      <span>{adminError}</span>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleAdminLogin} className="space-y-4">
+                    <Input
+                      label={t('loginPage.adminEmailLabel', 'Administrator Email *')}
+                      type="email"
+                      value={adminEmail}
+                      onChange={e => setAdminEmail(e.target.value)}
+                      placeholder="admin@muzaffarnagar-kaamgar.in"
+                      leftIcon={<Mail className="w-5 h-5 text-semantic-text-tertiary" />}
+                      required
+                      autoFocus
+                    />
+
+                    <Input
+                      label={t('loginPage.passwordLabel', 'Password *')}
+                      type="password"
+                      value={adminPassword}
+                      onChange={e => setAdminPassword(e.target.value)}
+                      placeholder="••••••••••••"
+                      leftIcon={<Lock className="w-5 h-5 text-semantic-text-tertiary" />}
+                      required
+                    />
+
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      className="w-full mt-2 bg-amber-600 hover:bg-amber-500 text-white font-medium border-none shadow-lg shadow-amber-600/20"
+                      size="lg"
+                      loading={adminLoading}
+                    >
+                      {t('loginPage.adminSubmitBtn', 'Authenticate & Launch 2FA OTP')}
+                    </Button>
+                  </form>
+                </div>
+              )}
+
+              {admin2faStep === 'otp_challenge' && (
+                <div className="text-center">
+                  <div className="w-14 h-14 mx-auto mb-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-center animate-pulse">
+                    <Shield className="w-7 h-7 text-amber-400" />
+                  </div>
+                  <span className="inline-block px-2 py-0.5 mb-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-300 bg-amber-500/20 border border-amber-500/30 rounded-full">
+                    {t('loginPage.twoFaBadge', '2FA Verification')}
                   </span>
-                  <h1 className="text-2xl font-bold text-semantic-text-primary">
-                    Verify Your Identity
-                  </h1>
-                  <p className="mt-1.5 text-sm text-semantic-text-secondary">
-                    We've triggered an OTP via MSG91 to your administrator mobile:
+                  <h2 className="text-xl font-bold text-semantic-text-primary">
+                    {t('loginPage.twoFaTitle', 'Verify Your Mobile')}
+                  </h2>
+                  <p className="mt-1 text-xs text-semantic-text-secondary">
+                    {t('loginPage.twoFaSubtitle', "We've triggered an OTP via MSG91 to:")}
                   </p>
-                  <p className="mt-2 text-lg font-bold text-amber-400 tracking-wider">
+                  <p className="mt-1 text-base font-bold text-amber-400 tracking-wider">
                     +91 ••••••{adminPhone.slice(-4)}
                   </p>
-                </div>
 
-                {adminError && (
-                  <div className="mb-6 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2 text-red-400 text-sm">
-                    <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                    <span>{adminError}</span>
+                  {adminError && (
+                    <div className="my-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2 text-red-400 text-xs text-left">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                      <span>{adminError}</span>
+                    </div>
+                  )}
+
+                  <div className="space-y-3 mt-5">
+                    <Button
+                      type="button"
+                      variant="primary"
+                      className="w-full bg-amber-600 hover:bg-amber-500 text-white font-medium border-none shadow-lg shadow-amber-600/20 py-2.5"
+                      size="lg"
+                      loading={adminLoading}
+                      onClick={() => launchAdmin2faOtp(adminPhone)}
+                    >
+                      <ShieldCheck className="w-4 h-4 mr-2" />
+                      {t('loginPage.openOtpWidgetBtn', 'Open OTP Verification Widget')}
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full text-xs text-semantic-text-secondary hover:text-red-400 border-semantic-border-light"
+                      onClick={async () => {
+                        await logout()
+                        setAdmin2faStep('credentials')
+                        setAdminPassword('')
+                        setAdminError('')
+                      }}
+                    >
+                      {t('loginPage.cancelSignOut', 'Cancel & Sign Out')}
+                    </Button>
                   </div>
-                )}
-
-                <div className="space-y-3">
-                  <Button
-                    type="button"
-                    variant="primary"
-                    className="w-full bg-amber-600 hover:bg-amber-500 text-white font-medium border-none shadow-lg shadow-amber-600/20 py-3"
-                    size="lg"
-                    loading={adminLoading}
-                    onClick={() => launchAdmin2faOtp(adminPhone)}
-                  >
-                    <ShieldCheck className="w-5 h-5 mr-2" />
-                    Open OTP Verification Widget
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full text-xs text-semantic-text-secondary hover:text-red-400 border-semantic-border-light"
-                    onClick={async () => {
-                      await logout()
-                      setAdmin2faStep('credentials')
-                      setAdminPassword('')
-                      setAdminError('')
-                    }}
-                  >
-                    Cancel & Sign Out
-                  </Button>
                 </div>
-              </div>
-            )}
+              )}
 
-            {admin2faStep === 'phone_setup' && (
-              <div>
-                <div className="text-center mb-6">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-center shadow-inner">
-                    <Phone className="w-8 h-8 text-amber-400" />
-                  </div>
-                  <span className="inline-block px-2.5 py-0.5 mb-2 text-[10px] font-bold uppercase tracking-wider text-amber-300 bg-amber-500/20 border border-amber-500/30 rounded-full">
-                    Mandatory 2FA Setup
-                  </span>
-                  <h1 className="text-2xl font-bold text-semantic-text-primary">
-                    Link Administrator Mobile
-                  </h1>
-                  <p className="mt-1.5 text-sm text-semantic-text-secondary">
-                    Your administrator account requires a verified mobile number to receive mandatory 2FA OTP codes on every sign in.
-                  </p>
-                </div>
-
-                {adminError && (
-                  <div className="mb-6 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2 text-red-400 text-sm">
-                    <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                    <span>{adminError}</span>
-                  </div>
-                )}
-
-                <form onSubmit={handleAdminPhoneSetupSubmit} className="space-y-4">
-                  <Input
-                    label="Administrator Mobile Number (10 digits)"
-                    value={adminSetupPhone}
-                    onChange={e => setAdminSetupPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                    placeholder="9876543210"
-                    leftIcon={<span className="text-sm font-semibold text-semantic-text-secondary">+91</span>}
-                    required
-                    autoFocus
-                  />
-
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    className="w-full mt-2 bg-amber-600 hover:bg-amber-500 text-white font-medium border-none shadow-lg shadow-amber-600/20"
-                    size="lg"
-                    loading={adminLoading}
-                  >
-                    Verify via OTP & Link Mobile
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full text-xs text-semantic-text-secondary hover:text-red-400 border-semantic-border-light"
-                    onClick={async () => {
-                      await logout()
-                      setAdmin2faStep('credentials')
-                      setAdminPassword('')
-                      setAdminError('')
-                    }}
-                  >
-                    Cancel & Sign Out
-                  </Button>
-                </form>
-              </div>
-            )}
-          </div>
-        ) : (
-          /* ================= CUSTOMER & WORKER DUAL LOGIN (MOBILE OTP OR EMAIL) ================= */
-          <div>
-            <div className="text-center mb-5">
-              <div className="w-16 h-16 mx-auto mb-3 bg-brand-500/10 border border-brand-500/20 rounded-2xl flex items-center justify-center">
-                <ShieldCheck className="w-8 h-8 text-brand-400" />
-              </div>
-              <h1 className="text-2xl font-bold text-semantic-text-primary">
-                {t('auth.loginTitle', 'Customer & Worker Login')}
-              </h1>
-              <p className="mt-1 text-xs text-semantic-text-secondary">
-                Sign in with your mobile number via OTP or registered email & password.
-              </p>
-            </div>
-
-            {/* Sub-toggle: Mobile OTP vs Email */}
-            <div className="flex bg-surface-200/90 p-1 rounded-xl mb-5 border border-semantic-border-light text-xs font-semibold">
-              <button
-                type="button"
-                onClick={() => {
-                  setCustomerAuthMode('otp')
-                  setError('')
-                }}
-                className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                  customerAuthMode === 'otp'
-                    ? 'bg-brand-500 text-white shadow-sm'
-                    : 'text-semantic-text-secondary hover:text-semantic-text-primary'
-                }`}
-              >
-                <Phone className="w-3.5 h-3.5" />
-                <span>Mobile Number (OTP)</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setCustomerAuthMode('email')
-                  setError('')
-                }}
-                className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                  customerAuthMode === 'email'
-                    ? 'bg-brand-500 text-white shadow-sm'
-                    : 'text-semantic-text-secondary hover:text-semantic-text-primary'
-                }`}
-              >
-                <Mail className="w-3.5 h-3.5" />
-                <span>Email & Password</span>
-              </button>
-            </div>
-
-            {error && (
-              <div className="mb-5 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2 text-red-400 text-xs">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
-
-            {customerAuthMode === 'email' ? (
-              /* Email & Password Form */
-              <form onSubmit={handleCustomerEmailLogin} className="space-y-4">
-                <Input
-                  label="Registered Email Address"
-                  type="email"
-                  value={customerEmail}
-                  onChange={e => setCustomerEmail(e.target.value)}
-                  placeholder="yourname@gmail.com"
-                  leftIcon={<Mail className="w-5 h-5 text-semantic-text-tertiary" />}
-                  required
-                  autoFocus
-                />
-
-                <Input
-                  label="Password"
-                  type="password"
-                  value={customerPassword}
-                  onChange={e => setCustomerPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  leftIcon={<Lock className="w-5 h-5 text-semantic-text-tertiary" />}
-                  required
-                />
-
-                <Button
-                  type="submit"
-                  variant="primary"
-                  className="w-full mt-2"
-                  size="lg"
-                  loading={customerEmailLoading}
-                >
-                  Sign In with Email
-                </Button>
-              </form>
-            ) : (
-              /* Mobile Number OTP Form */
-              <form onSubmit={handleVerifyPhoneAndLogin} className="space-y-4">
-                <Input
-                  label={t('auth.nameLabel', 'Full Name')}
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  placeholder="Your Full Name"
-                  required
-                  autoFocus
-                />
-
+              {admin2faStep === 'phone_setup' && (
                 <div>
-                  <Input
-                    label={t('auth.phoneLabel', 'Mobile Number (10 digits)')}
-                    value={phone}
-                    onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                    placeholder="9876543210"
-                    leftIcon={<span className="text-sm font-semibold text-semantic-text-secondary">+91</span>}
-                    required
-                  />
-                  <p className="mt-1 text-xs text-semantic-text-tertiary">
-                    We will send a 6-digit verification code to this number.
-                  </p>
+                  <div className="text-center mb-4">
+                    <div className="w-12 h-12 mx-auto mb-2 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-center">
+                      <Phone className="w-6 h-6 text-amber-400" />
+                    </div>
+                    <h2 className="text-lg font-bold text-semantic-text-primary">
+                      {t('loginPage.linkMobileTitle', 'Link Mobile for 2FA')}
+                    </h2>
+                    <p className="mt-1 text-xs text-semantic-text-secondary">
+                      {t('loginPage.linkMobileSubtitle', 'Your administrator account requires a verified mobile number for mandatory SMS OTP verification.')}
+                    </p>
+                  </div>
+
+                  {adminError && (
+                    <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2 text-red-400 text-xs">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                      <span>{adminError}</span>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleAdminPhoneSetupSubmit} className="space-y-4">
+                    <Input
+                      label={t('loginPage.phoneLabel', 'Mobile Number (10 digits) *')}
+                      value={adminSetupPhone}
+                      onChange={e => setAdminSetupPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                      placeholder="9876543210"
+                      leftIcon={<span className="text-sm font-semibold text-semantic-text-secondary">+91</span>}
+                      required
+                      autoFocus
+                    />
+
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      className="w-full mt-2 bg-amber-600 hover:bg-amber-500 text-white font-medium border-none shadow-lg shadow-amber-600/20"
+                      size="lg"
+                      loading={adminLoading}
+                    >
+                      {t('loginPage.verifyLinkMobileBtn', 'Verify via OTP & Link Mobile')}
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full text-xs text-semantic-text-secondary hover:text-red-400 border-semantic-border-light"
+                      onClick={async () => {
+                        await logout()
+                        setAdmin2faStep('credentials')
+                        setAdminPassword('')
+                        setAdminError('')
+                      }}
+                    >
+                      {t('loginPage.cancelSignOut', 'Cancel & Sign Out')}
+                    </Button>
+                  </form>
                 </div>
-
-                <div>
-                  <Input
-                    label={t('auth.emailOptional', 'Email Address (Optional)')}
-                    type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="name@gmail.com"
-                    leftIcon={<Mail className="w-5 h-5 text-semantic-text-tertiary" />}
-                  />
-                  <p className="mt-1 text-xs text-semantic-text-tertiary">
-                    Optional: For receipts and booking updates.
-                  </p>
-                </div>
-
-                <Button
-                  type="submit"
-                  variant="primary"
-                  className="w-full mt-2"
-                  size="lg"
-                  loading={loading}
-                >
-                  {t('auth.verifyViaOtp', 'Verify Mobile via OTP & Sign In')}
-                </Button>
-              </form>
-            )}
-
-            {/* Optional Google Auto-fill helper */}
-            <div className="mt-4 pt-3 border-t border-semantic-border-light/60 text-center">
-              <button
-                type="button"
-                onClick={handleAutoFillFromGoogle}
-                className="inline-flex items-center gap-2 text-xs text-semantic-text-tertiary hover:text-brand-300 transition-colors"
-              >
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
-                  <path
-                    fill="#4285F4"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                  />
-                </svg>
-                <span>Optional: Auto-fill details from Google account</span>
-              </button>
+              )}
             </div>
+          )}
 
-            {/* Worker Registration Link */}
-            <div className="mt-5 pt-4 border-t border-semantic-border-light text-center">
-              <p className="text-sm text-semantic-text-secondary mb-1.5">Are you a skilled worker or tradesperson?</p>
+          {/* Footer Callout to Register */}
+          <div className="mt-6 pt-5 border-t border-semantic-border-light text-center">
+            <p className="text-xs text-semantic-text-secondary">
+              {t('loginPage.newToKaamgar', 'New to Kaamgar?')}{' '}
               <Link
-                to="/register/worker"
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-400 hover:text-brand-300 transition-colors"
+                to={`/register?role=${loginRole === 'worker' ? 'worker' : 'customer'}`}
+                className="font-semibold text-brand-400 hover:text-brand-300 transition-colors"
               >
-                <span>Register as a Kaamgar Worker</span>
-                <ArrowRight className="w-4 h-4" />
+                {t('loginPage.signUpLink', 'Create an account (Sign Up)')}
               </Link>
-            </div>
-
-            {/* Direct Admin switch helper */}
-            <div className="mt-3 text-center">
-              <button
-                type="button"
-                onClick={() => {
-                  setAuthMode('admin')
-                  setAdmin2faStep('credentials')
-                }}
-                className="text-xs text-semantic-text-tertiary hover:text-amber-400 transition-colors inline-flex items-center gap-1"
-              >
-                <Lock className="w-3 h-3" />
-                <span>Platform Administrator? Sign in with Email & 2FA</span>
-              </button>
-            </div>
+            </p>
           </div>
-        )}
-      </Card>
+        </Card>
+      </div>
     </div>
   )
 }

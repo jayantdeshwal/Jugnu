@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { Language } from '@kaamgar/shared'
+import i18n from '@/i18n'
 
 interface LanguageContextType {
   language: Language
@@ -14,7 +15,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('kaamgar-language') as Language
       if (saved && (saved === 'en' || saved === 'hi')) return saved
-      return 'hi'
+      return (i18n.language === 'en' ? 'en' : 'hi') as Language
     }
     return 'hi'
   })
@@ -23,6 +24,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     setLanguageState(lang)
     localStorage.setItem('kaamgar-language', lang)
     document.documentElement.lang = lang
+    void i18n.changeLanguage(lang)
   }
   
   const toggleLanguage = () => {
@@ -31,6 +33,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   
   useEffect(() => {
     document.documentElement.lang = language
+    if (i18n.language !== language) {
+      void i18n.changeLanguage(language)
+    }
   }, [language])
   
   return (

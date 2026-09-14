@@ -36,7 +36,7 @@ const iconComponents = {
 
 import { Zap, Wrench, Hammer, Snowflake, Brush } from 'lucide-react'
 
-function FilterPanel({ filtersOpen, setFiltersOpen, selectedCategory, setSelectedCategory, selectedArea, setSelectedArea, sortBy, setSortBy, t, categories, serviceAreas }: any) {
+function FilterPanel({ filtersOpen, setFiltersOpen, selectedCategory, setSelectedCategory, selectedArea, setSelectedArea, sortBy, setSortBy, t, categories, serviceAreas, i18n }: any) {
   if (!filtersOpen) return null
 
   return (
@@ -56,7 +56,7 @@ function FilterPanel({ filtersOpen, setFiltersOpen, selectedCategory, setSelecte
             </Chip>
             {categories.map((cat: any) => (
               <Chip key={cat.id} selected={selectedCategory === cat.id} onClick={() => setSelectedCategory(selectedCategory === cat.id ? '' : cat.id)} variant="outline">
-                {getCategoryName(cat, t('common.language') === 'हिंदी' ? 'hi' : 'en')}
+                {getCategoryName(cat, i18n.language === 'hi' ? 'hi' : 'en')}
               </Chip>
             ))}
           </div>
@@ -66,7 +66,7 @@ function FilterPanel({ filtersOpen, setFiltersOpen, selectedCategory, setSelecte
           <label className="label">{t('common.area')}</label>
           <div className="flex flex-wrap gap-2">
             <Chip selected={!selectedArea} onClick={() => setSelectedArea('')} variant="outline">
-              All Areas
+              {t('common.allAreas', 'All Areas')}
             </Chip>
             {serviceAreas.map((area: any) => (
               <Chip key={area.id} selected={selectedArea === area.pincode} onClick={() => setSelectedArea(selectedArea === area.pincode ? '' : area.pincode)} variant="outline">
@@ -95,7 +95,7 @@ function FilterPanel({ filtersOpen, setFiltersOpen, selectedCategory, setSelecte
   )
 }
 
-function ResultsHeader({ filteredWorkers, selectedCategory, t, getCategoryName, CATEGORIES }: any) {
+function ResultsHeader({ filteredWorkers, selectedCategory, t, getCategoryName, CATEGORIES, i18n }: any) {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="mb-6">
       <div className="flex items-center justify-between mb-6">
@@ -103,7 +103,7 @@ function ResultsHeader({ filteredWorkers, selectedCategory, t, getCategoryName, 
           <h1 className="text-2xl font-bold text-semantic-text-primary">{t('nav.search')}</h1>
           <p className="text-semantic-text-secondary mt-1">
             {filteredWorkers.length} {t('common.workersFound') || 'workers found'}
-            {selectedCategory && ` - ${getCategoryName(CATEGORIES.find((c: typeof CATEGORIES[0]) => c.id === selectedCategory)!, 'en')}`}
+            {selectedCategory && ` - ${getCategoryName(CATEGORIES.find((c: typeof CATEGORIES[0]) => c.id === selectedCategory)!, i18n.language === 'hi' ? 'hi' : 'en')}`}
           </p>
         </div>
       </div>
@@ -115,14 +115,14 @@ function EmptyState({ t, clearFilters }: any) {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-16">
       <Truck className="w-16 h-16 mx-auto text-semantic-text-tertiary mb-4" />
-      <h3 className="text-lg font-medium text-semantic-text-primary mb-2">No workers found</h3>
-      <p className="text-semantic-text-secondary mb-6">Try adjusting your filters or search terms</p>
-      <Button variant="outline" onClick={clearFilters}>{t('common.clear')} Filters</Button>
+      <h3 className="text-lg font-medium text-semantic-text-primary mb-2">{t('common.noWorkersFound', 'No workers found')}</h3>
+      <p className="text-semantic-text-secondary mb-6">{t('common.adjustFilters', 'Try adjusting your filters or search terms')}</p>
+      <Button variant="outline" onClick={clearFilters}>{t('common.clearFilters', 'Clear Filters')}</Button>
     </motion.div>
   )
 }
 
-function WorkerGrid({ filteredWorkers, t, iconComponents, CATEGORIES, getCategoryName }: any) {
+function WorkerGrid({ filteredWorkers, t, iconComponents, CATEGORIES, getCategoryName, i18n }: any) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ staggerChildren: 0.08 }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {filteredWorkers.map((worker: any, index: number) => {
@@ -138,7 +138,7 @@ function WorkerGrid({ filteredWorkers, t, iconComponents, CATEGORIES, getCategor
                       <h3 className="font-semibold text-semantic-text-primary truncate">{worker.name}</h3>
                       {worker.verified && (
                         <Badge variant="brand" dot className="ml-2">
-                          Verified
+                          {t('workerCard.verified', 'Verified')}
                         </Badge>
                       )}
                     </div>
@@ -148,7 +148,7 @@ function WorkerGrid({ filteredWorkers, t, iconComponents, CATEGORIES, getCategor
                           iconComponents[worker.category as keyof typeof iconComponents] || Truck,
                           { className: 'w-4 h-4' }
                         )}
-                        {cat ? getCategoryName(cat, 'en') : worker.category}
+                        {cat ? getCategoryName(cat, i18n.language === 'hi' ? 'hi' : 'en') : worker.category}
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock className="w-4 h-4" />
@@ -157,7 +157,7 @@ function WorkerGrid({ filteredWorkers, t, iconComponents, CATEGORIES, getCategor
                     </div>
                     <div className="mt-2 flex items-center gap-2">
                       <RatingStars rating={worker.rating} size="sm" showValue />
-                      <span className="text-sm text-semantic-text-tertiary">({worker.reviews} Reviews)</span>
+                      <span className="text-sm text-semantic-text-tertiary">({worker.reviews} {t('common.reviews', 'Reviews')})</span>
                     </div>
                     <div className="mt-2 flex items-center gap-1 text-sm text-semantic-text-tertiary">
                       <MapPin className="w-3.5 h-3.5" />
@@ -171,20 +171,20 @@ function WorkerGrid({ filteredWorkers, t, iconComponents, CATEGORIES, getCategor
                     {worker.available ? (
                       <span className="flex items-center gap-1 text-emerald-400 font-medium">
                         <CheckCircle className="w-4 h-4" />
-                        Available
+                        {t('workerCard.available', 'Available')}
                       </span>
                     ) : (
                       <span className="flex items-center gap-1 text-amber-400 font-medium">
                         <Power className="w-4 h-4" />
-                        Unavailable
+                        {t('workerCard.unavailable', 'Unavailable')}
                       </span>
                     )}
                   </span>
                   {worker.available ? (
-                    <Button size="sm" variant="primary">Book Now <ArrowRight className="w-4 h-4 ml-1" /></Button>
+                    <Button size="sm" variant="primary">{t('workerCard.bookNow', 'Book Now')} <ArrowRight className="w-4 h-4 ml-1" /></Button>
                   ) : (
                     <Button size="sm" variant="secondary" disabled className="opacity-60 cursor-not-allowed">
-                      Unavailable
+                      {t('workerProfile.unavailable', 'Unavailable')}
                     </Button>
                   )}
                 </div>
@@ -197,28 +197,26 @@ function WorkerGrid({ filteredWorkers, t, iconComponents, CATEGORIES, getCategor
   )
 }
 
-function SearchResults({ filteredWorkers, selectedCategory, isLoadingWorkers, t, getCategoryName, CATEGORIES, iconComponents, EmptyState, WorkerGrid }: any) {
-  const cat = CATEGORIES.find((c: typeof CATEGORIES[0]) => c.id === selectedCategory)
-
+function SearchResults({ filteredWorkers, selectedCategory, isLoadingWorkers, t, getCategoryName, CATEGORIES, iconComponents, EmptyState, WorkerGrid, i18n }: any) {
   return (
     <>
-      <ResultsHeader filteredWorkers={filteredWorkers} selectedCategory={selectedCategory} t={t} getCategoryName={getCategoryName} CATEGORIES={CATEGORIES} />
+      <ResultsHeader filteredWorkers={filteredWorkers} selectedCategory={selectedCategory} t={t} getCategoryName={getCategoryName} CATEGORIES={CATEGORIES} i18n={i18n} />
       {isLoadingWorkers ? (
         <div className="py-16 text-center text-semantic-text-tertiary">
           <div className="w-8 h-8 mx-auto mb-3 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm">Loading verified workers...</p>
+          <p className="text-sm">{t('common.loadingWorkers', 'Loading verified workers...')}</p>
         </div>
       ) : filteredWorkers.length === 0 ? (
         <EmptyState t={t} clearFilters={() => {}} />
       ) : (
-        <WorkerGrid filteredWorkers={filteredWorkers} t={t} iconComponents={iconComponents} CATEGORIES={CATEGORIES} getCategoryName={getCategoryName} />
+        <WorkerGrid filteredWorkers={filteredWorkers} t={t} iconComponents={iconComponents} CATEGORIES={CATEGORIES} getCategoryName={getCategoryName} i18n={i18n} />
       )}
     </>
   )
 }
 
 export default function Search() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { categories, serviceAreas } = usePublicCatalog()
   const [searchParams, setSearchParams] = useSearchParams()
   const [filtersOpen, setFiltersOpen] = useState(false)
@@ -311,12 +309,12 @@ export default function Search() {
         </div>
 
         <AnimatePresence>
-          <FilterPanel filtersOpen={filtersOpen} setFiltersOpen={setFiltersOpen} selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} selectedArea={selectedArea} setSelectedArea={setSelectedArea} sortBy={sortBy} setSortBy={setSortBy} t={t} categories={categories} serviceAreas={serviceAreas} />
+          <FilterPanel filtersOpen={filtersOpen} setFiltersOpen={setFiltersOpen} selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} selectedArea={selectedArea} setSelectedArea={setSelectedArea} sortBy={sortBy} setSortBy={setSortBy} t={t} categories={categories} serviceAreas={serviceAreas} i18n={i18n} />
         </AnimatePresence>
       </motion.div>
 
       <div className="container-app py-8">
-        <SearchResults filteredWorkers={filteredWorkers} selectedCategory={selectedCategory} isLoadingWorkers={isLoadingWorkers} t={t} getCategoryName={getCategoryName} CATEGORIES={categories} iconComponents={iconComponents} EmptyState={EmptyState} WorkerGrid={WorkerGrid} />
+        <SearchResults filteredWorkers={filteredWorkers} selectedCategory={selectedCategory} isLoadingWorkers={isLoadingWorkers} t={t} getCategoryName={getCategoryName} CATEGORIES={categories} iconComponents={iconComponents} EmptyState={EmptyState} WorkerGrid={WorkerGrid} i18n={i18n} />
       </div>
     </div>
   )

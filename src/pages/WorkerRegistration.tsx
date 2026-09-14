@@ -26,13 +26,13 @@ import { notifyAdminsOfWorkerRegistration } from '@/services/admin'
 import { openOtpWidget } from '@/services/otp'
 
 const STEPS = [
-  { key: 'personal', label: 'Personal Info', icon: User },
-  { key: 'work', label: 'Work Details', icon: Briefcase },
-  { key: 'documents', label: 'Documents', icon: IdCard },
+  { key: 'personal', labelKey: 'auth.workerRegistration.step1', fallback: 'Personal Info', icon: User },
+  { key: 'work', labelKey: 'auth.workerRegistration.step2', fallback: 'Work Details', icon: Briefcase },
+  { key: 'documents', labelKey: 'auth.workerRegistration.step3', fallback: 'Documents', icon: IdCard },
 ]
 
 export default function WorkerRegistration() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const { user, loginWithVerifiedPhone, signInWithGoogle } = useAuth()
   const [currentStep, setCurrentStep] = useState(0)
@@ -326,17 +326,17 @@ export default function WorkerRegistration() {
             {t('auth.workerRegistration.successDesc', 'Our team will verify your details and approve within 24 hours.')}
           </p>
           <div className="p-4 bg-surface-200/60 rounded-xl border border-semantic-border-light text-left text-xs text-semantic-text-secondary mb-6 space-y-1.5">
-            <p className="font-semibold text-semantic-text-primary">Submission Summary:</p>
-            <p>• Full Name: {formData.name}</p>
-            <p>• Mobile Number: +91{formData.phone} (Verified)</p>
-            <p>• Work Category: {formData.category}</p>
-            <p>• Experience: {formData.experience} years</p>
-            <p>• Service Areas: {formData.areas.join(', ')}</p>
-            <p>• ID Proof: Securely uploaded for verification</p>
-            {formData.avatar && <p>• Profile Photo: Uploaded</p>}
+            <p className="font-semibold text-semantic-text-primary">{t('auth.workerRegistration.submissionSummary', 'Submission Summary:')}</p>
+            <p>• {t('auth.workerRegistration.summaryName', 'Full Name')}: {formData.name}</p>
+            <p>• {t('auth.workerRegistration.summaryMobile', 'Mobile Number')}: +91{formData.phone} ({t('auth.phoneVerified', 'Verified')})</p>
+            <p>• {t('auth.workerRegistration.summaryCategory', 'Work Category')}: {formData.category}</p>
+            <p>• {t('auth.workerRegistration.summaryExperience', 'Experience')}: {formData.experience} {t('common.years', 'years')}</p>
+            <p>• {t('auth.workerRegistration.summaryAreas', 'Service Areas')}: {formData.areas.join(', ')}</p>
+            <p>• {t('auth.workerRegistration.summaryIdProof', 'ID Proof: Securely uploaded for verification')}</p>
+            {formData.avatar && <p>• {t('auth.workerRegistration.summaryPhoto', 'Profile Photo: Uploaded')}</p>}
           </div>
           <Button variant="primary" onClick={() => navigate('/worker/dashboard')} className="w-full">
-            Go to Worker Dashboard
+            {t('auth.workerRegistration.goToDashboard', 'Go to Worker Dashboard')}
           </Button>
         </Card>
       </div>
@@ -360,7 +360,7 @@ export default function WorkerRegistration() {
             {t('auth.workerRegistration.title', 'Worker Registration')}
           </h1>
           <p className="text-semantic-text-secondary mt-1">
-            Register as a verified artisan or service professional in Muzaffarnagar.
+            {t('auth.workerRegistration.subtitle', 'Register as a verified artisan or service professional in Muzaffarnagar.')}
           </p>
         </div>
 
@@ -394,7 +394,7 @@ export default function WorkerRegistration() {
                           : 'text-semantic-text-tertiary'
                       }`}
                     >
-                      {step.label}
+                      {t(step.labelKey, step.fallback)}
                     </span>
                   </div>
                   {index < STEPS.length - 1 && (
@@ -432,7 +432,7 @@ export default function WorkerRegistration() {
               <div className="space-y-5">
                 <div className="p-4 bg-brand-500/10 border border-brand-500/20 rounded-xl">
                   <p className="text-xs text-brand-300">
-                    Step 1 requires your <strong>Full Name</strong> and a verified <strong>Mobile Number</strong>. Mobile verification protects customers and ensures job notifications reach you.
+                    {t('auth.workerRegistration.step1Notice', 'Step 1 requires your Full Name and a verified Mobile Number. Mobile verification protects customers and ensures job notifications reach you.')}
                   </p>
                 </div>
 
@@ -440,7 +440,7 @@ export default function WorkerRegistration() {
                   label={t('auth.workerRegistration.fullName', 'Full Name')}
                   value={formData.name}
                   onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Enter your full name"
+                  placeholder={t('auth.workerRegistration.namePlaceholder', 'Enter your full name')}
                   error={errors.name}
                   required
                   autoFocus
@@ -463,22 +463,22 @@ export default function WorkerRegistration() {
                     required
                   />
                   <p className="mt-1 text-xs text-semantic-text-tertiary">
-                    Enter your 10-digit Indian mobile number
+                    {t('auth.workerRegistration.phoneHint', 'Enter your 10-digit Indian mobile number')}
                   </p>
                 </div>
 
                 {/* Optional Email Address */}
                 <div>
                   <Input
-                    label="Email / Gmail Address (Optional)"
+                    label={t('auth.workerRegistration.emailLabel', 'Email / Gmail Address (Optional)')}
                     type="email"
                     value={formData.email}
                     onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    placeholder="name@gmail.com"
+                    placeholder={t('auth.workerRegistration.emailPlaceholder', 'name@gmail.com')}
                     leftIcon={<Mail className="w-5 h-5 text-semantic-text-tertiary" />}
                   />
                   <p className="mt-1 text-xs text-semantic-text-tertiary">
-                    Optional: For registration confirmation, receipts, and admin notices.
+                    {t('auth.workerRegistration.emailHint', 'Optional: For registration confirmation, receipts, and admin notices.')}
                   </p>
                 </div>
 
@@ -488,7 +488,7 @@ export default function WorkerRegistration() {
                     <div className="flex items-center gap-2.5">
                       <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
                       <div>
-                        <p className="text-sm font-semibold">Mobile Number Verified</p>
+                        <p className="text-sm font-semibold">{t('auth.workerRegistration.phoneVerified', 'Mobile Number Verified')}</p>
                         <p className="text-xs text-emerald-300/80">+91{formData.phone}</p>
                       </div>
                     </div>
@@ -497,7 +497,7 @@ export default function WorkerRegistration() {
                       onClick={() => setPhoneVerified(false)}
                       className="text-xs text-emerald-300/70 hover:text-emerald-200 underline"
                     >
-                      Change Number
+                      {t('auth.workerRegistration.changeNumber', 'Change Number')}
                     </button>
                   </div>
                 ) : (
@@ -510,7 +510,7 @@ export default function WorkerRegistration() {
                       loading={verifyingOtp}
                     >
                       <ShieldCheck className="w-4 h-4 mr-2" />
-                      Verify Mobile Number with OTP
+                      {t('auth.workerRegistration.verifyPhoneBtn', 'Verify Mobile Number with OTP')}
                     </Button>
                   </div>
                 )}
@@ -538,7 +538,7 @@ export default function WorkerRegistration() {
                           }`}
                         >
                           <p className="font-medium text-sm text-semantic-text-primary capitalize">
-                            {getCategoryName(cat, 'en')}
+                            {getCategoryName(cat, i18n.language === 'hi' ? 'hi' : 'en')}
                           </p>
                         </div>
                       )
@@ -554,7 +554,7 @@ export default function WorkerRegistration() {
                   max="50"
                   value={formData.experience}
                   onChange={e => setFormData(prev => ({ ...prev, experience: e.target.value }))}
-                  placeholder="e.g. 5"
+                  placeholder={t('auth.workerRegistration.experiencePlaceholder', 'e.g. 5')}
                   error={errors.experience}
                   required
                 />
@@ -566,7 +566,7 @@ export default function WorkerRegistration() {
                   <textarea
                     value={formData.bio}
                     onChange={e => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-                    placeholder="Tell customers about your skills, specialties, and tools..."
+                    placeholder={t('auth.workerRegistration.bioPlaceholder', 'Tell customers about your skills, specialties, and tools...')}
                     rows={3}
                     className="w-full rounded-lg bg-surface-200 border border-semantic-border-light p-3 text-sm text-semantic-text-primary placeholder:text-semantic-text-tertiary focus:border-brand-500 focus:outline-none"
                   />
@@ -575,7 +575,7 @@ export default function WorkerRegistration() {
 
                 <div>
                   <label className="label text-semantic-text-secondary mb-2 block">
-                    {t('auth.workerRegistration.serviceAreas', 'Service Areas')} (Select at least one)
+                    {t('auth.workerRegistration.serviceAreas', 'Service Areas')} {t('auth.workerRegistration.selectAtLeastOne', '(Select at least one)')}
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {MUZAFFARNAGAR_PINCODES.map(pincode => (
@@ -609,10 +609,11 @@ export default function WorkerRegistration() {
                     <Info className="w-5 h-5 text-brand-400" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-brand-400 text-sm">Government ID Verification</h4>
+                    <h4 className="font-semibold text-brand-400 text-sm">
+                      {t('auth.workerRegistration.govtIdTitle', 'Government ID Verification')}
+                    </h4>
                     <p className="text-xs text-semantic-text-secondary mt-1">
-                      Upload a clear photo or PDF of your Aadhaar card or Voter ID. Your document is stored in a{' '}
-                      <strong>strictly private</strong> storage bucket and accessible exclusively to administrators for verification.
+                      {t('auth.workerRegistration.govtIdDesc', 'Upload a clear photo or PDF of your Aadhaar card or Voter ID. Your document is stored in a strictly private storage bucket and accessible exclusively to administrators for verification.')}
                     </p>
                   </div>
                 </div>
@@ -620,7 +621,7 @@ export default function WorkerRegistration() {
                 {/* ID Proof Upload */}
                 <div>
                   <label className="label text-semantic-text-secondary mb-1 block">
-                    {t('auth.workerRegistration.idProof', 'ID Proof')} (Required)
+                    {t('auth.workerRegistration.idProof', 'ID Proof')} {t('auth.workerRegistration.requiredBadge', '(Required)')}
                   </label>
                   <div className="border-2 border-dashed border-semantic-border-light hover:border-brand-500 bg-surface-200/40 rounded-xl p-6 text-center transition-colors">
                     {formData.idProof ? (
@@ -648,7 +649,7 @@ export default function WorkerRegistration() {
                           }}
                           className="text-xs text-red-400 hover:text-red-300 mt-2 flex items-center gap-1"
                         >
-                          <X className="w-3.5 h-3.5" /> Remove document
+                          <X className="w-3.5 h-3.5" /> {t('auth.workerRegistration.removeDoc', 'Remove document')}
                         </button>
                       </div>
                     ) : (
@@ -663,10 +664,10 @@ export default function WorkerRegistration() {
                         <label htmlFor="idproof-upload" className="cursor-pointer flex flex-col items-center gap-2">
                           <IdCard className="w-10 h-10 text-semantic-text-tertiary" />
                           <span className="text-semantic-text-secondary text-sm">
-                            Click to upload Aadhaar or Voter ID
+                            {t('auth.workerRegistration.clickUploadId', 'Click to upload Aadhaar or Voter ID')}
                           </span>
                           <span className="text-xs text-semantic-text-tertiary">
-                            JPG, PNG, PDF up to 10MB
+                            {t('auth.workerRegistration.idFormatHint', 'JPG, PNG, PDF up to 10MB')}
                           </span>
                         </label>
                       </>
@@ -699,7 +700,7 @@ export default function WorkerRegistration() {
                           }}
                           className="text-xs text-red-400 hover:text-red-300 mt-2 flex items-center gap-1"
                         >
-                          <X className="w-3.5 h-3.5" /> Remove photo
+                          <X className="w-3.5 h-3.5" /> {t('auth.workerRegistration.removePhoto', 'Remove photo')}
                         </button>
                       </div>
                     ) : (
@@ -714,9 +715,11 @@ export default function WorkerRegistration() {
                         <label htmlFor="avatar-upload" className="cursor-pointer flex flex-col items-center gap-2">
                           <Image className="w-10 h-10 text-semantic-text-tertiary" />
                           <span className="text-semantic-text-secondary text-sm">
-                            Click to upload profile photo
+                            {t('auth.workerRegistration.clickUploadPhoto', 'Click to upload profile photo')}
                           </span>
-                          <span className="text-xs text-semantic-text-tertiary">JPG, PNG up to 5MB</span>
+                          <span className="text-xs text-semantic-text-tertiary">
+                            {t('auth.workerRegistration.photoFormatHint', 'JPG, PNG up to 5MB')}
+                          </span>
                         </label>
                       </>
                     )}
@@ -725,12 +728,14 @@ export default function WorkerRegistration() {
                 </div>
 
                 <div className="p-4 bg-surface-200/60 border border-semantic-border-light rounded-xl">
-                  <h4 className="font-semibold text-semantic-text-primary mb-2 text-sm">What happens next?</h4>
+                  <h4 className="font-semibold text-semantic-text-primary mb-2 text-sm">
+                    {t('auth.workerRegistration.whatHappensNext', 'What happens next?')}
+                  </h4>
                   <ul className="text-xs text-semantic-text-secondary space-y-1.5">
-                    <li>• Our team reviews your ID document within 24 hours.</li>
-                    <li>• You will receive an automated notification once approved.</li>
-                    <li>• Your profile will appear in the Muzaffarnagar public worker directory.</li>
-                    <li>• Zero commission on bookings during the introductory pilot.</li>
+                    <li>{t('auth.workerRegistration.nextStep1', '• Our team reviews your ID document within 24 hours.')}</li>
+                    <li>{t('auth.workerRegistration.nextStep2', '• You will receive an automated notification once approved.')}</li>
+                    <li>{t('auth.workerRegistration.nextStep3', '• Your profile will appear in the Muzaffarnagar public worker directory.')}</li>
+                    <li>{t('auth.workerRegistration.nextStep4', '• 0% commission on bookings for the starting 3 months.')}</li>
                   </ul>
                 </div>
               </div>

@@ -18,7 +18,7 @@ interface CreateBookingRpc {
 }
 
 export default function Booking() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { workerId } = useParams<{ workerId: string }>()
   const navigate = useNavigate()
   const location = useLocation()
@@ -150,8 +150,10 @@ export default function Booking() {
       <div className="min-h-screen flex items-center justify-center bg-semantic-bg-primary">
         <div className="text-center">
           <AlertCircle className="w-16 h-16 mx-auto text-semantic-text-tertiary mb-4" />
-          <h2 className="text-xl font-semibold text-semantic-text-primary mb-2">Worker not found</h2>
-          <Link to="/search" className="text-brand-400 hover:underline">Back to Search</Link>
+          <h2 className="text-xl font-semibold text-semantic-text-primary mb-2">{t('errors.notFound', 'Worker not found')}</h2>
+          <Link to="/search" className="text-brand-400 hover:underline">
+            {t('common.back', 'Back')} / {t('nav.search', 'Find Workers')}
+          </Link>
         </div>
       </div>
     )
@@ -163,7 +165,7 @@ export default function Booking() {
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <Link to="/search" className="inline-flex items-center gap-2 text-semantic-text-secondary hover:text-semantic-text-primary text-sm font-medium transition-colors">
             <ArrowLeft className="w-4 h-4" />
-            Back to Search
+            <span>{t('common.back', 'Back')} / {t('nav.search', 'Find Workers')}</span>
           </Link>
         </div>
       </div>
@@ -176,12 +178,12 @@ export default function Booking() {
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-bold text-semantic-text-primary">{worker.name}</h1>
                 <Badge variant={worker.available ? 'success' : 'warning'}>
-                  {worker.available ? 'Available' : t('workerProfile.unavailable', 'Currently Unavailable')}
+                  {worker.available ? t('workerCard.available', 'Available') : t('workerProfile.unavailable', 'Currently Unavailable')}
                 </Badge>
               </div>
               <div className="flex items-center gap-3 mt-1 text-sm text-semantic-text-secondary">
                 <span className="flex items-center gap-1">
-                  {cat && <span>{getCategoryName(cat, 'en')}</span>}
+                  {cat && <span>{getCategoryName(cat, i18n.language === 'hi' ? 'hi' : 'en')}</span>}
                 </span>
                 <span className="flex items-center gap-1 text-yellow-400">
                   <span>★</span>
