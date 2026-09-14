@@ -150,6 +150,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     setUser(null)
     localStorage.removeItem('kaamgar-user')
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('admin_2fa_verified')
+      sessionStorage.removeItem('admin_2fa_timestamp')
+    }
     try {
       const { error } = await getSupabaseClient().auth.signOut()
       if (error) console.warn('Supabase sign-out notice:', error.message)

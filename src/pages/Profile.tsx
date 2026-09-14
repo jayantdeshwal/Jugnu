@@ -908,7 +908,7 @@ export default function Profile() {
                 </div>
 
                 {/* Email / Gmail Address & Language Preference */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className={`grid grid-cols-1 ${user?.role === 'admin' ? '' : 'md:grid-cols-2'} gap-4`}>
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className="block text-xs font-semibold text-semantic-text-secondary uppercase">
@@ -963,26 +963,28 @@ export default function Profile() {
                     )}
                   </div>
 
-                  {/* Language Preference */}
-                  <div>
-                    <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
-                      {t('profile.languagePreference', 'Language Preference')}
-                    </label>
-                    {editMode ? (
-                      <select
-                        value={formData.language}
-                        onChange={e => setFormData(prev => ({ ...prev, language: e.target.value as 'en' | 'hi' }))}
-                        className="w-full bg-surface-200 border border-semantic-border-medium rounded-lg p-2.5 text-sm text-semantic-text-primary focus:outline-none focus:border-brand-500"
-                      >
-                        <option value="en">English</option>
-                        <option value="hi">हिंदी (Hindi)</option>
-                      </select>
-                    ) : (
-                      <p className="text-semantic-text-primary font-medium p-2.5 bg-surface-200/50 rounded-lg border border-semantic-border-light text-sm min-h-[42px] flex items-center">
-                        {formData.language === 'hi' ? 'हिंदी (Hindi)' : 'English'}
-                      </p>
-                    )}
-                  </div>
+                  {/* Language Preference - Hidden for Admin profile */}
+                  {user?.role !== 'admin' && (
+                    <div>
+                      <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
+                        {t('profile.languagePreference', 'Language Preference')}
+                      </label>
+                      {editMode ? (
+                        <select
+                          value={formData.language}
+                          onChange={e => setFormData(prev => ({ ...prev, language: e.target.value as 'en' | 'hi' }))}
+                          className="w-full bg-surface-200 border border-semantic-border-medium rounded-lg p-2.5 text-sm text-semantic-text-primary focus:outline-none focus:border-brand-500"
+                        >
+                          <option value="en">English</option>
+                          <option value="hi">हिंदी (Hindi)</option>
+                        </select>
+                      ) : (
+                        <p className="text-semantic-text-primary font-medium p-2.5 bg-surface-200/50 rounded-lg border border-semantic-border-light text-sm min-h-[42px] flex items-center">
+                          {formData.language === 'hi' ? 'हिंदी (Hindi)' : 'English'}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Worker Specific Fields */}

@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { Card, Badge, Button, Modal, Avatar, RatingStars } from '@kaamgar/ui'
@@ -72,6 +72,7 @@ interface AdminStats {
 
 export default function AdminDashboard() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { user, isAdmin } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -511,6 +512,38 @@ export default function AdminDashboard() {
     }
     void fetchFreshMedia()
   }, [inspectWorker?.id])
+
+  const is2faVerified = typeof window !== 'undefined' && sessionStorage.getItem('admin_2fa_verified') === 'true'
+
+  if (!isAdmin || !is2faVerified) {
+    return (
+      <div className="min-h-screen bg-semantic-bg-primary flex items-center justify-center py-12 px-4">
+        <Card className="w-full max-w-md p-8 bg-surface-100 border border-amber-500/30 shadow-2xl text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-center shadow-inner">
+            <Shield className="w-8 h-8 text-amber-400" />
+          </div>
+          <span className="inline-block px-2.5 py-0.5 mb-2 text-[10px] font-bold uppercase tracking-wider text-amber-300 bg-amber-500/15 border border-amber-500/30 rounded-full">
+            2FA Protected Console
+          </span>
+          <h1 className="text-xl font-bold text-semantic-text-primary">
+            Two-Factor Authentication Required
+          </h1>
+          <p className="mt-2 text-sm text-semantic-text-secondary">
+            Access to the Muzaffarnagar Kaamgar Administrator Console is locked. You must sign in with your administrator credentials and complete mobile OTP 2FA.
+          </p>
+          <div className="mt-6">
+            <Button
+              variant="primary"
+              className="w-full bg-amber-600 hover:bg-amber-500 text-white border-none py-2.5 shadow-lg shadow-amber-600/20"
+              onClick={() => navigate('/login')}
+            >
+              Sign In & Verify 2FA OTP
+            </Button>
+          </div>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-semantic-bg-primary">
