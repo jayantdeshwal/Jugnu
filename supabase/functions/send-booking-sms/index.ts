@@ -8,6 +8,7 @@ declare const Deno: {
   }
 }
 
+// @ts-ignore - Deno remote URL imports are resolved at runtime by Supabase Edge Functions
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 
 interface BookingSmsPayload {
