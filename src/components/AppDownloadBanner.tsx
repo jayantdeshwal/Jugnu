@@ -146,15 +146,14 @@ export default function AppDownloadBanner() {
                   </div>
                 ) : (
                   <>
-                    <Button
-                      variant="primary"
-                      size="lg"
+                    <button
+                      type="button"
                       onClick={handleInstallClick}
-                      className="font-bold text-sm sm:text-base px-8 py-3.5 shadow-xl shadow-brand-500/25 flex items-center gap-2 group"
+                      className="inline-flex items-center gap-2.5 px-8 py-4 rounded-xl bg-gradient-to-r from-brand-500 via-amber-400 to-brand-500 text-surface-950 font-black text-sm sm:text-base shadow-2xl shadow-brand-500/40 hover:shadow-brand-500/60 hover:scale-[1.03] active:scale-[0.98] transition-all border border-amber-200 cursor-pointer group"
                     >
-                      <Download className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" />
-                      <span>{t('appBanner.installBtn', 'Install Mobile App Now')}</span>
-                    </Button>
+                      <Download className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform text-surface-950 animate-bounce" />
+                      <span className="uppercase tracking-tight">{t('appBanner.installBtn', 'Install Mobile App Now')}</span>
+                    </button>
 
                     <button
                       type="button"

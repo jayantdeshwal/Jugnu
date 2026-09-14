@@ -4,7 +4,7 @@ import { useLanguage } from '../context/LanguageContext'
 import { useAuth } from '../context/AuthContext'
 import { useNotifications } from '../context/NotificationContext'
 import { Button, Avatar, Badge } from '@kaamgar/ui'
-import { Menu, X, Bell, User, LogOut, Settings, Shield, Home, Search, List, UserPlus, Truck, Star, Briefcase, ChevronDown, Globe, Phone, Mail, MapPin, ShieldCheck, ArrowRight, Heart, Smartphone } from 'lucide-react'
+import { Menu, X, Bell, User, LogOut, Settings, Shield, Home, Search, List, UserPlus, Truck, Star, Briefcase, ChevronDown, Globe, Phone, Mail, MapPin, ShieldCheck, ArrowRight, Heart, Smartphone, Download } from 'lucide-react'
 import { CATEGORIES, getCategoryName } from '@kaamgar/shared'
 import { useState, useRef, useEffect } from 'react'
 import NetworkStatus from './NetworkStatus'
@@ -175,6 +175,17 @@ export default function Layout() {
             </div>
             
             <div className="flex items-center gap-3">
+              {/* Highlighted Install App Quick Action (Desktop) */}
+              <button
+                type="button"
+                onClick={() => triggerPWAInstall()}
+                className="hidden lg:inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-brand-500 via-amber-400 to-brand-500 text-surface-950 font-black text-xs uppercase tracking-tight shadow-md shadow-brand-500/25 hover:shadow-brand-500/40 hover:scale-105 active:scale-95 transition-all border border-amber-200/80 cursor-pointer"
+                title={t('pwa.installApp', 'Install App')}
+              >
+                <Download className="w-3.5 h-3.5 text-surface-950 animate-bounce" />
+                <span>{t('pwa.installApp', 'Install App')}</span>
+              </button>
+
               {/* Language Switcher Button */}
               <button
                 onClick={toggleLanguage}
@@ -380,6 +391,17 @@ export default function Layout() {
                 </div>
               )}
               
+              {/* Highlighted Install App Quick Action (Mobile Top Bar) */}
+              <button
+                type="button"
+                onClick={() => triggerPWAInstall()}
+                className="md:hidden inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-brand-500 via-amber-400 to-brand-500 text-surface-950 font-black text-[11px] uppercase tracking-tight shadow-sm active:scale-95 transition-all border border-amber-200 cursor-pointer"
+                title={t('pwa.installApp', 'Install App')}
+              >
+                <Download className="w-3 h-3 text-surface-950 animate-bounce" />
+                <span>{t('pwa.installApp', 'Install App')}</span>
+              </button>
+
               <button
                 className="md:hidden p-2 rounded-lg text-semantic-text-secondary hover:text-semantic-text-primary hover:bg-surface-200"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -471,21 +493,26 @@ export default function Layout() {
                       </Badge>
                     </button>
 
-                    {/* PWA Install App Button in Mobile Drawer */}
+                    {/* Highly Highlighted PWA Install App Button in Mobile Drawer */}
                     <button
                       type="button"
                       onClick={() => {
                         setMobileMenuOpen(false)
                         triggerPWAInstall()
                       }}
-                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-brand-400 hover:bg-surface-100 transition-colors border border-brand-500/30 mt-1"
+                      className="w-full flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-brand-500 via-amber-400 to-brand-500 text-surface-950 font-black shadow-lg shadow-brand-500/25 border border-amber-200 mt-2 transition-transform active:scale-[0.98] cursor-pointer"
                     >
                       <div className="flex items-center gap-2.5">
-                        <Smartphone className="w-4 h-4 text-brand-400" />
-                        <span>{t('pwa.installApp', 'Install App')}</span>
+                        <div className="p-1.5 rounded-lg bg-surface-950/15">
+                          <Download className="w-4 h-4 animate-bounce text-surface-950" />
+                        </div>
+                        <div className="text-left leading-tight">
+                          <p className="text-sm font-black uppercase tracking-tight">{t('pwa.installApp', 'Install App')}</p>
+                          <p className="text-[10px] font-semibold text-surface-900 opacity-90">{t('pwa.installSub', '1-Click fast access on phone')}</p>
+                        </div>
                       </div>
-                      <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-300">
-                        APP
+                      <span className="text-[10px] uppercase font-black tracking-wider px-2 py-0.5 rounded-full bg-surface-950 text-brand-400">
+                        FREE
                       </span>
                     </button>
 
@@ -534,21 +561,26 @@ export default function Layout() {
                       </Badge>
                     </button>
 
-                    {/* PWA Install App Button for Guest Mobile Drawer */}
+                    {/* Highly Highlighted PWA Install App Button for Guest Mobile Drawer */}
                     <button
                       type="button"
                       onClick={() => {
                         setMobileMenuOpen(false)
                         triggerPWAInstall()
                       }}
-                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-brand-400 hover:bg-surface-100 transition-colors border border-brand-500/30 mt-1"
+                      className="w-full flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-brand-500 via-amber-400 to-brand-500 text-surface-950 font-black shadow-lg shadow-brand-500/25 border border-amber-200 mt-2 transition-transform active:scale-[0.98] cursor-pointer"
                     >
                       <div className="flex items-center gap-2.5">
-                        <Smartphone className="w-4 h-4 text-brand-400" />
-                        <span>{t('pwa.installApp', 'Install App')}</span>
+                        <div className="p-1.5 rounded-lg bg-surface-950/15">
+                          <Download className="w-4 h-4 animate-bounce text-surface-950" />
+                        </div>
+                        <div className="text-left leading-tight">
+                          <p className="text-sm font-black uppercase tracking-tight">{t('pwa.installApp', 'Install App')}</p>
+                          <p className="text-[10px] font-semibold text-surface-900 opacity-90">{t('pwa.installSub', '1-Click fast access on phone')}</p>
+                        </div>
                       </div>
-                      <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-300">
-                        APP
+                      <span className="text-[10px] uppercase font-black tracking-wider px-2 py-0.5 rounded-full bg-surface-950 text-brand-400">
+                        FREE
                       </span>
                     </button>
 
