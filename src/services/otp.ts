@@ -151,15 +151,3 @@ export async function openOtpWidget(options: OtpWidgetOptions): Promise<boolean>
   console.warn('[MSG91] SDK unavailable (verify.msg91.com may be blocked by adblock/shields or offline).')
   return false
 }
-
-/**
- * Development / Test simulator for fast local testing without depleting SMS credits.
- */
-export function simulateOtpVerification(phone: string): Promise<boolean> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log(`[Simulated OTP] Successfully verified +91${phone}`)
-      resolve(true)
-    }, 600)
-  })
-}

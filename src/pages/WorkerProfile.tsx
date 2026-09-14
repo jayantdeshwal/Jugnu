@@ -16,25 +16,6 @@ const iconComponents = {
   brush: Brush,
 }
 
-const MOCK_WORKER = {
-  id: '1',
-  name: 'Rajesh Kumar',
-  category: 'electrician',
-  experience: 12,
-  rating: 4.8,
-  reviews: 124,
-  areas: ['251001', '251002'],
-  bio: 'Licensed electrician with 12+ years experience. Specializes in home wiring, inverter installation, and electrical repairs. Available for emergency services.',
-  avatar: null,
-  verified: true,
-  available: true,
-  phone: '+919876543210',
-  services: ['Home Wiring', 'Inverter Installation', 'Fan/Light Installation', 'Switch Board Repair', 'MCB/DB Installation', 'Emergency Repairs'],
-  completedJobs: 89,
-  responseRate: 95,
-  avgResponseTime: '15 min',
-}
-
 export default function WorkerProfile() {
   const { t } = useTranslation()
   const { id } = useParams<{ id: string }>()

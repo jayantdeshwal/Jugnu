@@ -25,86 +25,6 @@ interface SearchWorker {
   categories?: string[]
 }
 
-const MOCK_WORKERS: SearchWorker[] = [
-  {
-    id: '1',
-    name: 'Rajesh Kumar',
-    category: 'electrician',
-    experience: 12,
-    rating: 4.8,
-    reviews: 124,
-    areas: ['251001', '251002'],
-    bio: 'Licensed electrician with 12+ years experience. Specializes in home wiring, inverter installation, and electrical repairs.',
-    avatar: null,
-    verified: true,
-    available: true,
-  },
-  {
-    id: '2',
-    name: 'Mohammad Ali',
-    category: 'plumber',
-    experience: 8,
-    rating: 4.6,
-    reviews: 89,
-    areas: ['251001'],
-    bio: 'Expert in pipe fitting, bathroom fittings, water tank installation, and drainage solutions.',
-    avatar: null,
-    verified: true,
-    available: true,
-  },
-  {
-    id: '3',
-    name: 'Suresh Sharma',
-    category: 'carpenter',
-    experience: 15,
-    rating: 4.9,
-    reviews: 67,
-    areas: ['251001', '251002'],
-    bio: 'Custom furniture, modular kitchen, wardrobe installation, and wood repair specialist.',
-    avatar: null,
-    verified: true,
-    available: false,
-  },
-  {
-    id: '4',
-    name: 'Ramesh Yadav',
-    category: 'ac',
-    experience: 10,
-    rating: 4.7,
-    reviews: 156,
-    areas: ['251001', '251002'],
-    bio: 'AC installation, repair, gas filling, and maintenance for all brands. Split & window AC expert.',
-    avatar: null,
-    verified: true,
-    available: true,
-  },
-  {
-    id: '5',
-    name: 'Prem Singh',
-    category: 'painter',
-    experience: 7,
-    rating: 4.5,
-    reviews: 43,
-    areas: ['251002'],
-    bio: 'Interior & exterior painting, texture work, waterproofing, and wall repair services.',
-    avatar: null,
-    verified: false,
-    available: true,
-  },
-  {
-    id: '6',
-    name: 'Vikram Singh',
-    category: 'electrician',
-    experience: 5,
-    rating: 4.4,
-    reviews: 28,
-    areas: ['251001'],
-    bio: 'Young electrician specializing in modern home automation, LED lighting, and smart switches.',
-    avatar: null,
-    verified: true,
-    available: true,
-  },
-]
 
 const iconComponents = {
   zap: Zap,
@@ -277,13 +197,18 @@ function WorkerGrid({ filteredWorkers, t, iconComponents, CATEGORIES, getCategor
   )
 }
 
-function SearchResults({ filteredWorkers, selectedCategory, t, getCategoryName, CATEGORIES, iconComponents, EmptyState, WorkerGrid }: any) {
+function SearchResults({ filteredWorkers, selectedCategory, isLoadingWorkers, t, getCategoryName, CATEGORIES, iconComponents, EmptyState, WorkerGrid }: any) {
   const cat = CATEGORIES.find((c: typeof CATEGORIES[0]) => c.id === selectedCategory)
 
   return (
     <>
       <ResultsHeader filteredWorkers={filteredWorkers} selectedCategory={selectedCategory} t={t} getCategoryName={getCategoryName} CATEGORIES={CATEGORIES} />
-      {filteredWorkers.length === 0 ? (
+      {isLoadingWorkers ? (
+        <div className="py-16 text-center text-semantic-text-tertiary">
+          <div className="w-8 h-8 mx-auto mb-3 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm">Loading verified workers...</p>
+        </div>
+      ) : filteredWorkers.length === 0 ? (
         <EmptyState t={t} clearFilters={() => {}} />
       ) : (
         <WorkerGrid filteredWorkers={filteredWorkers} t={t} iconComponents={iconComponents} CATEGORIES={CATEGORIES} getCategoryName={getCategoryName} />
@@ -301,7 +226,8 @@ export default function Search() {
   const [selectedArea, setSelectedArea] = useState(searchParams.get('area') || '')
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '')
   const [sortBy, setSortBy] = useState<'rating' | 'experience' | 'reviews'>('rating')
-  const [workerData, setWorkerData] = useState<SearchWorker[]>(MOCK_WORKERS)
+  const [workerData, setWorkerData] = useState<SearchWorker[]>([])
+  const [isLoadingWorkers, setIsLoadingWorkers] = useState(true)
 
   useEffect(() => {
     let isMounted = true
@@ -314,8 +240,11 @@ export default function Search() {
           category: worker.categories[0] || '',
         })))
       })
-      .catch(() => {
-        // Keep the local demo workers visible until the public directory is configured.
+      .catch((err) => {
+        console.warn('Error fetching workers:', err)
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingWorkers(false)
       })
 
     return () => {
@@ -387,7 +316,7 @@ export default function Search() {
       </motion.div>
 
       <div className="container-app py-8">
-        <SearchResults filteredWorkers={filteredWorkers} selectedCategory={selectedCategory} t={t} getCategoryName={getCategoryName} CATEGORIES={categories} iconComponents={iconComponents} EmptyState={EmptyState} WorkerGrid={WorkerGrid} />
+        <SearchResults filteredWorkers={filteredWorkers} selectedCategory={selectedCategory} isLoadingWorkers={isLoadingWorkers} t={t} getCategoryName={getCategoryName} CATEGORIES={categories} iconComponents={iconComponents} EmptyState={EmptyState} WorkerGrid={WorkerGrid} />
       </div>
     </div>
   )

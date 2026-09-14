@@ -33,39 +33,6 @@ interface ProfileRow {
   created_at: string | null
 }
 
-const MOCK_USERS: User[] = [
-  {
-    id: '1',
-    phone: '+919876543210',
-    email: 'rajesh.worker@kaamgar.local',
-    name: 'Rajesh Kumar',
-    role: 'worker',
-    language: 'hi',
-    avatar_url: null,
-    created_at: '2024-01-15T10:00:00Z',
-  },
-  {
-    id: '2',
-    phone: '+919876543211',
-    email: 'priya.customer@kaamgar.local',
-    name: 'Priya Sharma',
-    role: 'customer',
-    language: 'en',
-    avatar_url: null,
-    created_at: '2024-01-20T14:30:00Z',
-  },
-  {
-    id: '3',
-    phone: '+919876543212',
-    email: 'admin@kaamgar.local',
-    name: 'Admin User',
-    role: 'admin',
-    language: 'en',
-    avatar_url: null,
-    created_at: '2024-01-01T00:00:00Z',
-  },
-]
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -384,14 +351,4 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider')
   }
   return context
-}
-
-export function useMockAuth() {
-  const { login, logout } = useAuth()
-
-  const loginAsCustomer = () => login(MOCK_USERS[1])
-  const loginAsWorker = () => login(MOCK_USERS[0])
-  const loginAsAdmin = () => login(MOCK_USERS[2])
-
-  return { loginAsCustomer, loginAsWorker, loginAsAdmin, logout }
 }

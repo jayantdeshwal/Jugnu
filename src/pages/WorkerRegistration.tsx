@@ -23,7 +23,7 @@ import { useAuth } from '@/context/AuthContext'
 import { getSupabaseClient } from '@/lib/supabase'
 import { uploadAvatar, uploadIdProof, validateFile } from '@/services/storage'
 import { notifyAdminsOfWorkerRegistration } from '@/services/admin'
-import { openOtpWidget, simulateOtpVerification } from '@/services/otp'
+import { openOtpWidget } from '@/services/otp'
 
 const STEPS = [
   { key: 'personal', label: 'Personal Info', icon: User },
@@ -126,43 +126,15 @@ export default function WorkerRegistration() {
       })
 
       if (!launched) {
-        // Fallback dev simulation
-        await simulateOtpVerification(cleanPhone)
-        setPhoneVerified(true)
         setVerifyingOtp(false)
-        setErrors({})
-        await loginWithVerifiedPhone(formData.name.trim(), cleanPhone, 'worker', formData.email.trim() || undefined)
+        setErrors(prev => ({
+          ...prev,
+          phone: 'OTP verification widget could not be loaded. Please ensure ad-blockers are disabled and try again.',
+        }))
       }
     } catch (err) {
       setVerifyingOtp(false)
       setErrors(prev => ({ ...prev, phone: 'Could not open verification widget' }))
-    }
-  }
-
-  // Instant simulation mode for local development
-  const handleSimulateWorkerPhone = async () => {
-    setErrors({})
-    const cleanPhone = formData.phone.replace(/\D/g, '')
-
-    if (!formData.name.trim()) {
-      setErrors(prev => ({ ...prev, name: 'Please enter your full name' }))
-      return
-    }
-    if (cleanPhone.length !== 10) {
-      setErrors(prev => ({ ...prev, phone: 'Please enter a valid 10-digit mobile number' }))
-      return
-    }
-
-    setVerifyingOtp(true)
-    try {
-      await simulateOtpVerification(cleanPhone)
-      setPhoneVerified(true)
-      setErrors({})
-      await loginWithVerifiedPhone(formData.name.trim(), cleanPhone, 'worker', formData.email.trim() || undefined)
-    } catch (err) {
-      setErrors(prev => ({ ...prev, phone: 'Simulation failed' }))
-    } finally {
-      setVerifyingOtp(false)
     }
   }
 
@@ -529,7 +501,7 @@ export default function WorkerRegistration() {
                     </button>
                   </div>
                 ) : (
-                  <div className="space-y-2 pt-1">
+                  <div className="pt-1">
                     <Button
                       type="button"
                       variant="primary"
@@ -539,15 +511,6 @@ export default function WorkerRegistration() {
                     >
                       <ShieldCheck className="w-4 h-4 mr-2" />
                       Verify Mobile Number with OTP
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="w-full text-xs text-brand-300 border-brand-500/30 hover:bg-brand-500/10"
-                      onClick={handleSimulateWorkerPhone}
-                    >
-                      Instant Test Verification (Dev Mode)
                     </Button>
                   </div>
                 )}

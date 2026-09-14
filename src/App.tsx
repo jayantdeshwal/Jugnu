@@ -15,7 +15,6 @@ import Profile from './pages/Profile'
 import AdminDashboard from './pages/AdminDashboard'
 import Notifications from './pages/Notifications'
 import WorkerDashboard from './pages/WorkerDashboard'
-import TestLogin from './pages/TestLogin'
 
 function AppRoutes() {
   const { t } = useTranslation()
@@ -29,8 +28,6 @@ function AppRoutes() {
         <Route path="booking/:workerId" element={<Booking />} />
         <Route path="bookings" element={<Bookings />} />
         <Route path="login" element={<Login />} />
-        <Route path="test-login" element={<TestLogin />} />
-        <Route path="admin-login" element={<TestLogin />} />
         <Route path="register/worker" element={<WorkerRegistration />} />
         <Route path="profile" element={<Profile />} />
         <Route path="notifications" element={<Notifications />} />

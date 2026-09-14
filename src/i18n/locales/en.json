@@ -166,7 +166,6 @@
     "verifyPhonePrompt": "Please enter and verify your 10-digit mobile number via OTP.",
     "verifyViaOtp": "Verify via OTP",
     "customerLoginDesc": "Enter your name and mobile number to sign in or register.",
-    "demoAccounts": "Demo Accounts",
     "workerRegistrationInfo": "Looking for daily work in Muzaffarnagar? Register as a verified worker to start receiving bookings directly from local customers.",
     "workerRegistration": {
       "title": "Worker Registration",
