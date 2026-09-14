@@ -32,11 +32,8 @@ import {
   Briefcase,
   Users,
   Smartphone,
-  Download,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import AppDownloadBanner from '@/components/AppDownloadBanner'
-import { triggerPWAInstall } from '@/components/PWAInstallPrompt'
 
 const iconMap: Record<string, any> = {
   zap: Zap,
@@ -103,26 +100,17 @@ export default function Home() {
 
         <div className="container-app relative z-10">
           <div className="max-w-4xl mx-auto text-center">
-            {/* Top Eyebrow Badges & Quick Install Trigger */}
+            {/* Top Eyebrow Badges */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="flex flex-wrap items-center justify-center gap-2.5 mb-6"
+              className="flex items-center justify-center mb-5"
             >
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/25 text-brand-400 text-xs font-semibold uppercase tracking-wider shadow-sm backdrop-blur-md">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/25 text-brand-400 text-xs font-semibold uppercase tracking-wider shadow-sm backdrop-blur-md">
                 <Sparkles className="w-3.5 h-3.5 text-brand-400" />
                 <span>{t('home.heroBadge')}</span>
               </div>
-
-              <button
-                type="button"
-                onClick={() => triggerPWAInstall()}
-                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-brand-500 to-amber-500 hover:from-brand-400 hover:to-amber-400 text-surface-950 font-bold text-xs uppercase tracking-wider shadow-md shadow-brand-500/20 hover:scale-105 active:scale-95 transition-all border border-amber-200/60 cursor-pointer"
-              >
-                <Download className="w-3.5 h-3.5 text-surface-950" />
-                <span>{t('pwa.installApp', 'Install App')}</span>
-              </button>
             </motion.div>
 
             {/* Main Headline */}
@@ -130,7 +118,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight sm:leading-tight mb-5"
+              className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight mb-4"
             >
               {t('home.heroTitle')}
             </motion.h1>
@@ -140,7 +128,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-base sm:text-lg lg:text-xl text-semantic-text-secondary max-w-2xl mx-auto mb-10 leading-relaxed"
+              className="text-xs sm:text-sm lg:text-base text-semantic-text-secondary max-w-2xl mx-auto mb-8 leading-relaxed"
             >
               {t('home.heroSubtitle')}
             </motion.p>
@@ -250,32 +238,32 @@ export default function Home() {
         </div>
 
         {/* Trust Metric Strip */}
-        <div className="container-app mt-12 pt-8 border-t border-semantic-border-light/40">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div className="p-3 rounded-xl bg-surface-900/40 border border-semantic-border-light/30 flex items-center justify-center gap-2.5">
-              <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
-              <span className="text-xs sm:text-sm font-semibold text-semantic-text-primary">
+        <div className="container-app mt-8 pt-6 border-t border-semantic-border-light/40">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 text-center">
+            <div className="p-2.5 sm:p-3 rounded-xl bg-surface-900/40 border border-semantic-border-light/30 flex items-center justify-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span className="text-[11px] sm:text-xs font-semibold text-semantic-text-primary leading-tight">
                 {t('home.statVerified')}
               </span>
             </div>
 
-            <div className="p-3 rounded-xl bg-surface-900/40 border border-semantic-border-light/30 flex items-center justify-center gap-2.5">
-              <Percent className="w-5 h-5 text-brand-400 shrink-0" />
-              <span className="text-xs sm:text-sm font-semibold text-semantic-text-primary">
+            <div className="p-2.5 sm:p-3 rounded-xl bg-surface-900/40 border border-semantic-border-light/30 flex items-center justify-center gap-2">
+              <Percent className="w-4 h-4 text-brand-400 shrink-0" />
+              <span className="text-[11px] sm:text-xs font-semibold text-semantic-text-primary leading-tight">
                 {t('home.statCommission')}
               </span>
             </div>
 
-            <div className="p-3 rounded-xl bg-surface-900/40 border border-semantic-border-light/30 flex items-center justify-center gap-2.5">
-              <PhoneCall className="w-5 h-5 text-blue-400 shrink-0" />
-              <span className="text-xs sm:text-sm font-semibold text-semantic-text-primary">
+            <div className="p-2.5 sm:p-3 rounded-xl bg-surface-900/40 border border-semantic-border-light/30 flex items-center justify-center gap-2">
+              <PhoneCall className="w-4 h-4 text-blue-400 shrink-0" />
+              <span className="text-[11px] sm:text-xs font-semibold text-semantic-text-primary leading-tight">
                 {t('home.statDirect')}
               </span>
             </div>
 
-            <div className="p-3 rounded-xl bg-surface-900/40 border border-semantic-border-light/30 flex items-center justify-center gap-2.5">
-              <MapPin className="w-5 h-5 text-amber-400 shrink-0" />
-              <span className="text-xs sm:text-sm font-semibold text-semantic-text-primary">
+            <div className="p-2.5 sm:p-3 rounded-xl bg-surface-900/40 border border-semantic-border-light/30 flex items-center justify-center gap-2">
+              <MapPin className="w-4 h-4 text-amber-400 shrink-0" />
+              <span className="text-[11px] sm:text-xs font-semibold text-semantic-text-primary leading-tight">
                 {t('home.statHyperlocal')}
               </span>
             </div>
@@ -311,7 +299,7 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4.5">
             {categories.map((cat, index) => {
               const Icon = iconMap[cat.icon as keyof typeof iconMap] || Truck
               const stat = workerStats[cat.id]
@@ -327,13 +315,13 @@ export default function Home() {
                 >
                   <Link
                     to={`/search?category=${cat.id}`}
-                    className="group block p-6 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-brand-500/50 hover:shadow-xl hover:shadow-brand-500/5 transition-all duration-300 relative overflow-hidden"
+                    className="group block p-4 sm:p-5 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-brand-500/50 hover:shadow-xl hover:shadow-brand-500/5 transition-all duration-300 relative overflow-hidden"
                   >
-                    <div className="w-14 h-14 mb-5 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400 group-hover:bg-brand-500 group-hover:text-surface-950 transition-all duration-300 group-hover:scale-105">
-                      <Icon className="w-7 h-7 transition-colors" />
+                    <div className="w-10 h-10 sm:w-11 sm:h-11 mb-3 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400 group-hover:bg-brand-500 group-hover:text-surface-950 transition-all duration-300 group-hover:scale-105">
+                      <Icon className="w-5 h-5 transition-colors" />
                     </div>
 
-                    <h3 className="font-bold text-base text-semantic-text-primary group-hover:text-brand-400 transition-colors mb-2">
+                    <h3 className="font-semibold text-xs sm:text-sm text-semantic-text-primary group-hover:text-brand-400 transition-colors mb-1.5">
                       {getCategoryName(cat, i18n.language === 'hi' ? 'hi' : 'en')}
                     </h3>
 
@@ -514,10 +502,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ========================================================================= */}
-      {/* 5. DEDICATED APP DOWNLOAD SECTION                                         */}
-      {/* ========================================================================= */}
-      <AppDownloadBanner />
+
 
       {/* ========================================================================= */}
       {/* 6. DUAL AUDIENCE CONVERSION BANNERS (CUSTOMER & WORKER)                  */}

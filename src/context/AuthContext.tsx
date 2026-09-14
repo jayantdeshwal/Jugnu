@@ -153,6 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('admin_2fa_verified')
       sessionStorage.removeItem('admin_2fa_timestamp')
+      sessionStorage.removeItem('kaamgar_guest_mode')
     }
     try {
       const { error } = await getSupabaseClient().auth.signOut()

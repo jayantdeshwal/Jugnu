@@ -5,6 +5,8 @@ import { Button, Input, Card, Badge } from '@kaamgar/ui'
 import { useAuth } from '../context/AuthContext'
 import { openOtpWidget } from '@/services/otp'
 import { getSupabaseClient } from '@/lib/supabase'
+import { useLanguage } from '../context/LanguageContext'
+import { triggerPWAInstall } from '@/components/PWAInstallPrompt'
 import {
   Phone,
   AlertCircle,
@@ -19,10 +21,17 @@ import {
   Truck,
   Briefcase,
   Sparkles,
+  Download,
+  Globe,
 } from 'lucide-react'
 
-export default function Login() {
+interface LoginProps {
+  onExploreAsGuest?: () => void
+}
+
+export default function Login({ onExploreAsGuest }: LoginProps = {}) {
   const { t } = useTranslation()
+  const { language, toggleLanguage } = useLanguage()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -390,23 +399,58 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-semantic-bg-primary flex items-center justify-center py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full">
-        {/* Back Link */}
-        <div className="mb-4">
-          <Link
-            to="/auth"
-            className="inline-flex items-center gap-1.5 text-xs text-semantic-text-tertiary hover:text-brand-400 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>{t('loginPage.backToOptions', 'Back to Login / Sign Up options')}</span>
-          </Link>
+    <div className="min-h-screen bg-surface-950 text-semantic-text-primary flex flex-col justify-between relative overflow-hidden px-4 py-4 sm:py-6">
+      {/* Decent Ambient Theme Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute -top-32 left-1/4 w-96 h-96 bg-brand-500/8 rounded-full blur-3xl" />
+        <div className="absolute top-1/3 -right-24 w-80 h-80 bg-emerald-500/6 rounded-full blur-3xl" />
+        <div className="absolute -bottom-32 left-1/3 w-96 h-96 bg-brand-500/5 rounded-full blur-3xl" />
+      </div>
+
+      {/* Top Minimalist Header */}
+      <header className="relative z-10 w-full max-w-md mx-auto flex items-center justify-between py-2">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-brand-500 text-surface-950 rounded-lg flex items-center justify-center font-bold shadow-md shadow-brand-500/20">
+            <Truck className="w-4 h-4 text-surface-950" />
+          </div>
+          <span className="font-extrabold text-sm sm:text-base text-white tracking-tight">
+            {t('app.name')}
+          </span>
         </div>
 
-        <Card className="p-6 sm:p-8 bg-surface-100 border border-semantic-border-light shadow-2xl relative">
-          {/* Header Title */}
-          <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-semantic-text-primary">
+        <div className="flex items-center gap-2">
+          {/* Install App Button (Exclusively on Login page before signing in!) */}
+          <button
+            type="button"
+            onClick={() => triggerPWAInstall()}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 border border-brand-500/30 text-xs font-semibold shadow-sm transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            title={t('pwa.installApp', 'Install App')}
+          >
+            <Download className="w-3.5 h-3.5 text-brand-400" />
+            <span>{t('pwa.installApp', 'Install App')}</span>
+          </button>
+
+          {/* Language Switcher */}
+          <button
+            onClick={toggleLanguage}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 border border-semantic-border-medium rounded-full text-xs font-semibold text-semantic-text-secondary hover:text-semantic-text-primary hover:bg-surface-800 transition-colors cursor-pointer"
+            aria-label={language === 'en' ? 'Switch to Hindi' : 'Switch to English'}
+          >
+            <Globe className="w-3.5 h-3.5 text-brand-400" />
+            <span className="font-hindi tracking-wide">{language === 'en' ? 'EN' : 'हि'}</span>
+          </button>
+        </div>
+      </header>
+
+      {/* Central Instagram-style Auth Card */}
+      <div className="w-full max-w-md mx-auto my-auto relative z-10 py-3">
+        <Card className="p-6 sm:p-7 bg-surface-900/85 backdrop-blur-xl border border-semantic-border-light shadow-2xl rounded-3xl relative">
+          {/* Header Title & Branding */}
+          <div className="text-center mb-5">
+            <div className="w-12 h-12 mx-auto mb-2.5 bg-brand-500/10 border border-brand-500/25 rounded-2xl flex items-center justify-center text-brand-400 shadow-sm">
+              <Sparkles className="w-5 h-5 text-brand-400" />
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
               {loginRole === 'admin'
                 ? t('loginPage.adminTitle', 'Administrator Portal')
                 : loginRole === 'worker'
@@ -865,8 +909,8 @@ export default function Login() {
             </div>
           )}
 
-          {/* Footer Callout to Register */}
-          <div className="mt-6 pt-5 border-t border-semantic-border-light text-center">
+          {/* Footer Callout to Register & Guest Mode */}
+          <div className="mt-5 pt-4 border-t border-semantic-border-light text-center space-y-3">
             <p className="text-xs text-semantic-text-secondary">
               {t('loginPage.newToKaamgar', 'New to Kaamgar?')}{' '}
               <Link
@@ -876,9 +920,42 @@ export default function Login() {
                 {t('loginPage.signUpLink', 'Create an account (Sign Up)')}
               </Link>
             </p>
+
+            {/* Explore as Guest Link */}
+            <div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (onExploreAsGuest) {
+                    onExploreAsGuest()
+                  } else {
+                    sessionStorage.setItem('kaamgar_guest_mode', 'true')
+                    navigate('/')
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 text-xs text-semantic-text-tertiary hover:text-white transition-colors cursor-pointer"
+              >
+                <span>{t('loginPage.exploreAsGuest', 'Explore services without signing in')}</span>
+                <ArrowRight className="w-3 h-3 text-brand-400" />
+              </button>
+            </div>
           </div>
         </Card>
       </div>
+
+      {/* Bottom Footer Trust & Copyright */}
+      <footer className="relative z-10 w-full max-w-md mx-auto text-center py-2">
+        <div className="flex items-center justify-center gap-2 text-[11px] text-semantic-text-tertiary">
+          <span>100% ID Verified</span>
+          <span>•</span>
+          <span>0% Commission</span>
+          <span>•</span>
+          <span>Muzaffarnagar</span>
+        </div>
+        <p className="text-[10px] text-semantic-text-tertiary/70 mt-1">
+          © 2026 {t('app.name')} • Hyperlocal Pilot
+        </p>
+      </footer>
     </div>
   )
 }

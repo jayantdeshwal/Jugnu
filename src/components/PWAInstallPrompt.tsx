@@ -4,6 +4,9 @@ import { Button } from '@kaamgar/ui'
 import { Download, X, Smartphone, Share, PlusSquare, Sparkles, ChevronRight, HelpCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
+import { useAuth } from '../context/AuthContext'
+import { useLocation } from 'react-router-dom'
+
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>
@@ -41,11 +44,16 @@ export function canInstallPWA(): boolean {
 
 export default function PWAInstallPrompt() {
   const { t } = useTranslation()
+  const { isAuthenticated } = useAuth()
+  const location = useLocation()
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [isStandalone, setIsStandalone] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const [showGuide, setShowGuide] = useState(false)
   const [isIOS, setIsIOS] = useState(false)
+
+  // Check if current page is the login / auth entry page
+  const isLoginPage = location.pathname === '/login' || location.pathname === '/auth' || location.pathname === '/'
 
   useEffect(() => {
     // 1. Check if running in standalone mode (already installed as an app)
@@ -61,30 +69,30 @@ export default function PWAInstallPrompt() {
     const isIosDevice = /iphone|ipad|ipod/.test(userAgent)
     setIsIOS(isIosDevice)
 
-    // 3. Clear any legacy 3-day dismissal lock so users can test immediately
-    localStorage.removeItem('kaamgar_pwa_dismissed')
-
-    // 4. Capture native beforeinstallprompt (Chrome Android/Desktop)
+    // 3. Capture native beforeinstallprompt (Chrome Android/Desktop)
     const handleBeforeInstallPrompt = (e: BeforeInstallPromptEvent) => {
       e.preventDefault()
       globalDeferredPrompt = e
       setDeferredPrompt(e)
-      setIsExpanded(true)
+      // Only auto-expand if unauthenticated AND on the login page
+      if (!isAuthenticated && isLoginPage) {
+        setIsExpanded(true)
+      }
     }
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
 
-    // 5. Custom event listener for when users click "Install App" elsewhere
+    // 4. Custom event listener for when user taps "Install App" button in Login or Profile
     const handleOpenDialog = () => {
       setIsExpanded(true)
       setShowGuide(true)
     }
     window.addEventListener('open-pwa-install-dialog', handleOpenDialog)
 
-    // 6. Pop up automatically after a gentle 2s delay on initial exploration (if not already dismissed in this session)
-    const hasDismissed = sessionStorage.getItem('kaamgar_pwa_dismissed_session')
+    // 5. Pop up automatically on Login page ONLY after 2s delay (if not dismissed in this session and NOT authenticated)
     let timer: any = null
-    if (!hasDismissed) {
+    const hasDismissed = sessionStorage.getItem('kaamgar_pwa_dismissed_session')
+    if (!hasDismissed && !isAuthenticated && isLoginPage) {
       timer = setTimeout(() => {
         setIsExpanded(true)
       }, 2000)
@@ -95,7 +103,7 @@ export default function PWAInstallPrompt() {
       window.removeEventListener('open-pwa-install-dialog', handleOpenDialog)
       if (timer) clearTimeout(timer)
     }
-  }, [])
+  }, [isAuthenticated, isLoginPage])
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {

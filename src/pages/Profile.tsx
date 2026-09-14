@@ -29,9 +29,11 @@ import {
   ChevronRight,
   UserCheck,
   Mail,
+  Smartphone,
 } from 'lucide-react'
 import { getSupabaseClient } from '@/lib/supabase'
 import { uploadAvatar, uploadIdProof, validateFile } from '@/services/storage'
+import { triggerPWAInstall } from '@/components/PWAInstallPrompt'
 
 interface LiveWorkerDetails {
   bio: string
@@ -823,6 +825,16 @@ export default function Profile() {
                   {language === 'en'
                     ? t('profile.switchToHindi', 'हिंदी में बदलें (Hindi)')
                     : t('profile.switchToEnglish', 'Switch to English')}
+                </Button>
+
+                {/* Single Clean Install App Button (Only in Profile Section) */}
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-brand-400 hover:bg-brand-500/10 border-brand-500/30"
+                  onClick={() => triggerPWAInstall()}
+                >
+                  <Smartphone className="w-4 h-4 mr-2.5 text-brand-400" />
+                  <span>{t('pwa.installApp', 'Install Mobile App')}</span>
                 </Button>
 
                 <Button

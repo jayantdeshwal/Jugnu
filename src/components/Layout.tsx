@@ -131,6 +131,26 @@ export default function Layout() {
     )
   }
 
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/auth'
+  const isGuestMode = typeof window !== 'undefined' && sessionStorage.getItem('kaamgar_guest_mode') === 'true'
+  const isUnauthRoot = location.pathname === '/' && !isAuthenticated && !isGuestMode
+
+  if (isAuthPage || isUnauthRoot) {
+    return (
+      <>
+        <NetworkStatus />
+        <main className="min-h-screen">
+          <Outlet />
+        </main>
+        <NotificationToast
+          notifications={notifications}
+          onClose={removeNotification}
+        />
+        <PWAInstallPrompt />
+      </>
+    )
+  }
+
   return (
     <>
       <NetworkStatus />
@@ -370,8 +390,8 @@ export default function Layout() {
                   )}
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => navigate('/auth')}>
+                <div className="hidden sm:flex items-center gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
                     {t('nav.loginSignup', 'Login / Sign Up')}
                   </Button>
                   <Button variant="primary" size="sm" onClick={() => navigate('/register/worker')}>

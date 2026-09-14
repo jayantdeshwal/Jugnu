@@ -18,18 +18,48 @@ import AdminDashboard from './pages/AdminDashboard'
 import Notifications from './pages/Notifications'
 import WorkerDashboard from './pages/WorkerDashboard'
 
+import { useState } from 'react'
+import { useAuth } from './context/AuthContext'
+
+function RootRoute() {
+  const { isAuthenticated, isLoading } = useAuth()
+  const [isGuest, setIsGuest] = useState(() => {
+    return typeof window !== 'undefined' && sessionStorage.getItem('kaamgar_guest_mode') === 'true'
+  })
+
+  const handleExploreAsGuest = () => {
+    sessionStorage.setItem('kaamgar_guest_mode', 'true')
+    setIsGuest(true)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-surface-950 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" />
+      </div>
+    )
+  }
+
+  if (isAuthenticated || isGuest) {
+    return <Home />
+  }
+
+  return <Login onExploreAsGuest={handleExploreAsGuest} />
+}
+
 function AppRoutes() {
   const { t } = useTranslation()
   
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
-        <Route index element={<Home />} />
+        <Route index element={<RootRoute />} />
+        <Route path="home" element={<Home />} />
         <Route path="search" element={<Search />} />
         <Route path="worker/:id" element={<WorkerProfile />} />
         <Route path="booking/:workerId" element={<Booking />} />
         <Route path="bookings" element={<Bookings />} />
-        <Route path="auth" element={<AuthChoice />} />
+        <Route path="auth" element={<Login />} />
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
         <Route path="signup" element={<Navigate to="/register" replace />} />
