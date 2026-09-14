@@ -18,3 +18,19 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </ErrorBoundary>
   </React.StrictMode>,
 )
+
+// Register PWA Service Worker
+if ('serviceWorker' in navigator && typeof window !== 'undefined') {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then(reg => {
+        if (import.meta.env.DEV) {
+          console.log('PWA Service Worker registered:', reg.scope)
+        }
+      })
+      .catch(err => {
+        console.warn('PWA Service Worker registration failed:', err)
+      })
+  })
+}

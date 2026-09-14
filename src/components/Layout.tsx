@@ -4,10 +4,11 @@ import { useLanguage } from '../context/LanguageContext'
 import { useAuth } from '../context/AuthContext'
 import { useNotifications } from '../context/NotificationContext'
 import { Button, Avatar, Badge } from '@kaamgar/ui'
-import { Menu, X, Bell, User, LogOut, Settings, Shield, Home, Search, List, UserPlus, Truck, Star, Briefcase, ChevronDown, Globe, Phone, Mail, MapPin, ShieldCheck, ArrowRight, Heart } from 'lucide-react'
+import { Menu, X, Bell, User, LogOut, Settings, Shield, Home, Search, List, UserPlus, Truck, Star, Briefcase, ChevronDown, Globe, Phone, Mail, MapPin, ShieldCheck, ArrowRight, Heart, Smartphone } from 'lucide-react'
 import { CATEGORIES, getCategoryName } from '@kaamgar/shared'
 import { useState, useRef, useEffect } from 'react'
 import NetworkStatus from './NetworkStatus'
+import PWAInstallPrompt, { triggerPWAInstall } from './PWAInstallPrompt'
 
 export default function Layout() {
   const { t } = useTranslation()
@@ -470,6 +471,24 @@ export default function Layout() {
                       </Badge>
                     </button>
 
+                    {/* PWA Install App Button in Mobile Drawer */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileMenuOpen(false)
+                        triggerPWAInstall()
+                      }}
+                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-brand-400 hover:bg-surface-100 transition-colors border border-brand-500/30 mt-1"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Smartphone className="w-4 h-4 text-brand-400" />
+                        <span>{t('pwa.installApp', 'Install App')}</span>
+                      </div>
+                      <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-300">
+                        APP
+                      </span>
+                    </button>
+
                     {/* Sign Out Button in Mobile */}
                     <Button
                       variant="ghost"
@@ -513,6 +532,24 @@ export default function Layout() {
                       <Badge variant="primary" size="sm">
                         {language === 'en' ? 'English (EN)' : 'हिंदी (HI)'}
                       </Badge>
+                    </button>
+
+                    {/* PWA Install App Button for Guest Mobile Drawer */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileMenuOpen(false)
+                        triggerPWAInstall()
+                      }}
+                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-brand-400 hover:bg-surface-100 transition-colors border border-brand-500/30 mt-1"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Smartphone className="w-4 h-4 text-brand-400" />
+                        <span>{t('pwa.installApp', 'Install App')}</span>
+                      </div>
+                      <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-300">
+                        APP
+                      </span>
                     </button>
 
                     <div className="pt-4 border-t border-semantic-border-light flex flex-col gap-2">
@@ -681,6 +718,8 @@ export default function Layout() {
         notifications={notifications}
         onClose={removeNotification}
       />
+      
+      <PWAInstallPrompt />
     </>
   )
 }

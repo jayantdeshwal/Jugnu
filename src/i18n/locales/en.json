@@ -653,5 +653,13 @@
     "emergencyCall": "Helpline: +91 98765 43210",
     "supportEmail": "support@muzaffarnagar-kaamgar.in",
     "pilotNotice": "Official Community Pilot Platform • City of Muzaffarnagar"
+  },
+  "pwa": {
+    "installApp": "Install App",
+    "installBannerTitle": "Install Kaamgar App",
+    "installBannerSubtitle": "Add to your home screen for faster bookings, instant WhatsApp contact, and offline access.",
+    "installBtn": "Install App",
+    "laterBtn": "Later",
+    "iosShareHint": "Tap Share and then 'Add to Home Screen' to install this app on your iPhone."
   }
 }

@@ -653,5 +653,13 @@
     "emergencyCall": "हेल्पलाइन: +91 98765 43210",
     "supportEmail": "support@muzaffarnagar-kaamgar.in",
     "pilotNotice": "आधिकारिक समुदाय पायलट मंच • मुजफ्फरनगर शहर"
+  },
+  "pwa": {
+    "installApp": "ऐप इंस्टॉल करें",
+    "installBannerTitle": "कामगार ऐप इंस्टॉल करें",
+    "installBannerSubtitle": "तेज़ बुकिंग, सीधा व्हाट्सएप संपर्क और आसान उपयोग के लिए इसे अपनी मोबाइल स्क्रीन पर जोड़ें।",
+    "installBtn": "ऐप इंस्टॉल करें",
+    "laterBtn": "बाद में",
+    "iosShareHint": "अपने आईफोन पर यह ऐप इंस्टॉल करने के लिए शेयर (Share) दबाएं और 'Add to Home Screen' चुनें।"
   }
 }
