@@ -661,5 +661,25 @@
     "installBtn": "Install App",
     "laterBtn": "Later",
     "iosShareHint": "Tap Share and then 'Add to Home Screen' to install this app on your iPhone."
+  },
+  "appBanner": {
+    "eyebrow": "Official Mobile App • <2MB Storage",
+    "title": "Get the Muzaffarnagar Kaamgar Mobile App",
+    "subtitle": "Install the app directly on your phone for faster bookings, 1-tap WhatsApp chat, and 0% commission local artisan services.",
+    "installBtn": "Install Mobile App Now",
+    "installedStatus": "App Already Installed on This Device",
+    "feature1Title": "Under 2MB Size",
+    "feature1Desc": "Takes almost no phone memory and works fast on any network.",
+    "feature2Title": "Instant 1-Tap Access",
+    "feature2Desc": "Launches directly from your home screen just like a native app.",
+    "feature3Title": "0% Commission",
+    "feature3Desc": "No intermediary fees for the starting 3 months.",
+    "feature4Title": "100% ID Verified",
+    "feature4Desc": "Direct contact with verified Muzaffarnagar artisans.",
+    "iosTitle": "Installing on iPhone (Safari):",
+    "iosStep1": "1. Tap the Share button at the bottom of Safari",
+    "iosStep2": "2. Select 'Add to Home Screen' and tap Add",
+    "androidManualTitle": "Installing on Android (Chrome):",
+    "androidManualDesc": "Tap the 3 dots (⋮) in Chrome and select 'Install app' or 'Add to Home screen' to add the Kaamgar icon to your phone."
   }
 }

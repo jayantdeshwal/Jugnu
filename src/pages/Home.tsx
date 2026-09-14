@@ -31,8 +31,11 @@ import {
   ChevronRight,
   Briefcase,
   Users,
+  Smartphone,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
+import AppDownloadBanner from '@/components/AppDownloadBanner'
+import { triggerPWAInstall } from '@/components/PWAInstallPrompt'
 
 const iconMap: Record<string, any> = {
   zap: Zap,
@@ -99,15 +102,26 @@ export default function Home() {
 
         <div className="container-app relative z-10">
           <div className="max-w-4xl mx-auto text-center">
-            {/* Top Eyebrow Badge */}
+            {/* Top Eyebrow Badges & Quick Install Trigger */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/25 text-brand-400 text-xs font-semibold uppercase tracking-wider mb-6 shadow-sm backdrop-blur-md"
+              className="flex flex-wrap items-center justify-center gap-2.5 mb-6"
             >
-              <Sparkles className="w-3.5 h-3.5 text-brand-400" />
-              <span>{t('home.heroBadge')}</span>
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/25 text-brand-400 text-xs font-semibold uppercase tracking-wider shadow-sm backdrop-blur-md">
+                <Sparkles className="w-3.5 h-3.5 text-brand-400" />
+                <span>{t('home.heroBadge')}</span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => triggerPWAInstall()}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-surface-800/90 hover:bg-surface-700 border border-brand-500/30 text-white text-xs font-medium transition-all hover:scale-105 shadow-sm active:scale-95"
+              >
+                <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
+                <span>{t('pwa.installApp', 'Install App')}</span>
+              </button>
             </motion.div>
 
             {/* Main Headline */}
@@ -500,7 +514,12 @@ export default function Home() {
       </section>
 
       {/* ========================================================================= */}
-      {/* 5. DUAL AUDIENCE CONVERSION BANNERS (CUSTOMER & WORKER)                  */}
+      {/* 5. DEDICATED APP DOWNLOAD SECTION                                         */}
+      {/* ========================================================================= */}
+      <AppDownloadBanner />
+
+      {/* ========================================================================= */}
+      {/* 6. DUAL AUDIENCE CONVERSION BANNERS (CUSTOMER & WORKER)                  */}
       {/* ========================================================================= */}
       <section className="section bg-surface-950/80 border-t border-semantic-border-light py-16">
         <div className="container-app">
