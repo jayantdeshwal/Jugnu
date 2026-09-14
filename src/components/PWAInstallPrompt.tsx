@@ -81,15 +81,19 @@ export default function PWAInstallPrompt() {
     }
     window.addEventListener('open-pwa-install-dialog', handleOpenDialog)
 
-    // 6. Pop up automatically after a gentle 1.5s delay on initial exploration
-    const timer = setTimeout(() => {
-      setIsExpanded(true)
-    }, 1500)
+    // 6. Pop up automatically after a gentle 2s delay on initial exploration (if not already dismissed in this session)
+    const hasDismissed = sessionStorage.getItem('kaamgar_pwa_dismissed_session')
+    let timer: any = null
+    if (!hasDismissed) {
+      timer = setTimeout(() => {
+        setIsExpanded(true)
+      }, 2000)
+    }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
       window.removeEventListener('open-pwa-install-dialog', handleOpenDialog)
-      clearTimeout(timer)
+      if (timer) clearTimeout(timer)
     }
   }, [])
 
@@ -108,45 +112,17 @@ export default function PWAInstallPrompt() {
     }
   }
 
+  const handleDismiss = () => {
+    sessionStorage.setItem('kaamgar_pwa_dismissed_session', 'true')
+    setIsExpanded(false)
+  }
+
   // If already installed, hide everything
   if (isStandalone) return null
 
   return (
     <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-md z-50 pointer-events-none">
-      <AnimatePresence mode="wait">
-        {/* State A: Minimized Floating Highlighted Pill Button */}
-        {!isExpanded && (
-          <motion.div
-            key="minimized-pill"
-            initial={{ scale: 0.8, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.8, opacity: 0, y: 20 }}
-            transition={{ type: 'spring', damping: 20, stiffness: 350 }}
-            className="flex justify-end pointer-events-auto"
-          >
-            <button
-              onClick={() => {
-                setIsExpanded(true)
-              }}
-              className="group relative flex items-center gap-2.5 px-5 py-3 rounded-full bg-gradient-to-r from-brand-500 via-amber-400 to-brand-500 text-surface-950 font-black text-xs sm:text-sm shadow-2xl shadow-brand-500/40 hover:scale-105 active:scale-95 transition-all border-2 border-amber-200 ring-4 ring-brand-500/25"
-              aria-label="Install Kaamgar Mobile App"
-            >
-              {/* Pulsing indicator ring */}
-              <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border border-surface-950" />
-              </span>
-
-              <Download className="w-4 h-4 animate-bounce shrink-0" />
-              <span className="tracking-tight uppercase">
-                {t('pwa.installApp', 'Install App')}
-              </span>
-              <ChevronRight className="w-3.5 h-3.5 opacity-60 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          </motion.div>
-        )}
-
-        {/* State B: Expanded Full Highlighted Pop-up Banner */}
+      <AnimatePresence>
         {isExpanded && (
           <motion.div
             key="expanded-card"
@@ -182,12 +158,12 @@ export default function PWAInstallPrompt() {
                       </h4>
                     </div>
 
-                    {/* Minimize / Close button */}
+                    {/* Close button */}
                     <button
-                      onClick={() => setIsExpanded(false)}
-                      className="p-1.5 rounded-lg text-semantic-text-tertiary hover:text-white hover:bg-surface-800 transition-colors shrink-0"
-                      title="Minimize"
-                      aria-label="Minimize"
+                      onClick={handleDismiss}
+                      className="p-1.5 rounded-lg text-semantic-text-tertiary hover:text-white hover:bg-surface-800 transition-colors shrink-0 cursor-pointer"
+                      title="Close"
+                      aria-label="Close"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -239,17 +215,17 @@ export default function PWAInstallPrompt() {
                       <button
                         type="button"
                         onClick={handleInstallClick}
-                        className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-brand-500 via-amber-400 to-brand-500 text-surface-950 font-extrabold text-xs sm:text-sm shadow-lg shadow-brand-500/30 hover:scale-105 active:scale-95 transition-all border border-amber-200"
+                        className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-brand-500 to-amber-500 hover:from-brand-400 hover:to-amber-400 text-surface-950 font-bold text-xs sm:text-sm shadow-md shadow-brand-500/20 active:scale-95 transition-all border border-amber-200/60 cursor-pointer"
                       >
-                        <Download className="w-4 h-4 animate-bounce" />
+                        <Download className="w-4 h-4" />
                         <span>{t('pwa.installBtn', 'Install App Now')}</span>
                       </button>
 
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setIsExpanded(false)}
-                        className="text-xs text-semantic-text-tertiary hover:text-white py-2 px-3"
+                        onClick={handleDismiss}
+                        className="text-xs text-semantic-text-tertiary hover:text-white py-2 px-3 cursor-pointer"
                       >
                         <span>{t('pwa.laterBtn', 'Later')}</span>
                       </Button>

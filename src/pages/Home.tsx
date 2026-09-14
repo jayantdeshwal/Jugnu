@@ -118,14 +118,10 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => triggerPWAInstall()}
-                className="relative group inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-brand-500 via-amber-400 to-brand-500 text-surface-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-brand-500/30 hover:shadow-brand-500/50 hover:scale-105 active:scale-95 transition-all border border-amber-200/80 cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-brand-500 to-amber-500 hover:from-brand-400 hover:to-amber-400 text-surface-950 font-bold text-xs uppercase tracking-wider shadow-md shadow-brand-500/20 hover:scale-105 active:scale-95 transition-all border border-amber-200/60 cursor-pointer"
               >
-                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand-600"></span>
-                </span>
-                <Download className="w-3.5 h-3.5 animate-bounce text-surface-950" />
-                <span className="font-extrabold">{t('pwa.installApp', 'Install App')}</span>
+                <Download className="w-3.5 h-3.5 text-surface-950" />
+                <span>{t('pwa.installApp', 'Install App')}</span>
               </button>
             </motion.div>
 
