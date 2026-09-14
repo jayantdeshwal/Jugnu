@@ -4,7 +4,7 @@ import { useLanguage } from '../context/LanguageContext'
 import { useAuth } from '../context/AuthContext'
 import { useNotifications } from '../context/NotificationContext'
 import { Button, Avatar, Badge } from '@kaamgar/ui'
-import { Menu, X, Bell, User, LogOut, Settings, Shield, Home, Search, List, UserPlus, Truck, Star, Briefcase, ChevronDown, Globe, Phone, Mail, MapPin, ShieldCheck, ArrowRight, Heart, Smartphone } from 'lucide-react'
+import { Menu, X, Bell, User, LogOut, Settings, Shield, Home, Search, List, UserPlus, Truck, Star, Briefcase, ChevronDown, Globe, Phone, Mail, MapPin, ShieldCheck, ArrowRight, Heart, Smartphone, LogIn } from 'lucide-react'
 import { CATEGORIES, getCategoryName } from '@kaamgar/shared'
 import { useState, useRef, useEffect } from 'react'
 import NetworkStatus from './NetworkStatus'
@@ -556,7 +556,7 @@ export default function Layout() {
         </nav>
       </header>
       
-      <main className="min-h-[calc(100vh-64px)]">
+      <main className={`min-h-[calc(100vh-64px)] ${!isAuthenticated ? 'pb-20 sm:pb-16' : ''}`}>
         <Outlet />
       </main>
       
@@ -700,6 +700,42 @@ export default function Layout() {
         </div>
       </footer>
       
+      {/* Guest Exploration Sticky Bottom Bar */}
+      {!isAuthenticated && (
+        <aside
+          className="fixed bottom-0 left-0 right-0 z-40 bg-surface-950/95 backdrop-blur-md border-t border-semantic-border-light shadow-2xl px-3 sm:px-6 py-2.5"
+          aria-label="Guest session prompt"
+        >
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-brand-500/15 border border-brand-500/30 flex items-center justify-center text-brand-400 shrink-0">
+                <ShieldCheck className="w-4 h-4" />
+              </div>
+              <div className="truncate">
+                <p className="text-xs font-semibold text-semantic-text-primary truncate">
+                  {t('guestBar.prompt', 'Browsing in Guest Mode')}
+                </p>
+                <p className="text-[11px] text-semantic-text-secondary truncate hidden sm:block">
+                  {t('guestBar.subprompt', 'Sign in to book artisans, chat, and access verified phone numbers')}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => navigate('/login')}
+                className="font-semibold px-4 py-1.5 shadow-lg shadow-brand-500/20 text-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>{t('nav.loginSignup', 'Login / Sign Up')}</span>
+              </Button>
+            </div>
+          </div>
+        </aside>
+      )}
+
       <NotificationToast
         notifications={notifications}
         onClose={removeNotification}

@@ -51,6 +51,13 @@
   html {
     @apply antialiased;
     scroll-behavior: smooth;
+    font-size: 13px; /* Reduces base from 16px/12pt by ~3 points */
+  }
+
+  @media (min-width: 640px) {
+    html {
+      font-size: 13.5px;
+    }
   }
 
   body {

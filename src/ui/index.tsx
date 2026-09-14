@@ -11,7 +11,7 @@ export function Button({ variant = 'primary', size = 'md', loading, className = 
     ghost: 'text-semantic-text-secondary hover:text-semantic-text-primary hover:bg-surface-200 active:bg-surface-300',
     danger: 'bg-red-600 text-white hover:bg-red-500 active:bg-red-700 shadow-sm',
   }
-  const sizes = { sm: 'px-3 py-1.5 text-sm', md: 'px-4 py-2.5 text-sm', lg: 'px-5 py-3 text-base' }
+  const sizes = { sm: 'px-2.5 py-1 text-xs', md: 'px-3.5 py-2 text-xs sm:text-sm', lg: 'px-4.5 py-2.5 text-sm' }
   return <button className={`inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-semantic-bg-primary disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${sizes[size]} ${className}`} disabled={disabled || loading} {...props}>{loading ? 'Loading...' : children}</button>
 }
 
@@ -19,13 +19,13 @@ export function Input({ label, error, helperText, leftIcon, rightIcon, className
   const inputId = id || label?.toLowerCase().replace(/\s+/g, '-')
   return (
     <div className="w-full">
-      {label && <label className="block text-sm font-medium text-semantic-text-secondary mb-1.5" htmlFor={inputId}>{label}</label>}
+      {label && <label className="block text-xs font-medium text-semantic-text-secondary mb-1" htmlFor={inputId}>{label}</label>}
       <div className="relative">
         {leftIcon && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-semantic-text-tertiary">{leftIcon}</span>}
-        <input id={inputId} className={`w-full rounded-lg bg-surface-200 border border-semantic-border-medium px-4 py-2.5 text-sm text-semantic-text-primary placeholder:text-semantic-text-tertiary focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 transition-colors ${leftIcon ? 'pl-10' : ''} ${rightIcon ? 'pr-10' : ''} ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''} ${className}`} aria-invalid={Boolean(error)} {...props} />
+        <input id={inputId} className={`w-full rounded-lg bg-surface-200 border border-semantic-border-medium px-3.5 py-2 text-xs sm:text-sm text-semantic-text-primary placeholder:text-semantic-text-tertiary focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 transition-colors ${leftIcon ? 'pl-9' : ''} ${rightIcon ? 'pr-9' : ''} ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''} ${className}`} aria-invalid={Boolean(error)} {...props} />
         {rightIcon && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-semantic-text-tertiary">{rightIcon}</span>}
       </div>
-      {error ? <p className="mt-1 text-sm text-red-400">{error}</p> : helperText && <p className="mt-1 text-sm text-semantic-text-tertiary">{helperText}</p>}
+      {error ? <p className="mt-1 text-xs text-red-400">{error}</p> : helperText && <p className="mt-1 text-xs text-semantic-text-tertiary">{helperText}</p>}
     </div>
   )
 }
@@ -33,9 +33,9 @@ export function Input({ label, error, helperText, leftIcon, rightIcon, className
 export function Card({ className = '', children, ...props }: HTMLAttributes<HTMLDivElement> & { padding?: 'none' | 'sm' | 'md' | 'lg'; variant?: string; hover?: boolean }) {
   return <div className={`rounded-xl border border-semantic-border-light bg-surface-100 text-semantic-text-primary shadow-sm ${className}`} {...props}>{children}</div>
 }
-export function CardHeader(props: HTMLAttributes<HTMLDivElement>) { return <div className={`mb-4 ${props.className || ''}`} {...props} /> }
-export function CardTitle(props: HTMLAttributes<HTMLHeadingElement>) { return <h3 className={`text-lg font-semibold text-semantic-text-primary ${props.className || ''}`} {...props} /> }
-export function CardDescription(props: HTMLAttributes<HTMLParagraphElement>) { return <p className={`mt-1 text-sm text-semantic-text-secondary ${props.className || ''}`} {...props} /> }
+export function CardHeader(props: HTMLAttributes<HTMLDivElement>) { return <div className={`mb-3 ${props.className || ''}`} {...props} /> }
+export function CardTitle(props: HTMLAttributes<HTMLHeadingElement>) { return <h3 className={`text-base font-semibold text-semantic-text-primary ${props.className || ''}`} {...props} /> }
+export function CardDescription(props: HTMLAttributes<HTMLParagraphElement>) { return <p className={`mt-0.5 text-xs text-semantic-text-secondary ${props.className || ''}`} {...props} /> }
 export function CardContent(props: HTMLAttributes<HTMLDivElement>) { return <div {...props} /> }
 export function CardFooter(props: HTMLAttributes<HTMLDivElement>) { return <div className={`mt-4 border-t border-semantic-border-light pt-4 ${props.className || ''}`} {...props} /> }
 

@@ -681,5 +681,9 @@
     "iosStep2": "2. Select 'Add to Home Screen' and tap Add",
     "androidManualTitle": "Installing on Android (Chrome):",
     "androidManualDesc": "Tap the 3 dots (⋮) in Chrome and select 'Install app' or 'Add to Home screen' to add the Kaamgar icon to your phone."
+  },
+  "guestBar": {
+    "prompt": "Browsing in Guest Mode",
+    "subprompt": "Sign in to book artisans, chat, and access verified phone numbers"
   }
 }

@@ -23,6 +23,7 @@ import {
   Sparkles,
   Download,
   Globe,
+  Heart,
 } from 'lucide-react'
 
 interface LoginProps {
@@ -450,14 +451,14 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
             <div className="w-12 h-12 mx-auto mb-2.5 bg-brand-500/10 border border-brand-500/25 rounded-2xl flex items-center justify-center text-brand-400 shadow-sm">
               <Sparkles className="w-5 h-5 text-brand-400" />
             </div>
-            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+            <h1 className="text-lg sm:text-xl font-black text-white tracking-tight">
               {loginRole === 'admin'
                 ? t('loginPage.adminTitle', 'Administrator Portal')
                 : loginRole === 'worker'
                 ? t('loginPage.workerTitle', 'Kaamgar Worker Login')
                 : t('loginPage.customerTitle', 'Customer Login')}
             </h1>
-            <p className="mt-1 text-xs text-semantic-text-secondary">
+            <p className="mt-1 text-[11px] sm:text-xs text-semantic-text-secondary">
               {loginRole === 'admin'
                 ? t('loginPage.adminSubtitle', 'Sign in with administrator credentials & complete 2FA')
                 : loginRole === 'worker'
@@ -943,7 +944,7 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
         </Card>
       </div>
 
-      {/* Bottom Footer Trust & Copyright */}
+      {/* Bottom Footer Trust, Love & Copyright */}
       <footer className="relative z-10 w-full max-w-md mx-auto text-center py-2">
         <div className="flex items-center justify-center gap-2 text-[11px] text-semantic-text-tertiary">
           <span>100% ID Verified</span>
@@ -951,6 +952,10 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
           <span>0% Commission</span>
           <span>•</span>
           <span>Muzaffarnagar</span>
+        </div>
+        <div className="flex items-center justify-center gap-1.5 text-xs text-semantic-text-secondary mt-1.5">
+          <Heart className="w-3.5 h-3.5 text-red-400 fill-red-400/20" />
+          <span>{t('footer.madeWith', 'Made with ❤️ for Muzaffarnagar')}</span>
         </div>
         <p className="text-[10px] text-semantic-text-tertiary/70 mt-1">
           © 2026 {t('app.name')} • Hyperlocal Pilot

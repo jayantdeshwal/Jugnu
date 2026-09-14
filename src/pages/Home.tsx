@@ -118,7 +118,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight mb-4"
+              className="text-xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white leading-tight mb-3"
             >
               {t('home.heroTitle')}
             </motion.h1>
@@ -128,7 +128,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-xs sm:text-sm lg:text-base text-semantic-text-secondary max-w-2xl mx-auto mb-8 leading-relaxed"
+              className="text-[11px] sm:text-xs lg:text-sm text-semantic-text-secondary max-w-2xl mx-auto mb-6 leading-relaxed"
             >
               {t('home.heroSubtitle')}
             </motion.p>
@@ -150,7 +150,7 @@ export default function Home() {
                   <select
                     value={selectedCategory}
                     onChange={e => setSelectedCategory(e.target.value)}
-                    className="w-full bg-transparent py-3 text-sm text-semantic-text-primary focus:outline-none cursor-pointer"
+                    className="w-full bg-transparent py-2.5 text-xs sm:text-sm text-semantic-text-primary focus:outline-none cursor-pointer"
                     aria-label={t('home.searchSelectCategory')}
                   >
                     <option value="" className="bg-surface-900 text-white">
@@ -170,7 +170,7 @@ export default function Home() {
                   <select
                     value={selectedArea}
                     onChange={e => setSelectedArea(e.target.value)}
-                    className="w-full bg-transparent py-3 text-sm text-semantic-text-primary focus:outline-none cursor-pointer"
+                    className="w-full bg-transparent py-2.5 text-xs sm:text-sm text-semantic-text-primary focus:outline-none cursor-pointer"
                     aria-label={t('home.searchSelectArea')}
                   >
                     <option value="" className="bg-surface-900 text-white">
@@ -192,7 +192,7 @@ export default function Home() {
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     placeholder={t('home.searchKeywordPlaceholder')}
-                    className="w-full bg-transparent py-3 text-sm text-white placeholder:text-semantic-text-tertiary focus:outline-none"
+                    className="w-full bg-transparent py-2.5 text-xs sm:text-sm text-white placeholder:text-semantic-text-tertiary focus:outline-none"
                   />
                 </div>
 
@@ -201,7 +201,7 @@ export default function Home() {
                   type="submit"
                   variant="primary"
                   size="lg"
-                  className="px-6 py-3 bg-brand-500 hover:bg-brand-400 text-surface-950 font-bold rounded-xl shadow-lg shadow-brand-500/25 flex items-center justify-center gap-2 whitespace-nowrap transition-transform active:scale-[0.98]"
+                  className="px-5 py-2.5 bg-brand-500 hover:bg-brand-400 text-surface-950 font-bold rounded-xl shadow-lg shadow-brand-500/25 flex items-center justify-center gap-2 whitespace-nowrap text-xs sm:text-sm transition-transform active:scale-[0.98]"
                 >
                   <Search className="w-4 h-4" />
                   <span>{t('home.searchButton')}</span>
@@ -282,10 +282,10 @@ export default function Home() {
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Muzaffarnagar Directory</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-semantic-text-primary">
+              <h2 className="text-xl sm:text-2xl font-bold text-semantic-text-primary">
                 {t('home.popularCategories')}
               </h2>
-              <p className="text-sm text-semantic-text-secondary mt-1 max-w-xl">
+              <p className="text-xs sm:text-sm text-semantic-text-secondary mt-1 max-w-xl">
                 {t('home.servicesSubtitle')}
               </p>
             </div>
@@ -367,10 +367,10 @@ export default function Home() {
               <ShieldCheck className="w-4 h-4" />
               <span>Trust & Quality Standard</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-semantic-text-primary">
+            <h2 className="text-xl sm:text-2xl font-bold text-semantic-text-primary">
               {t('home.whyTitle')}
             </h2>
-            <p className="text-sm text-semantic-text-secondary mt-2">
+            <p className="text-xs sm:text-sm text-semantic-text-secondary mt-1.5">
               {t('home.whySubtitle')}
             </p>
           </div>
@@ -381,7 +381,7 @@ export default function Home() {
               <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4">
                 <UserCheck className="w-6 h-6" />
               </div>
-              <h3 className="font-bold text-base text-semantic-text-primary mb-2">
+              <h3 className="font-bold text-sm sm:text-base text-semantic-text-primary mb-2">
                 {t('home.whyPillar1Title')}
               </h3>
               <p className="text-xs text-semantic-text-secondary leading-relaxed">
@@ -394,7 +394,7 @@ export default function Home() {
               <div className="w-12 h-12 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400 mb-4">
                 <PhoneCall className="w-6 h-6" />
               </div>
-              <h3 className="font-bold text-base text-semantic-text-primary mb-2">
+              <h3 className="font-bold text-sm sm:text-base text-semantic-text-primary mb-2">
                 {t('home.whyPillar2Title')}
               </h3>
               <p className="text-xs text-semantic-text-secondary leading-relaxed">
@@ -407,7 +407,7 @@ export default function Home() {
               <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-4">
                 <Percent className="w-6 h-6" />
               </div>
-              <h3 className="font-bold text-base text-semantic-text-primary mb-2">
+              <h3 className="font-bold text-sm sm:text-base text-semantic-text-primary mb-2">
                 {t('home.whyPillar3Title')}
               </h3>
               <p className="text-xs text-semantic-text-secondary leading-relaxed">
@@ -420,7 +420,7 @@ export default function Home() {
               <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 mb-4">
                 <MapPin className="w-6 h-6" />
               </div>
-              <h3 className="font-bold text-base text-semantic-text-primary mb-2">
+              <h3 className="font-bold text-sm sm:text-base text-semantic-text-primary mb-2">
                 {t('home.whyPillar4Title')}
               </h3>
               <p className="text-xs text-semantic-text-secondary leading-relaxed">
@@ -437,10 +437,10 @@ export default function Home() {
       <section className="section bg-semantic-bg-primary">
         <div className="container-app">
           <div className="text-center max-w-2xl mx-auto mb-14">
-            <h2 className="text-2xl sm:text-3xl font-bold text-semantic-text-primary">
+            <h2 className="text-xl sm:text-2xl font-bold text-semantic-text-primary">
               {t('home.howTitle')}
             </h2>
-            <p className="text-sm text-semantic-text-secondary mt-2">
+            <p className="text-xs sm:text-sm text-semantic-text-secondary mt-1.5">
               {t('home.howSubtitle')}
             </p>
           </div>
@@ -449,54 +449,48 @@ export default function Home() {
             {[
               {
                 step: '01',
-                title: t('home.step1Title'),
-                desc: t('home.step1Desc'),
-                icon: Search,
+                title: t('home.howStep1Title'),
+                desc: t('home.howStep1Desc'),
+                badge: 'Pincode Filter',
               },
               {
                 step: '02',
-                title: t('home.step2Title'),
-                desc: t('home.step2Desc'),
-                icon: Star,
+                title: t('home.howStep2Title'),
+                desc: t('home.howStep2Desc'),
+                badge: 'Verified Badges',
               },
               {
                 step: '03',
-                title: t('home.step3Title'),
-                desc: t('home.step3Desc'),
-                icon: Calendar,
+                title: t('home.howStep3Title'),
+                desc: t('home.howStep3Desc'),
+                badge: 'Direct WhatsApp',
               },
               {
                 step: '04',
-                title: t('home.step4Title'),
-                desc: t('home.step4Desc'),
-                icon: MessageSquare,
+                title: t('home.howStep4Title'),
+                desc: t('home.howStep4Desc'),
+                badge: 'Local Review',
               },
-            ].map(({ step, title, desc, icon: StepIcon }, idx) => (
-              <motion.div
-                key={step}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: idx * 0.1 }}
-                className="p-6 rounded-2xl bg-surface-100 border border-semantic-border-light flex flex-col justify-between relative group"
+            ].map((item, index) => (
+              <div
+                key={item.step}
+                className="relative p-6 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-brand-500/30 transition-all duration-200"
               >
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-2xl font-black text-brand-500/40 group-hover:text-brand-400 transition-colors">
-                      {step}
-                    </span>
-                    <div className="w-10 h-10 rounded-xl bg-surface-200 flex items-center justify-center text-brand-400">
-                      <StepIcon className="w-5 h-5" />
-                    </div>
-                  </div>
-                  <h3 className="font-bold text-base text-semantic-text-primary mb-2">
-                    {title}
-                  </h3>
-                  <p className="text-xs text-semantic-text-secondary leading-relaxed">
-                    {desc}
-                  </p>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-3xl font-black text-brand-500/30 font-mono">
+                    {item.step}
+                  </span>
+                  <span className="text-[11px] font-semibold text-brand-400 bg-brand-500/10 px-2 py-0.5 rounded-full border border-brand-500/20">
+                    {item.badge}
+                  </span>
                 </div>
-              </motion.div>
+                <h3 className="font-bold text-sm sm:text-base text-semantic-text-primary mb-2">
+                  {item.title}
+                </h3>
+                <p className="text-xs text-semantic-text-secondary leading-relaxed">
+                  {item.desc}
+                </p>
+              </div>
             ))}
           </div>
         </div>
@@ -517,10 +511,10 @@ export default function Home() {
                 <Badge variant="brand" size="sm" className="mb-4">
                   {t('homeCta.badgeVerified')}
                 </Badge>
-                <h3 className="text-2xl font-bold text-white mb-2">
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-2">
                   {t('homeCta.customerCardTitle')}
                 </h3>
-                <p className="text-sm text-semantic-text-secondary leading-relaxed mb-6">
+                <p className="text-xs sm:text-sm text-semantic-text-secondary leading-relaxed mb-5">
                   {t('homeCta.customerCardSubtitle')}
                 </p>
               </div>
@@ -545,10 +539,10 @@ export default function Home() {
                 <Badge variant="success" size="sm" className="mb-4">
                   {t('homeCta.workerCardBadge', '0% Commission for Starting 3 Months')}
                 </Badge>
-                <h3 className="text-2xl font-bold text-white mb-2">
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-2">
                   {t('homeCta.workerCardTitle')}
                 </h3>
-                <p className="text-sm text-semantic-text-secondary leading-relaxed mb-6">
+                <p className="text-xs sm:text-sm text-semantic-text-secondary leading-relaxed mb-5">
                   {t('homeCta.workerCardSubtitle')}
                 </p>
               </div>

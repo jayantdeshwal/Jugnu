@@ -681,5 +681,9 @@
     "iosStep2": "2. 'Add to Home Screen' चुनें और 'Add' पर टैप करें",
     "androidManualTitle": "एंड्रॉइड पर वैकल्पिक तरीका",
     "androidManualDesc": "क्रोम के ऊपरी दाएं कोने में 3 बिंदुओं (⋮) पर टैप करें और 'Install app' या 'Add to Home screen' चुनें।"
+  },
+  "guestBar": {
+    "prompt": "अतिथि मोड में देख रहे हैं",
+    "subprompt": "कारीगरों को बुक करने, चैट करने और फोन नंबर देखने के लिए लॉगिन करें"
   }
 }
