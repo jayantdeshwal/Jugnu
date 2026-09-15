@@ -51,8 +51,16 @@ export async function fetchPublicCatalog(): Promise<PublicCatalog> {
   if (categoriesError) throw categoriesError
   if (areasError) throw areasError
 
+  // Merge database categories with fallback list so new categories appear immediately
+  const dbCategories = categories ?? []
+  const existingIds = new Set(dbCategories.map((c: any) => c.id))
+  const mergedCategories = [
+    ...dbCategories,
+    ...fallbackCatalog.categories.filter(c => !existingIds.has(c.id)),
+  ].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+
   return {
-    categories: categories ?? [],
-    serviceAreas: serviceAreas ?? [],
+    categories: mergedCategories,
+    serviceAreas: serviceAreas ?? fallbackCatalog.serviceAreas,
   }
 }

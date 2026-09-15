@@ -137,7 +137,16 @@
     "whyPillar4Title": "Hyperlocal Coverage",
     "whyPillar4Desc": "Built specifically for Muzaffarnagar city, New Mandi, Civil Lines, and surrounding tehsil areas.",
     "howTitle": "How It Works",
-    "howSubtitle": "Four simple steps from searching to getting your job completed"
+    "howSubtitle": "Four simple steps from searching to getting your job completed",
+    "stickySearchPlaceholder": "Search for 'Electrician', 'AC Repair', 'Cleaning', 'Salon'...",
+    "stickyCategoriesTitle": "All Service Categories",
+    "stickyAreasTitle": "Select Local Area",
+    "stickyPopularSearches": "Popular Searches",
+    "instaHelp": "InstaHelp (30 Mins)",
+    "allServicesGrid": "All services",
+    "nativeServices": "Verified Muzaffarnagar Services",
+    "spotlightTitle": "In the spotlight",
+    "spotlightSubtitle": "Top-rated verified professionals in Muzaffarnagar"
   },
   "categories": {
     "electrician": "Electrician",
@@ -145,6 +154,9 @@
     "carpenter": "Carpenter",
     "ac": "AC Technician",
     "painter": "Painter",
+    "cleaning": "Cleaning & Pest Control",
+    "men_salon": "Men's Salon & Grooming",
+    "women_spa": "Women's Salon & Spa",
     "all": "All Services"
   },
   "workerCard": {
@@ -697,5 +709,34 @@
   "guestBar": {
     "prompt": "Browsing in Guest Mode",
     "subprompt": "Sign in to book artisans, chat, and access verified phone numbers"
+  },
+  "profile": {
+    "title": "My Account",
+    "subtitle": "Personal details, service options & preferences",
+    "verifiedCustomer": "Verified Customer",
+    "verifiedWorker": "Verified Kaamgar",
+    "incompleteProfile": "Incomplete Profile",
+    "completeProfile": "Complete",
+    "editProfile": "Edit Profile",
+    "myBookings": "My bookings",
+    "workerMode": "Worker Mode",
+    "becomeWorker": "Earn with Kaamgar",
+    "helpSupport": "Help & support",
+    "manageAddresses": "Manage addresses & localities",
+    "manageAddressesDesc": "Muzaffarnagar pincodes (251001 & 251002)",
+    "emailReceipts": "Email & notifications",
+    "reviewsRatings": "My ratings & reviews",
+    "aboutApp": "About Muzaffarnagar Kaamgar",
+    "faqsHelp": "Help Center & FAQs",
+    "referTitle": "Refer & earn / Share Kaamgar",
+    "referDesc": "Help your friends and family find verified local electricians, plumbers, and technicians without middlemen.",
+    "referNow": "Refer now",
+    "completed": "Completed",
+    "availableForJobs": "Available for Jobs",
+    "offlineUnavailable": "Offline / Unavailable",
+    "saveChanges": "Save Changes",
+    "logoutModalTitle": "Logout Confirmation",
+    "logoutModalDesc": "Are you sure you want to sign out of your account?",
+    "confirmLogout": "Confirm Logout"
   }
 }

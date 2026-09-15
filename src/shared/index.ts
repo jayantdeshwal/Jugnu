@@ -18,6 +18,9 @@ export const CATEGORIES = [
   { id: 'carpenter', name_en: 'Carpenter', name_hi: 'कारपेंटर', icon: 'hammer' },
   { id: 'ac', name_en: 'AC Technician', name_hi: 'AC टेक्नीशियन', icon: 'snowflake' },
   { id: 'painter', name_en: 'Painter', name_hi: 'पेंटर', icon: 'brush' },
+  { id: 'cleaning', name_en: 'Cleaning & Pest Control', name_hi: 'सफ़ाई एवं कीट नियंत्रण', icon: 'sparkles' },
+  { id: 'men_salon', name_en: "Men's Salon & Grooming", name_hi: 'पुरुष सैलून व ग्रूमिंग', icon: 'scissors' },
+  { id: 'women_spa', name_en: "Women's Salon & Spa", name_hi: 'महिला सैलून व स्पा', icon: 'flower' },
 ] as const
 
 export const MUZAFFARNAGAR_PINCODES = ['251001', '251002'] as const

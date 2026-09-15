@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import { Button, Card, Avatar, Badge, Input, Modal } from '@kaamgar/ui'
-import { CATEGORIES, MUZAFFARNAGAR_PINCODES } from '@kaamgar/shared'
+import { CATEGORIES, MUZAFFARNAGAR_PINCODES, getCategoryName } from '@kaamgar/shared'
 import {
   Star,
   Calendar,
@@ -25,11 +25,21 @@ import {
   X,
   FileText,
   Lock,
-  FileCheck,
   ChevronRight,
   UserCheck,
   Mail,
   Smartphone,
+  ArrowLeft,
+  Headphones,
+  ClipboardList,
+  Gift,
+  Share2,
+  HelpCircle,
+  Info,
+  PhoneCall,
+  MessageCircle,
+  Power,
+  Sparkles,
 } from 'lucide-react'
 import { getSupabaseClient } from '@/lib/supabase'
 import { uploadAvatar, uploadIdProof, validateFile } from '@/services/storage'
@@ -49,23 +59,16 @@ interface LiveWorkerDetails {
   id_proof_url: string | null
 }
 
-interface RecentActivityItem {
-  id: string
-  title: string
-  desc: string
-  time: string
-  status: string
-  category: string
-}
-
 export default function Profile() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
-  const { user, updateUser, updateEmail, logout, isWorker, isLoading: authLoading } = useAuth()
+  const { user, updateUser, updateEmail, logout, isWorker, isAdmin, isLoading: authLoading } = useAuth()
   const { language, setLanguage, toggleLanguage } = useLanguage()
 
   const [editMode, setEditMode] = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const [showSupportModal, setShowSupportModal] = useState(false)
+  const [showAddressModal, setShowAddressModal] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [saveSuccessMsg, setSaveSuccessMsg] = useState('')
   const [saveErrorMsg, setSaveErrorMsg] = useState('')
@@ -92,7 +95,7 @@ export default function Profile() {
   })
 
   const [workerDetails, setWorkerDetails] = useState<LiveWorkerDetails | null>(null)
-  const [recentActivities, setRecentActivities] = useState<RecentActivityItem[]>([])
+  const [completedBookingsCount, setCompletedBookingsCount] = useState(0)
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
 
   // Avatar upload
@@ -123,7 +126,7 @@ export default function Profile() {
         .eq('id', user.id)
         .maybeSingle()
 
-      // 2. If worker, fetch worker profile, categories, areas, bookings
+      // 2. If worker, fetch worker details
       let workerInfo: LiveWorkerDetails | null = null
       if (user.role === 'worker' || isWorker) {
         const [wpResult, wcResult, wsaResult, bookingsResult] = await Promise.all([
@@ -138,13 +141,13 @@ export default function Profile() {
             .select('service_areas(pincode)')
             .eq('worker_id', user.id),
           (supabase.from('bookings') as any)
-            .select('id, category_id, status, scheduled_at, created_at')
-            .eq('worker_id', user.id)
-            .order('created_at', { ascending: false }),
+            .select('id, status')
+            .eq('worker_id', user.id),
         ])
 
         const wp = wpResult?.data
         const completedCount = (bookingsResult?.data ?? []).filter((b: any) => b.status === 'completed').length
+        setCompletedBookingsCount(completedCount)
         const userCategories = (wcResult?.data ?? []).map((c: any) => c.category_id).filter(Boolean)
         const userAreas = (wsaResult?.data ?? [])
           .map((a: any) => a.service_areas?.pincode)
@@ -163,43 +166,13 @@ export default function Profile() {
           completedJobsCount: completedCount,
           id_proof_url: wp?.id_proof_url || null,
         }
-
-        // Map recent bookings for worker
-        const activities: RecentActivityItem[] = (bookingsResult?.data ?? []).slice(0, 5).map((b: any) => ({
-          id: b.id,
-          title: `Booking ${b.status}`,
-          desc: `${b.category_id} service`,
-          time: new Date(b.created_at).toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-IN', {
-            month: 'short',
-            day: 'numeric',
-          }),
-          status: b.status,
-          category: b.category_id,
-        }))
-        setRecentActivities(activities)
-      } else if (user.role === 'admin') {
-        // Administrator accounts do not participate in bookings
-        setRecentActivities([])
       } else {
-        // Customer bookings
-        const { data: customerBookings } = await (supabase.from('bookings') as any)
-          .select('id, category_id, status, scheduled_at, created_at')
+        // Customer completed bookings
+        const { data: custBookings } = await (supabase.from('bookings') as any)
+          .select('id, status')
           .eq('customer_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(5)
-
-        const activities: RecentActivityItem[] = (customerBookings ?? []).map((b: any) => ({
-          id: b.id,
-          title: `Booking ${b.status}`,
-          desc: `${b.category_id} booking`,
-          time: new Date(b.created_at).toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-IN', {
-            month: 'short',
-            day: 'numeric',
-          }),
-          status: b.status,
-          category: b.category_id,
-        }))
-        setRecentActivities(activities)
+        const completedCount = (custBookings ?? []).filter((b: any) => b.status === 'completed').length
+        setCompletedBookingsCount(completedCount)
       }
 
       setWorkerDetails(workerInfo)
@@ -223,35 +196,11 @@ export default function Profile() {
     }
   }, [user?.id, user?.name, user?.phone, user?.email, user?.language, user?.avatar_url, user?.role, isWorker, language])
 
-  const handleSaveEmailModal = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setEmailModalError('')
-    const trimmed = emailModalInput.trim()
-    if (!trimmed || !trimmed.includes('@')) {
-      setEmailModalError('Please enter a valid email address')
-      return
-    }
-
-    setIsSavingEmail(true)
-    try {
-      await updateEmail(trimmed)
-      setFormData(prev => ({ ...prev, email: trimmed }))
-      setShowEmailModal(false)
-      setEmailModalInput('')
-      setSaveSuccessMsg('Email address saved successfully!')
-      setTimeout(() => setSaveSuccessMsg(''), 4000)
-    } catch (err) {
-      setEmailModalError(err instanceof Error ? err.message : 'Failed to save email')
-    } finally {
-      setIsSavingEmail(false)
-    }
-  }
-
   useEffect(() => {
     void loadProfileData()
   }, [loadProfileData])
 
-  // Direct toggle availability without opening edit mode
+  // Direct toggle availability for worker
   const handleToggleAvailability = async () => {
     if (!user?.id || !workerDetails) return
     const newStatus = !workerDetails.is_available
@@ -271,12 +220,12 @@ export default function Profile() {
       )
       setTimeout(() => setSaveSuccessMsg(''), 3500)
     } catch (err) {
-      setSaveErrorMsg(err instanceof Error ? err.message : 'Failed to update availability status')
+      setSaveErrorMsg(err instanceof Error ? err.message : 'Failed to update availability')
       setTimeout(() => setSaveErrorMsg(''), 4000)
     }
   }
 
-  // Avatar file upload handler
+  // Avatar upload
   const handleAvatarFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !user?.id) return
@@ -299,9 +248,8 @@ export default function Profile() {
         .eq('id', user.id)
 
       if (error) throw error
-
       updateUser({ avatar_url: publicUrl })
-      setSaveSuccessMsg(t('profile.avatarUpdated', 'Profile photo updated successfully!'))
+      setSaveSuccessMsg(t('profile.avatarUpdated', 'Profile photo updated!'))
       setTimeout(() => setSaveSuccessMsg(''), 3500)
     } catch (err) {
       setAvatarUploadError(err instanceof Error ? err.message : 'Unable to upload photo')
@@ -310,7 +258,7 @@ export default function Profile() {
     }
   }
 
-  // ID Proof document upload handler
+  // ID proof upload
   const handleIdProofFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !user?.id) return
@@ -336,9 +284,8 @@ export default function Profile() {
         .eq('id', user.id)
 
       if (error) throw error
-
       setWorkerDetails(prev => (prev ? { ...prev, id_proof_url: filePath } : null))
-      setSaveSuccessMsg(t('profile.idUploaded', 'ID proof document uploaded securely (Private for Admin review)'))
+      setSaveSuccessMsg(t('profile.idUploaded', 'ID proof document uploaded securely'))
       setTimeout(() => setSaveSuccessMsg(''), 4000)
     } catch (err) {
       setIdProofUploadError(err instanceof Error ? err.message : 'Unable to upload document')
@@ -347,7 +294,7 @@ export default function Profile() {
     }
   }
 
-  // Save changes handler
+  // Save profile changes
   const handleSaveProfile = async () => {
     if (!user?.id) return
 
@@ -364,7 +311,7 @@ export default function Profile() {
         throw new Error(t('errors.required', 'Name cannot be empty'))
       }
 
-      // 1. Update profiles table
+      // Update profiles
       const { error: profileError } = await (supabase.from('profiles') as any)
         .update({
           full_name: trimmedName,
@@ -378,7 +325,7 @@ export default function Profile() {
 
       if (profileError) throw profileError
 
-      // 2. If worker, update worker_profiles and related tables
+      // Update worker details if worker
       if (user.role === 'worker' || isWorker) {
         const { error: workerError } = await (supabase.from('worker_profiles') as any)
           .update({
@@ -391,7 +338,6 @@ export default function Profile() {
 
         if (workerError) throw workerError
 
-        // Sync worker category
         if (formData.category) {
           await (supabase.from('worker_categories') as any).delete().eq('worker_id', user.id)
           await (supabase.from('worker_categories') as any).insert({
@@ -400,7 +346,6 @@ export default function Profile() {
           })
         }
 
-        // Sync worker service areas
         if (formData.areas.length > 0) {
           const { data: areaRows } = await (supabase.from('service_areas') as any)
             .select('id, pincode')
@@ -418,7 +363,6 @@ export default function Profile() {
         }
       }
 
-      // 3. Update Auth Context & Language
       updateUser({
         name: trimmedName,
         phone: trimmedPhone,
@@ -433,45 +377,31 @@ export default function Profile() {
       }
 
       setEditMode(false)
-      setSaveSuccessMsg(t('profile.saveSuccess', 'Profile changes saved successfully!'))
+      setSaveSuccessMsg(t('profile.saveSuccess', 'Profile updated successfully!'))
       setTimeout(() => setSaveSuccessMsg(''), 4000)
       await loadProfileData()
     } catch (err) {
-      setSaveErrorMsg(err instanceof Error ? err.message : 'Failed to save profile changes')
+      setSaveErrorMsg(err instanceof Error ? err.message : 'Failed to save changes')
     } finally {
       setIsSaving(false)
     }
   }
 
-  const handleCancelEdit = () => {
-    setEditMode(false)
-    setSaveErrorMsg('')
-    if (user) {
-      setFormData({
-        name: user.name || '',
-        phone: user.phone || '',
-        email: user.email || '',
-        language: (user.language || language || 'en') as 'en' | 'hi',
-        avatar_url: user.avatar_url || '',
-        bio: workerDetails?.bio || '',
-        experience_years: workerDetails?.experience_years || 0,
-        category: workerDetails?.categories?.[0] || '',
-        areas: workerDetails?.areas || [],
-        is_available: workerDetails?.is_available ?? true,
-        id_proof_url: workerDetails?.id_proof_url || '',
-      })
-    }
-  }
+  // Native share / WhatsApp referral
+  const handleShareApp = () => {
+    const shareText = language === 'hi'
+      ? 'मुजफ्फरनगर कामगार: बिना किसी कमीशन के सीधे मुजफ्फरनगर के सत्यापित इलेक्ट्रीशियन, प्लंबर व एसी कारीगर बुक करें! देखें: https://muzaffarnagar-kaamgar.in'
+      : 'Muzaffarnagar Kaamgar: Hire verified local Electricians, Plumbers, Cleaning & AC technicians with 0% commission! Visit: https://muzaffarnagar-kaamgar.in'
 
-  const toggleAreaSelection = (pincode: string) => {
-    setFormData(prev => {
-      const exists = prev.areas.includes(pincode)
-      if (exists) {
-        return { ...prev, areas: prev.areas.filter(a => a !== pincode) }
-      } else {
-        return { ...prev, areas: [...prev.areas, pincode] }
-      }
-    })
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      navigator.share({
+        title: 'Muzaffarnagar Kaamgar',
+        text: shareText,
+        url: window.location.origin,
+      }).catch(() => {})
+    } else {
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, '_blank')
+    }
   }
 
   if (authLoading || isLoadingProfile) {
@@ -482,925 +412,714 @@ export default function Profile() {
     )
   }
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-semantic-bg-primary">
-        <Card className="w-full max-w-md p-8 text-center bg-surface-100 border border-semantic-border-light">
-          <Shield className="w-12 h-12 mx-auto text-brand-400 mb-3" />
-          <h2 className="text-xl font-semibold text-semantic-text-primary mb-2">
-            {t('errors.unauthorized', 'Please login first')}
-          </h2>
-          <p className="text-semantic-text-secondary text-sm mb-4">
-            {t('profile.viewHint', 'You need to be logged in to view your profile settings.')}
-          </p>
-          <Button variant="primary" onClick={() => navigate('/login')} className="w-full">
-            {t('nav.login', 'Go to Login')}
-          </Button>
-        </Card>
-      </div>
-    )
-  }
+  const isProfileComplete = Boolean(formData.name && formData.phone)
+  const userDisplayName = formData.name || (user?.role === 'worker' ? 'Verified Kaamgar' : 'Verified Customer')
+  const userDisplayPhone = formData.phone
+    ? (formData.phone.startsWith('+91') ? formData.phone : `+91 ${formData.phone}`)
+    : 'No phone number set'
 
   return (
-    <div className="min-h-screen bg-semantic-bg-primary">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-semantic-text-primary">{t('profile.title', 'Profile')}</h1>
-            <p className="text-semantic-text-secondary mt-1">
-              {t('profile.subtitle', 'Manage your personal details, preferences, and account')}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {!editMode ? (
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => setEditMode(true)}
-                className="flex items-center gap-1.5 shadow-sm"
-              >
-                <Edit className="w-4 h-4" />
-                {t('profile.editProfile', 'Edit Profile')}
-              </Button>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Badge variant="warning" className="px-3 py-1 text-xs">
-                  {t('profile.editingMode', 'Editing Mode')}
-                </Badge>
-                <Button variant="secondary" size="sm" onClick={handleCancelEdit}>
-                  {t('common.cancel', 'Cancel')}
-                </Button>
-              </div>
-            )}
-          </div>
+    <div className="min-h-screen bg-semantic-bg-primary pb-24 text-semantic-text-primary">
+      <div className="max-w-xl mx-auto px-4 sm:px-6 pt-5">
+        {/* ===================================================================== */}
+        {/* 1. TOP BAR WITH BACK BUTTON (Matching uc2.jpeg)                        */}
+        {/* ===================================================================== */}
+        <div className="flex items-center justify-between mb-5">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="w-10 h-10 rounded-full bg-surface-100/90 hover:bg-surface-200 border border-semantic-border-light flex items-center justify-center text-semantic-text-primary transition-colors active:scale-95 shadow-sm"
+            aria-label="Go Back"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+
+          <span className="text-sm font-bold text-semantic-text-primary uppercase tracking-wider">
+            {t('profile.title', 'My Account')}
+          </span>
+
+          <div className="w-10" />
         </div>
 
         {/* Notifications & Alerts */}
         {saveSuccessMsg && (
-          <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm flex items-center gap-2 animate-fadeIn">
-            <CheckCircle className="w-5 h-5 flex-shrink-0" />
+          <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2 animate-fadeIn">
+            <CheckCircle className="w-4 h-4 shrink-0" />
             <span>{saveSuccessMsg}</span>
           </div>
         )}
         {saveErrorMsg && (
-          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center gap-2 animate-fadeIn">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2 animate-fadeIn">
+            <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{saveErrorMsg}</span>
           </div>
         )}
-        {avatarUploadError && (
-          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            <span>{avatarUploadError}</span>
-          </div>
-        )}
-        {idProofUploadError && (
-          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            <span>{idProofUploadError}</span>
-          </div>
-        )}
 
-        {/* Suggestion to add Gmail/Email if not added yet (Recommended for all roles) */}
-        {!user.email && (
-          <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-brand-500/15 via-surface-100 to-brand-500/5 border border-brand-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-fadeIn">
-            <div className="flex items-start gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-brand-500/20 border border-brand-500/30 flex items-center justify-center flex-shrink-0 text-brand-400">
-                <Mail className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h4 className="text-sm font-semibold text-semantic-text-primary">
-                    Add your Email / Gmail Address
-                  </h4>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                    Recommended
-                  </span>
-                </div>
-                <p className="text-xs text-semantic-text-secondary mt-1">
-                  Add your email to receive official booking receipts, job updates, and account recovery options.
-                </p>
-              </div>
+        {/* ===================================================================== */}
+        {/* 2. PROFILE IDENTITY HEADER (Exact layout of uc2.jpeg)                  */}
+        {/* ===================================================================== */}
+        <div className="mb-6 px-1 flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            {/* Status indicator tag */}
+            <div className="flex items-center gap-1.5 mb-1.5">
+              {!isProfileComplete ? (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full border border-red-500/30">
+                  <AlertCircle className="w-3 h-3" />
+                  <span>{t('profile.incompleteProfile', 'Incomplete profile')}</span>
+                </span>
+              ) : isWorker ? (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                  <CheckCircle className="w-3 h-3" />
+                  <span>{t('profile.verifiedWorker', 'Verified Kaamgar')}</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                  <CheckCircle className="w-3 h-3" />
+                  <span>{t('profile.verifiedCustomer', 'Verified Customer')}</span>
+                </span>
+              )}
+
+              {isAdmin && (
+                <span className="text-[10px] font-bold text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/30">
+                  ADMIN
+                </span>
+              )}
             </div>
+
+            {/* Bold User Name */}
+            <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight truncate">
+              {userDisplayName}
+            </h1>
+
+            {/* User Phone */}
+            <p className="text-xs sm:text-sm text-semantic-text-secondary mt-0.5">
+              {userDisplayPhone}
+            </p>
+          </div>
+
+          {/* Top Right Action Button (Complete / Edit Profile pill) */}
+          <button
+            type="button"
+            onClick={() => setEditMode(true)}
+            className="shrink-0 px-4 py-1.5 rounded-full border border-semantic-border-medium hover:border-brand-500 text-xs font-semibold text-semantic-text-primary hover:text-brand-400 transition-colors shadow-sm active:scale-95"
+          >
+            {!isProfileComplete ? t('profile.completeProfile', 'Complete') : t('profile.editProfile', 'Edit')}
+          </button>
+        </div>
+
+        {/* ===================================================================== */}
+        {/* 3. THREE QUICK ACTION CARDS ROW (Exact 3-card layout of uc2.jpeg)     */}
+        {/* ===================================================================== */}
+        <div className="grid grid-cols-3 gap-2.5 sm:gap-3 mb-6">
+          {/* Card 1: My Bookings */}
+          <button
+            type="button"
+            onClick={() => navigate('/bookings')}
+            className="p-3 sm:p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-brand-500/40 hover:bg-surface-200/80 transition-all flex flex-col items-center justify-center text-center group shadow-sm active:scale-95"
+          >
+            <div className="w-10 h-10 rounded-xl bg-surface-200 group-hover:bg-brand-500/15 flex items-center justify-center text-brand-400 mb-2 transition-colors">
+              <ClipboardList className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-bold text-semantic-text-primary group-hover:text-brand-400 leading-tight">
+              {t('profile.myBookings', 'My bookings')}
+            </span>
+          </button>
+
+          {/* Card 2: Worker Mode / Become a Worker */}
+          {isWorker ? (
+            <button
+              type="button"
+              onClick={handleToggleAvailability}
+              className="p-3 sm:p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-emerald-500/40 hover:bg-surface-200/80 transition-all flex flex-col items-center justify-center text-center group shadow-sm active:scale-95"
+            >
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center text-emerald-400 mb-2">
+                <Power className={`w-5 h-5 ${workerDetails?.is_available ? 'animate-pulse text-emerald-400' : 'text-amber-400'}`} />
+              </div>
+              <span className="text-xs font-bold text-semantic-text-primary leading-tight">
+                {workerDetails?.is_available ? 'Online / Ready' : 'Offline'}
+              </span>
+            </button>
+          ) : isAdmin ? (
+            <button
+              type="button"
+              onClick={() => navigate('/admin')}
+              className="p-3 sm:p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-rose-500/40 hover:bg-surface-200/80 transition-all flex flex-col items-center justify-center text-center group shadow-sm active:scale-95"
+            >
+              <div className="w-10 h-10 rounded-xl bg-rose-500/15 flex items-center justify-center text-rose-400 mb-2">
+                <Shield className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-bold text-semantic-text-primary leading-tight">
+                Admin Portal
+              </span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => navigate('/register/worker')}
+              className="p-3 sm:p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-emerald-500/40 hover:bg-surface-200/80 transition-all flex flex-col items-center justify-center text-center group shadow-sm active:scale-95"
+            >
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center text-emerald-400 mb-2">
+                <Briefcase className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-bold text-semantic-text-primary group-hover:text-emerald-400 leading-tight">
+                {t('profile.becomeWorker', 'Earn with Kaamgar')}
+              </span>
+            </button>
+          )}
+
+          {/* Card 3: Help & Support */}
+          <button
+            type="button"
+            onClick={() => setShowSupportModal(true)}
+            className="p-3 sm:p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-blue-500/40 hover:bg-surface-200/80 transition-all flex flex-col items-center justify-center text-center group shadow-sm active:scale-95"
+          >
+            <div className="w-10 h-10 rounded-xl bg-surface-200 group-hover:bg-blue-500/15 flex items-center justify-center text-blue-400 mb-2 transition-colors">
+              <Headphones className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-bold text-semantic-text-primary group-hover:text-blue-400 leading-tight">
+              {t('profile.helpSupport', 'Help & support')}
+            </span>
+          </button>
+        </div>
+
+        {/* Divider line */}
+        <div className="border-t border-semantic-border-light/60 my-4" />
+
+        {/* ===================================================================== */}
+        {/* 4. CLEAN MENU ROWS LIST (Exact layout of uc2.jpeg)                    */}
+        {/* ===================================================================== */}
+        <div className="space-y-1">
+          {/* Row: My Bookings / Orders */}
+          <div
+            onClick={() => navigate('/bookings')}
+            className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+          >
+            <div className="flex items-center gap-3.5">
+              <Calendar className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
+              <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                {t('profile.myBookings', 'My bookings')}
+              </span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+          </div>
+
+          {/* Row: Worker Dashboard (Worker only) */}
+          {isWorker && (
+            <div
+              onClick={() => navigate('/worker/dashboard')}
+              className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+            >
+              <div className="flex items-center gap-3.5">
+                <Briefcase className="w-5 h-5 text-emerald-400" />
+                <span className="text-sm font-medium text-semantic-text-primary group-hover:text-emerald-400">
+                  {t('nav.workerDashboard', 'Worker Dashboard')}
+                </span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
+            </div>
+          )}
+
+          {/* Row: Admin Dashboard (Admin only) */}
+          {isAdmin && (
+            <div
+              onClick={() => navigate('/admin')}
+              className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+            >
+              <div className="flex items-center gap-3.5">
+                <Shield className="w-5 h-5 text-rose-400" />
+                <span className="text-sm font-medium text-semantic-text-primary group-hover:text-rose-400">
+                  {t('admin.dashboard', 'Admin Controls')}
+                </span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-rose-400 group-hover:translate-x-0.5 transition-all" />
+            </div>
+          )}
+
+          {/* Row: My Rating & Reviews */}
+          <div
+            onClick={() => navigate('/bookings')}
+            className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+          >
+            <div className="flex items-center gap-3.5">
+              <Star className="w-5 h-5 text-amber-400" />
+              <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                {t('profile.reviewsRatings', 'My rating & reviews')}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {workerDetails && workerDetails.rating > 0 && (
+                <span className="text-xs font-bold text-amber-400">
+                  ★ {workerDetails.rating.toFixed(1)}
+                </span>
+              )}
+              <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+            </div>
+          </div>
+
+          {/* Row: Manage Addresses & Localities */}
+          <div
+            onClick={() => setShowAddressModal(true)}
+            className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+          >
+            <div className="flex items-center gap-3.5">
+              <MapPin className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
+              <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                {t('profile.manageAddresses', 'Manage addresses & localities')}
+              </span>
+            </div>
+            <div className="flex items-center gap-1 text-xs text-semantic-text-tertiary">
+              <span>Muzaffarnagar</span>
+              <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+            </div>
+          </div>
+
+          {/* Row: Email & Notifications */}
+          <div
+            onClick={() => {
+              setEmailModalInput(formData.email || user?.email || '')
+              setEmailModalError('')
+              setShowEmailModal(true)
+            }}
+            className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+          >
+            <div className="flex items-center gap-3.5">
+              <Mail className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
+              <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                {t('profile.emailReceipts', 'Email & notifications')}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-semantic-text-tertiary truncate max-w-[130px]">
+                {formData.email || 'Add Email'}
+              </span>
+              <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+            </div>
+          </div>
+
+          {/* Row: App Language Toggle */}
+          <div
+            onClick={toggleLanguage}
+            className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+          >
+            <div className="flex items-center gap-3.5">
+              <Globe className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
+              <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                {language === 'en' ? 'App Language' : 'ऐप की भाषा'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" size="sm" className="font-semibold text-brand-400 border-brand-500/30">
+                {language === 'en' ? 'English' : 'हिंदी'}
+              </Badge>
+              <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+            </div>
+          </div>
+
+          {/* Row: Dedicated PWA Install Button (Strictly in Profile section as instructed) */}
+          <div
+            onClick={() => triggerPWAInstall()}
+            className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+          >
+            <div className="flex items-center gap-3.5">
+              <Smartphone className="w-5 h-5 text-brand-400" />
+              <span className="text-sm font-medium text-brand-400 font-semibold">
+                {t('pwa.installApp', 'Install Mobile App')}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] bg-brand-500/15 text-brand-300 font-bold px-2 py-0.5 rounded-full border border-brand-500/30">
+                Fast & Offline
+              </span>
+              <ChevronRight className="w-4 h-4 text-brand-400 group-hover:translate-x-0.5 transition-all" />
+            </div>
+          </div>
+
+          {/* Row: Help Center & FAQs */}
+          <div
+            onClick={() => setShowSupportModal(true)}
+            className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+          >
+            <div className="flex items-center gap-3.5">
+              <HelpCircle className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
+              <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                {t('profile.faqsHelp', 'Help Center & FAQs')}
+              </span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+          </div>
+
+          {/* Row: About Kaamgar */}
+          <div
+            onClick={() => navigate('/')}
+            className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+          >
+            <div className="flex items-center gap-3.5">
+              <Info className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
+              <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                {t('profile.aboutApp', 'About Muzaffarnagar Kaamgar')}
+              </span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+          </div>
+
+          {/* Row: Log Out */}
+          <div
+            onClick={() => setShowLogoutModal(true)}
+            className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-red-500/10 cursor-pointer transition-colors group"
+          >
+            <div className="flex items-center gap-3.5">
+              <LogOut className="w-5 h-5 text-red-400" />
+              <span className="text-sm font-medium text-red-400">
+                {t('nav.logout', 'Log out')}
+              </span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-red-400/60 group-hover:translate-x-0.5 transition-all" />
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-semantic-border-light/60 my-6" />
+
+        {/* ===================================================================== */}
+        {/* 5. REFER & SHARE CARD AT BOTTOM (Exact match to uc2.jpeg gift card)    */}
+        {/* ===================================================================== */}
+        <div className="p-5 rounded-3xl bg-gradient-to-r from-purple-950/40 via-surface-100 to-brand-500/10 border border-purple-500/30 flex items-center justify-between gap-4 shadow-xl">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm sm:text-base font-extrabold text-white mb-1">
+              {t('profile.referTitle', 'Share Kaamgar & Earn Goodwill')}
+            </h3>
+            <p className="text-xs text-semantic-text-secondary leading-relaxed mb-3">
+              {t('profile.referDesc', 'Help your friends and family find verified local electricians, plumbers, and technicians without middlemen.')}
+            </p>
             <Button
               variant="primary"
               size="sm"
-              className="flex-shrink-0 text-xs py-2 px-4 whitespace-nowrap"
-              onClick={() => {
-                setEmailModalInput('')
-                setEmailModalError('')
-                setShowEmailModal(true)
-              }}
+              onClick={handleShareApp}
+              className="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-1.5 shadow-md shadow-purple-600/30 flex items-center gap-1.5"
             >
-              + Add Email Address
+              <Share2 className="w-3.5 h-3.5" />
+              <span>{t('profile.referNow', 'Refer now')}</span>
             </Button>
           </div>
-        )}
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Left Column: Avatar card & Quick Actions */}
-          <div className="lg:col-span-1 space-y-6">
-            <Card className="p-6 text-center bg-surface-100 border border-semantic-border-light relative overflow-hidden">
-              {/* Avatar with Camera upload trigger */}
-              <div className="relative inline-block mx-auto mb-3">
-                <Avatar
-                  name={formData.name}
-                  src={formData.avatar_url || undefined}
-                  size="2xl"
-                  className="mx-auto shadow-md"
-                />
-                <button
-                  type="button"
-                  onClick={() => avatarInputRef.current?.click()}
-                  disabled={isUploadingAvatar}
-                  className="absolute bottom-0 right-0 p-2 bg-brand-500 text-surface-950 rounded-full shadow-lg hover:bg-brand-400 transition-colors focus:outline-none"
-                  title="Upload profile photo"
-                >
-                  {isUploadingAvatar ? (
-                    <UploadCloud className="w-4 h-4 animate-bounce" />
-                  ) : (
-                    <Camera className="w-4 h-4" />
-                  )}
-                </button>
-                <input
-                  type="file"
-                  ref={avatarInputRef}
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleAvatarFileSelect}
-                />
-              </div>
-
-              <h2 className="text-xl font-bold text-semantic-text-primary">{formData.name}</h2>
-              <p className="text-semantic-text-secondary text-sm mt-0.5">
-                {formData.phone || t('profile.noPhone', 'No phone set')}
-              </p>
-              {user.email ? (
-                <div className="text-semantic-text-secondary text-xs mt-1.5 flex items-center justify-center gap-1.5">
-                  <Mail className="w-3.5 h-3.5 text-brand-400" />
-                  <span>{user.email}</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEmailModalInput(user.email || '')
-                      setEmailModalError('')
-                      setShowEmailModal(true)
-                    }}
-                    className="text-brand-400 hover:text-brand-300 text-[11px] underline ml-1"
-                  >
-                    Edit
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmailModalInput('')
-                    setEmailModalError('')
-                    setShowEmailModal(true)
-                  }}
-                  className="inline-flex items-center gap-1 text-xs text-brand-400 hover:text-brand-300 mt-1.5"
-                >
-                  <Mail className="w-3.5 h-3.5" />
-                  <span>+ Add Email</span>
-                </button>
-              )}
-
-              {/* Role & Verification Badges with clean spacing */}
-              <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-                <Badge variant={user.role === 'admin' ? 'danger' : user.role === 'worker' ? 'primary' : 'info'}>
-                  {user.role === 'admin'
-                    ? t('profile.roles.admin', 'ADMIN')
-                    : user.role === 'worker'
-                    ? t('profile.roles.worker', 'WORKER')
-                    : t('profile.roles.customer', 'CUSTOMER')}
-                </Badge>
-                {isWorker && workerDetails && (
-                  <Badge
-                    variant={
-                      workerDetails.approval_status === 'approved'
-                        ? 'success'
-                        : workerDetails.approval_status === 'pending'
-                        ? 'warning'
-                        : 'danger'
-                    }
-                  >
-                    {workerDetails.approval_status === 'approved'
-                      ? t('profile.status.approved', 'Verified & Approved')
-                      : workerDetails.approval_status === 'pending'
-                      ? t('profile.status.pending', 'Under Review')
-                      : t('profile.status.rejected', 'Needs Changes')}
-                  </Badge>
-                )}
-              </div>
-
-              {/* Worker Availability Status Pill & Direct Switcher */}
-              {isWorker && workerDetails && (
-                <div className="mt-3.5 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-200/80 border border-semantic-border-light text-xs">
-                  <span
-                    className={`w-2.5 h-2.5 rounded-full ${
-                      workerDetails.is_available ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
-                    }`}
-                  />
-                  <span className="font-medium text-semantic-text-primary">
-                    {workerDetails.is_available
-                      ? t('profile.availableForJobs', 'Available for Jobs')
-                      : t('profile.offlineUnavailable', 'Offline / Unavailable')}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleToggleAvailability}
-                    className="ml-1 text-[11px] font-semibold text-brand-400 hover:text-brand-300 underline focus:outline-none"
-                  >
-                    {workerDetails.is_available
-                      ? t('profile.goOffline', 'Go Offline')
-                      : t('profile.goOnline', 'Go Online')}
-                  </button>
-                </div>
-              )}
-
-              {/* Worker Metrics (spacious 3-box design with zero text mixing/overflow) */}
-              {isWorker && workerDetails && (
-                <div className="mt-5 pt-4 border-t border-semantic-border-light grid grid-cols-3 gap-2 text-center">
-                  {/* Rating box with single gold star */}
-                  <div className="p-3 bg-surface-200/70 border border-semantic-border-light rounded-xl flex flex-col items-center justify-center">
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 text-amber-400 fill-amber-400 flex-shrink-0" />
-                      <span className="text-base font-bold text-semantic-text-primary">
-                        {workerDetails.rating > 0 ? workerDetails.rating.toFixed(1) : '5.0'}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-semantic-text-secondary mt-0.5">{t('common.rating', 'Rating')}</p>
-                  </div>
-
-                  {/* Reviews box */}
-                  <div className="p-3 bg-surface-200/70 border border-semantic-border-light rounded-xl flex flex-col items-center justify-center">
-                    <p className="text-base font-bold text-semantic-text-primary">{workerDetails.review_count}</p>
-                    <p className="text-[11px] text-semantic-text-secondary mt-0.5">{t('common.reviews', 'Reviews')}</p>
-                  </div>
-
-                  {/* Completed Jobs box */}
-                  <div className="p-3 bg-surface-200/70 border border-semantic-border-light rounded-xl flex flex-col items-center justify-center">
-                    <p className="text-base font-bold text-emerald-400">{workerDetails.completedJobsCount}</p>
-                    <p className="text-[11px] text-semantic-text-secondary mt-0.5">{t('profile.completed', 'Completed')}</p>
-                  </div>
-                </div>
-              )}
-            </Card>
-
-            {/* Quick Actions Panel — ALL BUTTONS FULLY FUNCTIONAL */}
-            <Card className="p-6 bg-surface-100 border border-semantic-border-light">
-              <h3 className="font-semibold text-semantic-text-primary mb-4 text-xs uppercase tracking-wider">
-                {t('profile.quickActions', 'Quick Actions')}
-              </h3>
-              <div className="space-y-2">
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-semantic-text-primary hover:bg-surface-200"
-                  onClick={() => setEditMode(!editMode)}
-                >
-                  <Edit className="w-4 h-4 mr-2.5 text-brand-400" />
-                  {editMode ? t('profile.exitEditMode', 'Exit Edit Mode') : t('profile.editProfile', 'Edit Profile')}
-                </Button>
-
-                {user.role === 'admin' && (
-                  <>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-brand-400 hover:bg-brand-500/10 border-brand-500/30 font-medium"
-                      onClick={() => navigate('/admin')}
-                    >
-                      <Shield className="w-4 h-4 mr-2.5 text-brand-400" />
-                      {t('admin.dashboard', 'Admin Dashboard')}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-semantic-text-primary hover:bg-surface-200"
-                      onClick={() => navigate('/admin?tab=notifications')}
-                    >
-                      <Bell className="w-4 h-4 mr-2.5 text-amber-400" />
-                      {t('admin.notifications', 'Admin Notifications')}
-                    </Button>
-                  </>
-                )}
-
-                {isWorker && (
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-semantic-text-primary hover:bg-surface-200"
-                    onClick={() => navigate('/worker/dashboard')}
-                  >
-                    <Briefcase className="w-4 h-4 mr-2.5 text-emerald-400" />
-                    {t('nav.workerDashboard', 'Worker Dashboard')}
-                  </Button>
-                )}
-
-                {user.role !== 'admin' && (
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-semantic-text-primary hover:bg-surface-200"
-                    onClick={() => navigate('/bookings')}
-                  >
-                    <Calendar className="w-4 h-4 mr-2.5 text-blue-400" />
-                    {t('nav.bookings', 'My Bookings')}
-                  </Button>
-                )}
-
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-semantic-text-primary hover:bg-surface-200"
-                  onClick={() => navigate('/notifications')}
-                >
-                  <Bell className="w-4 h-4 mr-2.5 text-purple-400" />
-                  {t('nav.notifications', 'Notifications')}
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-semantic-text-primary hover:bg-surface-200"
-                  onClick={toggleLanguage}
-                >
-                  <Globe className="w-4 h-4 mr-2.5 text-amber-400" />
-                  {language === 'en'
-                    ? t('profile.switchToHindi', 'हिंदी में बदलें (Hindi)')
-                    : t('profile.switchToEnglish', 'Switch to English')}
-                </Button>
-
-                {/* Single Clean Install App Button (Only in Profile Section) */}
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-brand-400 hover:bg-brand-500/10 border-brand-500/30"
-                  onClick={() => triggerPWAInstall()}
-                >
-                  <Smartphone className="w-4 h-4 mr-2.5 text-brand-400" />
-                  <span>{t('pwa.installApp', 'Install Mobile App')}</span>
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-red-400 hover:bg-red-500/10 border-red-500/30"
-                  onClick={() => setShowLogoutModal(true)}
-                >
-                  <LogOut className="w-4 h-4 mr-2.5" />
-                  {t('nav.logout', 'Logout')}
-                </Button>
-              </div>
-            </Card>
-          </div>
-
-          {/* Right Column: Profile Details & Edit Section */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card className="p-6 bg-surface-100 border border-semantic-border-light shadow-sm">
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-semantic-border-light">
-                <div>
-                  <h3 className="text-lg font-semibold text-semantic-text-primary">
-                    {t('profile.accountDetails', 'Account Details')}
-                  </h3>
-                  <p className="text-xs text-semantic-text-secondary mt-0.5">
-                    {editMode
-                      ? t('profile.editHint', 'Update your personal and work details below, then click Save Changes.')
-                      : t('profile.viewHint', 'Your personal information and Kaamgar preferences.')}
-                  </p>
-                </div>
-                {!editMode ? (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setEditMode(true)}
-                    className="flex items-center gap-1.5 text-xs text-brand-400"
-                  >
-                    <Edit className="w-3.5 h-3.5" />
-                    {t('profile.editProfile', 'Edit Profile')}
-                  </Button>
-                ) : (
-                  <Button variant="secondary" size="sm" onClick={handleCancelEdit} className="text-xs">
-                    {t('common.cancel', 'Cancel')}
-                  </Button>
-                )}
-              </div>
-
-              <div className="space-y-5">
-                {/* Name & Phone */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
-                      {t('auth.workerRegistration.fullName', 'Full Name')}
-                    </label>
-                    {editMode ? (
-                      <Input
-                        value={formData.name}
-                        onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                        placeholder="Your full name"
-                        required
-                      />
-                    ) : (
-                      <p className="text-semantic-text-primary font-medium p-2.5 bg-surface-200/50 rounded-lg border border-semantic-border-light text-sm">
-                        {formData.name}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
-                      {t('auth.phoneLabel', 'Phone Number')}
-                    </label>
-                    {editMode ? (
-                      <Input
-                        value={formData.phone}
-                        onChange={e => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                        placeholder="+919876543210"
-                      />
-                    ) : (
-                      <p className="text-semantic-text-primary font-medium p-2.5 bg-surface-200/50 rounded-lg border border-semantic-border-light text-sm">
-                        {formData.phone || t('profile.noPhoneSpecified', 'No phone specified')}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Email / Gmail Address & Language Preference */}
-                <div className={`grid grid-cols-1 ${user?.role === 'admin' ? '' : 'md:grid-cols-2'} gap-4`}>
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="block text-xs font-semibold text-semantic-text-secondary uppercase">
-                        Email / Gmail Address
-                      </label>
-                      {!formData.email && !editMode && (
-                        <span className="text-[10px] text-amber-400 font-semibold uppercase">
-                          Recommended
-                        </span>
-                      )}
-                    </div>
-                    {editMode ? (
-                      <Input
-                        type="email"
-                        value={formData.email}
-                        onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                        placeholder="name@gmail.com"
-                        leftIcon={<Mail className="w-4 h-4 text-semantic-text-tertiary" />}
-                      />
-                    ) : (
-                      <div className="flex items-center justify-between p-2.5 bg-surface-200/50 rounded-lg border border-semantic-border-light text-sm min-h-[42px]">
-                        <div className="flex items-center gap-2">
-                          <Mail className="w-4 h-4 text-semantic-text-tertiary flex-shrink-0" />
-                          <span
-                            className={
-                              formData.email
-                                ? 'text-semantic-text-primary font-medium'
-                                : 'text-semantic-text-tertiary italic text-xs'
-                            }
-                          >
-                            {formData.email || 'No email added yet'}
-                          </span>
-                        </div>
-                        {!formData.email ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEmailModalInput('')
-                              setEmailModalError('')
-                              setShowEmailModal(true)
-                            }}
-                            className="text-xs text-brand-400 hover:text-brand-300 font-semibold"
-                          >
-                            + Add
-                          </button>
-                        ) : (
-                          <span className="text-[11px] text-emerald-400 flex items-center gap-1 font-medium">
-                            <CheckCircle className="w-3 h-3" /> Linked
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Language Preference - Hidden for Admin profile */}
-                  {user?.role !== 'admin' && (
-                    <div>
-                      <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
-                        {t('profile.languagePreference', 'Language Preference')}
-                      </label>
-                      {editMode ? (
-                        <select
-                          value={formData.language}
-                          onChange={e => setFormData(prev => ({ ...prev, language: e.target.value as 'en' | 'hi' }))}
-                          className="w-full bg-surface-200 border border-semantic-border-medium rounded-lg p-2.5 text-sm text-semantic-text-primary focus:outline-none focus:border-brand-500"
-                        >
-                          <option value="en">English</option>
-                          <option value="hi">हिंदी (Hindi)</option>
-                        </select>
-                      ) : (
-                        <p className="text-semantic-text-primary font-medium p-2.5 bg-surface-200/50 rounded-lg border border-semantic-border-light text-sm min-h-[42px] flex items-center">
-                          {formData.language === 'hi' ? 'हिंदी (Hindi)' : 'English'}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Worker Specific Fields */}
-                {isWorker && (
-                  <>
-                    <div className="pt-4 border-t border-semantic-border-light space-y-4">
-                      <h4 className="font-semibold text-semantic-text-primary text-xs uppercase tracking-wider">
-                        {t('profile.workDetailsTitle', 'Work & Service Details')}
-                      </h4>
-
-                      {/* Primary Category & Experience */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
-                            {t('profile.primaryCategory', 'Primary Category')}
-                          </label>
-                          {editMode ? (
-                            <select
-                              value={formData.category}
-                              onChange={e => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                              className="w-full bg-surface-200 border border-semantic-border-medium rounded-lg p-2.5 text-sm text-semantic-text-primary focus:outline-none focus:border-brand-500 capitalize"
-                            >
-                              <option value="">{t('profile.selectCategory', 'Select Category')}</option>
-                              {CATEGORIES.map(cat => (
-                                <option key={cat.id} value={cat.id}>
-                                  {language === 'hi' ? cat.name_hi : cat.name_en}
-                                </option>
-                              ))}
-                            </select>
-                          ) : (
-                            <div className="flex flex-wrap gap-1.5 p-2 bg-surface-200/50 rounded-lg border border-semantic-border-light min-h-[42px] items-center">
-                              {workerDetails?.categories && workerDetails.categories.length > 0 ? (
-                                workerDetails.categories.map(cat => {
-                                  const catObj = CATEGORIES.find(c => c.id === cat)
-                                  const catName = language === 'hi' && catObj ? catObj.name_hi : catObj?.name_en || cat
-                                  return (
-                                    <Badge key={cat} variant="primary" className="capitalize text-xs">
-                                      {catName}
-                                    </Badge>
-                                  )
-                                })
-                              ) : (
-                                <span className="text-xs text-semantic-text-tertiary">
-                                  {t('profile.noneAssigned', 'None assigned')}
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
-                            {t('profile.experienceYears', 'Experience (Years)')}
-                          </label>
-                          {editMode ? (
-                            <Input
-                              type="number"
-                              min="0"
-                              max="50"
-                              value={formData.experience_years}
-                              onChange={e =>
-                                setFormData(prev => ({
-                                  ...prev,
-                                  experience_years: Number(e.target.value),
-                                }))
-                              }
-                            />
-                          ) : (
-                            <p className="text-semantic-text-primary font-medium p-2.5 bg-surface-200/50 rounded-lg border border-semantic-border-light text-sm">
-                              {formData.experience_years} {t('common.years', 'years')}
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Service Areas */}
-                        <div className="md:col-span-2">
-                          <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
-                            {t('profile.serviceAreasTitle', 'Service Area Pincodes')}
-                          </label>
-                          {editMode ? (
-                            <div className="space-y-2">
-                              <div className="flex flex-wrap gap-2">
-                                {MUZAFFARNAGAR_PINCODES.map(pincode => {
-                                  const isSelected = formData.areas.includes(pincode)
-                                  return (
-                                    <button
-                                      key={pincode}
-                                      type="button"
-                                      onClick={() => toggleAreaSelection(pincode)}
-                                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors flex items-center gap-1.5 ${
-                                        isSelected
-                                          ? 'bg-brand-500/20 border-brand-500 text-brand-400'
-                                          : 'bg-surface-200 border-semantic-border-medium text-semantic-text-secondary hover:bg-surface-300'
-                                      }`}
-                                    >
-                                      <MapPin className="w-3.5 h-3.5" />
-                                      <span>
-                                        {language === 'hi' ? 'मुजफ्फरनगर' : 'Muzaffarnagar'} ({pincode})
-                                      </span>
-                                      {isSelected && <Check className="w-3.5 h-3.5 ml-0.5 text-brand-400" />}
-                                    </button>
-                                  )
-                                })}
-                              </div>
-                              <p className="text-[11px] text-semantic-text-tertiary">
-                                {t(
-                                  'profile.areasHint',
-                                  'Select all pincodes where you can travel to provide services.',
-                                )}
-                              </p>
-                            </div>
-                          ) : (
-                            <div className="flex flex-wrap gap-1.5 p-2 bg-surface-200/50 rounded-lg border border-semantic-border-light min-h-[42px] items-center">
-                              {workerDetails?.areas && workerDetails.areas.length > 0 ? (
-                                workerDetails.areas.map(area => (
-                                  <Badge key={area} variant="outline" className="text-xs">
-                                    <MapPin className="w-3 h-3 mr-1" />
-                                    {language === 'hi' ? 'मुजफ्फरनगर' : 'Muzaffarnagar'} ({area})
-                                  </Badge>
-                                ))
-                              ) : (
-                                <span className="text-xs text-semantic-text-tertiary">
-                                  {t('profile.noneSpecified', 'None specified')}
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Bio */}
-                      <div>
-                        <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
-                          {t('profile.bioTitle', 'Professional Bio / Specialties')}
-                        </label>
-                        {editMode ? (
-                          <textarea
-                            value={formData.bio}
-                            onChange={e => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-                            rows={3}
-                            placeholder={t(
-                              'profile.bioPlaceholder',
-                              'Describe your specialties, tools, and background...',
-                            )}
-                            className="w-full bg-surface-200 border border-semantic-border-medium rounded-lg p-3 text-sm text-semantic-text-primary focus:outline-none focus:border-brand-500"
-                          />
-                        ) : (
-                          <p className="text-semantic-text-secondary whitespace-pre-line p-3 bg-surface-200/50 rounded-lg border border-semantic-border-light text-sm leading-relaxed">
-                            {formData.bio ||
-                              t('profile.noBio', 'No bio written yet. Click Edit Profile to add one.')}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* ID Proof Document Section (Phase 9 Storage Upload) */}
-                      <div className="pt-4 border-t border-semantic-border-light">
-                        <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
-                          {t('profile.idProofTitle', 'ID Proof Document (Aadhaar / Voter ID / License)')}
-                        </label>
-                        <div className="p-3 bg-surface-200/50 border border-semantic-border-light rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-9 h-9 rounded-lg bg-brand-500/10 flex items-center justify-center text-brand-400">
-                              <Lock className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <p className="text-sm font-medium text-semantic-text-primary">
-                                  {workerDetails?.id_proof_url
-                                    ? t('profile.idDocOnFile', 'ID Document on File')
-                                    : t('profile.noIdDoc', 'No ID Document Uploaded Yet')}
-                                </p>
-                                {workerDetails?.id_proof_url && (
-                                  <Badge variant="success" className="text-[10px] px-1.5 py-0.5">
-                                    {t('profile.encryptedPrivate', 'Encrypted & Private')}
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="text-[11px] text-semantic-text-tertiary">
-                                {t(
-                                  'profile.privateDocNote',
-                                  'Stored in private storage. Visible only to verified administrators.',
-                                )}
-                              </p>
-                            </div>
-                          </div>
-
-                          {editMode && (
-                            <div>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => idProofInputRef.current?.click()}
-                                disabled={isUploadingIdProof}
-                                className="text-xs whitespace-nowrap"
-                              >
-                                {isUploadingIdProof ? (
-                                  <>
-                                    <UploadCloud className="w-3.5 h-3.5 mr-1.5 animate-bounce" />
-                                    {t('profile.uploading', 'Uploading...')}
-                                  </>
-                                ) : (
-                                  <>
-                                    <UploadCloud className="w-3.5 h-3.5 mr-1.5 text-brand-400" />
-                                    {workerDetails?.id_proof_url
-                                      ? t('profile.replaceDoc', 'Replace Document')
-                                      : t('profile.uploadIdProof', 'Upload ID Proof')}
-                                  </>
-                                )}
-                              </Button>
-                              <input
-                                type="file"
-                                ref={idProofInputRef}
-                                accept="image/*,application/pdf"
-                                className="hidden"
-                                onChange={handleIdProofFileSelect}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* Edit Mode Save & Cancel Actions */}
-                {editMode && (
-                  <div className="flex gap-3 pt-6 border-t border-semantic-border-light">
-                    <Button variant="secondary" onClick={handleCancelEdit} className="flex-1" disabled={isSaving}>
-                      {t('common.cancel', 'Cancel')}
-                    </Button>
-                    <Button variant="primary" onClick={handleSaveProfile} loading={isSaving} className="flex-1">
-                      {isSaving ? t('common.loading', 'Saving...') : t('profile.saveChanges', 'Save Changes')}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </Card>
-
-            {/* Admin Controls & Overview (shown only for Administrator accounts) */}
-            {user.role === 'admin' && (
-              <Card className="p-6 bg-surface-100 border border-semantic-border-light">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-lg bg-brand-500/10 flex items-center justify-center text-brand-400">
-                      <Shield className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-semantic-text-primary">
-                        {t('admin.dashboard', 'Admin Controls & Overview')}
-                      </h3>
-                      <p className="text-xs text-semantic-text-secondary">
-                        {t('admin.profileAdminRole', 'Platform Administrator')}
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => navigate('/admin')}
-                    className="text-xs"
-                  >
-                    {t('profile.goToAdminPortal', 'Go to Admin Portal')}
-                  </Button>
-                </div>
-                <p className="text-sm text-semantic-text-secondary mb-5 leading-relaxed">
-                  {t(
-                    'admin.profileAdminDesc',
-                    'Administrator accounts do not place or receive bookings. Use the administrative portal to review worker registrations, verify ID documents, and manage platform operations.'
-                  )}
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div
-                    onClick={() => navigate('/admin?tab=workers')}
-                    className="p-4 rounded-xl bg-surface-200/60 hover:bg-surface-200 border border-semantic-border-light cursor-pointer transition-colors group flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400">
-                        <UserCheck className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-semantic-text-primary group-hover:text-brand-400 transition-colors">
-                          {t('admin.pendingWorkers', 'Pending Approvals')}
-                        </p>
-                        <p className="text-xs text-semantic-text-tertiary">
-                          {t('admin.reviewPendingWorkers', 'Review Worker Registrations')}
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 transition-colors" />
-                  </div>
-
-                  <div
-                    onClick={() => navigate('/admin?tab=notifications')}
-                    className="p-4 rounded-xl bg-surface-200/60 hover:bg-surface-200 border border-semantic-border-light cursor-pointer transition-colors group flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center text-brand-400">
-                        <Bell className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-semantic-text-primary group-hover:text-brand-400 transition-colors">
-                          {t('admin.notifications', 'Admin Notifications')}
-                        </p>
-                        <p className="text-xs text-semantic-text-tertiary">
-                          {t('admin.viewAlerts', 'Verification & ID Alerts')}
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 transition-colors" />
-                  </div>
-                </div>
-              </Card>
-            )}
-
-            {/* Recent Booking Activity Card (Worker & Customer Accounts only) */}
-            {user.role !== 'admin' && (
-              <Card className="p-6 bg-surface-100 border border-semantic-border-light">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-semantic-text-primary">
-                    {t('profile.recentBookings', 'Recent Booking Activity')}
-                  </h3>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigate('/bookings')}
-                    className="text-xs text-brand-400"
-                  >
-                    {t('common.viewAll', 'View All')}
-                  </Button>
-                </div>
-                <div className="space-y-3">
-                  {recentActivities.length === 0 ? (
-                    <div className="text-center p-6 bg-surface-200/40 rounded-xl border border-semantic-border-light">
-                      <p className="text-sm font-medium text-semantic-text-primary">
-                        {t('profile.noRecentBookings', 'No recent booking activity recorded yet.')}
-                      </p>
-                      <p className="text-xs text-semantic-text-secondary mt-1">
-                        {t('profile.noRecentBookingsDesc', 'Bookings you place or receive will be listed here.')}
-                      </p>
-                    </div>
-                  ) : (
-                    recentActivities.map(activity => {
-                      const catObj = CATEGORIES.find(c => c.id === activity.category)
-                      const catName =
-                        language === 'hi' && catObj ? catObj.name_hi : catObj?.name_en || activity.category
-                      const statusText =
-                        activity.status === 'completed'
-                          ? t('booking.status.completed', 'Completed')
-                          : activity.status === 'accepted'
-                          ? t('booking.status.accepted', 'Accepted')
-                          : activity.status === 'in_progress'
-                          ? t('booking.status.inProgress', 'In Progress')
-                          : activity.status === 'pending'
-                          ? t('booking.status.pending', 'Pending')
-                          : t('booking.status.rejected', 'Rejected')
-
-                      return (
-                        <div
-                          key={activity.id}
-                          onClick={() => navigate('/bookings')}
-                          className="flex items-center justify-between p-3 bg-surface-200/60 hover:bg-surface-200 border border-semantic-border-light rounded-lg transition-colors cursor-pointer group"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 bg-brand-500/10 rounded-lg flex items-center justify-center text-brand-400">
-                              <Calendar className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <p className="font-medium text-sm text-semantic-text-primary capitalize group-hover:text-brand-400 transition-colors">
-                                {catName} ({statusText})
-                              </p>
-                              <p className="text-xs text-semantic-text-tertiary">
-                                {t('profile.recordedOn', 'Recorded on')} {activity.time}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge
-                              variant={
-                                activity.status === 'completed'
-                                  ? 'success'
-                                  : activity.status === 'accepted' || activity.status === 'in_progress'
-                                  ? 'info'
-                                  : activity.status === 'pending'
-                                  ? 'warning'
-                                  : 'danger'
-                              }
-                            >
-                              {statusText}
-                            </Badge>
-                            <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 transition-colors" />
-                          </div>
-                        </div>
-                      )
-                    })
-                  )}
-                </div>
-              </Card>
-            )}
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 shrink-0 shadow-inner">
+            <Gift className="w-8 h-8 sm:w-10 sm:h-10 text-purple-300" />
           </div>
         </div>
       </div>
 
-      {/* Add / Update Email Modal */}
+      {/* ===================================================================== */}
+      {/* 6. EDIT PROFILE MODAL / DRAWER (Clean focused form)                   */}
+      {/* ===================================================================== */}
+      <Modal
+        isOpen={editMode}
+        onClose={() => setEditMode(false)}
+        title={t('profile.editProfile', 'Edit Profile Details')}
+        description="Update your personal details, contact information, and preferences."
+      >
+        <div className="space-y-4 pt-2 max-h-[75vh] overflow-y-auto px-1">
+          {/* Avatar Photo Upload */}
+          <div className="flex items-center gap-4 p-3 bg-surface-200/50 rounded-2xl border border-semantic-border-light">
+            <div className="relative">
+              <Avatar
+                name={formData.name}
+                src={formData.avatar_url || undefined}
+                size="lg"
+                className="shadow-sm"
+              />
+              <button
+                type="button"
+                onClick={() => avatarInputRef.current?.click()}
+                disabled={isUploadingAvatar}
+                className="absolute -bottom-1 -right-1 p-1.5 bg-brand-500 text-surface-950 rounded-full shadow hover:bg-brand-400"
+                title="Change photo"
+              >
+                {isUploadingAvatar ? (
+                  <UploadCloud className="w-3.5 h-3.5 animate-bounce" />
+                ) : (
+                  <Camera className="w-3.5 h-3.5" />
+                )}
+              </button>
+              <input
+                type="file"
+                ref={avatarInputRef}
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarFileSelect}
+              />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-semantic-text-primary">Profile Photo</p>
+              <p className="text-[11px] text-semantic-text-tertiary">PNG, JPG or WebP (Max 5MB)</p>
+            </div>
+          </div>
+
+          {avatarUploadError && (
+            <p className="text-xs text-red-400">{avatarUploadError}</p>
+          )}
+
+          {/* Full Name */}
+          <div>
+            <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
+              Full Name
+            </label>
+            <Input
+              value={formData.name}
+              onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="Your full name"
+              required
+            />
+          </div>
+
+          {/* Phone Number */}
+          <div>
+            <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
+              Phone Number
+            </label>
+            <Input
+              value={formData.phone}
+              onChange={e => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+              placeholder="+919876543210"
+              leftIcon={<Phone className="w-4 h-4 text-semantic-text-tertiary" />}
+            />
+          </div>
+
+          {/* Email / Gmail */}
+          <div>
+            <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
+              Email / Gmail Address
+            </label>
+            <Input
+              type="email"
+              value={formData.email}
+              onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))}
+              placeholder="name@gmail.com"
+              leftIcon={<Mail className="w-4 h-4 text-semantic-text-tertiary" />}
+            />
+          </div>
+
+          {/* Language Selection */}
+          <div>
+            <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
+              Language Preference
+            </label>
+            <select
+              value={formData.language}
+              onChange={e => setFormData(prev => ({ ...prev, language: e.target.value as 'en' | 'hi' }))}
+              className="w-full bg-surface-200 border border-semantic-border-medium rounded-lg p-2.5 text-sm text-semantic-text-primary focus:outline-none focus:border-brand-500"
+            >
+              <option value="en">English</option>
+              <option value="hi">हिंदी (Hindi)</option>
+            </select>
+          </div>
+
+          {/* Worker Specific Fields */}
+          {isWorker && (
+            <div className="pt-3 border-t border-semantic-border-light space-y-3">
+              <h4 className="font-bold text-xs text-brand-400 uppercase tracking-wider">
+                Worker Trade & Details
+              </h4>
+
+              <div>
+                <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
+                  Primary Trade
+                </label>
+                <select
+                  value={formData.category}
+                  onChange={e => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                  className="w-full bg-surface-200 border border-semantic-border-medium rounded-lg p-2.5 text-sm text-semantic-text-primary focus:outline-none focus:border-brand-500 capitalize"
+                >
+                  <option value="">Select Primary Trade</option>
+                  {CATEGORIES.map(cat => (
+                    <option key={cat.id} value={cat.id}>
+                      {getCategoryName(cat, language === 'hi' ? 'hi' : 'en')}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
+                  Years of Experience
+                </label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="50"
+                  value={formData.experience_years}
+                  onChange={e => setFormData(prev => ({ ...prev, experience_years: Number(e.target.value) }))}
+                  placeholder="5"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
+                  About your work (Bio)
+                </label>
+                <textarea
+                  value={formData.bio}
+                  onChange={e => setFormData(prev => ({ ...prev, bio: e.target.value }))}
+                  rows={3}
+                  className="w-full bg-surface-200 border border-semantic-border-medium rounded-lg p-2.5 text-sm text-semantic-text-primary focus:outline-none focus:border-brand-500"
+                  placeholder="Describe your skills, tools, and specialty..."
+                />
+              </div>
+
+              {/* ID Proof upload */}
+              <div>
+                <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
+                  ID Proof Document (Aadhaar / Voter ID)
+                </label>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => idProofInputRef.current?.click()}
+                    disabled={isUploadingIdProof}
+                    className="text-xs"
+                  >
+                    <UploadCloud className="w-3.5 h-3.5 mr-1 text-brand-400" />
+                    {formData.id_proof_url ? 'Replace Document' : 'Upload ID Proof'}
+                  </Button>
+                  <input
+                    type="file"
+                    ref={idProofInputRef}
+                    accept="image/*,application/pdf"
+                    className="hidden"
+                    onChange={handleIdProofFileSelect}
+                  />
+                  {formData.id_proof_url && (
+                    <span className="text-xs text-emerald-400 flex items-center gap-1 font-medium">
+                      <Check className="w-3 h-3" /> Attached
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Modal Actions */}
+          <div className="flex gap-3 pt-4 border-t border-semantic-border-light">
+            <Button
+              variant="secondary"
+              onClick={() => setEditMode(false)}
+              className="flex-1 text-xs"
+              disabled={isSaving}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleSaveProfile}
+              loading={isSaving}
+              className="flex-1 text-xs font-bold"
+            >
+              {isSaving ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* ===================================================================== */}
+      {/* 7. HELP & SUPPORT MODAL                                               */}
+      {/* ===================================================================== */}
+      <Modal
+        isOpen={showSupportModal}
+        onClose={() => setShowSupportModal(false)}
+        title="Muzaffarnagar Kaamgar Helpline"
+        description="Connect with our local support team for booking assistance, issues, or enquiries."
+      >
+        <div className="space-y-3 pt-2">
+          {/* WhatsApp Direct Chat */}
+          <a
+            href="https://api.whatsapp.com/send?phone=918077362606&text=Hello%2C%20I%20need%20assistance%20with%20Muzaffarnagar%20Kaamgar%20services"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 transition-colors group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                <MessageCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-white group-hover:text-emerald-300">
+                  WhatsApp Support Chat
+                </p>
+                <p className="text-[11px] text-semantic-text-secondary">
+                  Instant replies (8:00 AM - 9:00 PM)
+                </p>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-emerald-400" />
+          </a>
+
+          {/* Emergency Phone Helpline */}
+          <a
+            href="tel:+918077362606"
+            className="flex items-center justify-between p-3.5 rounded-2xl bg-surface-200 border border-semantic-border-light hover:bg-surface-300 transition-colors group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-brand-500/20 flex items-center justify-center text-brand-400">
+                <PhoneCall className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-white group-hover:text-brand-300">
+                  Call Support Line
+                </p>
+                <p className="text-[11px] text-semantic-text-secondary">
+                  +91 8077362606
+                </p>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-semantic-text-tertiary" />
+          </a>
+
+          <div className="pt-2 text-center text-xs text-semantic-text-tertiary">
+            <p>Official City Initiative for Muzaffarnagar, Uttar Pradesh</p>
+          </div>
+        </div>
+      </Modal>
+
+      {/* ===================================================================== */}
+      {/* 8. MANAGE ADDRESSES MODAL                                             */}
+      {/* ===================================================================== */}
+      <Modal
+        isOpen={showAddressModal}
+        onClose={() => setShowAddressModal(false)}
+        title="Muzaffarnagar Service Localities"
+        description="Kaamgar currently provides rapid same-day artisan service in the following pincodes."
+      >
+        <div className="space-y-2.5 pt-2">
+          {MUZAFFARNAGAR_PINCODES.map(pincode => (
+            <div
+              key={pincode}
+              className="p-3.5 rounded-2xl bg-surface-200/70 border border-semantic-border-light flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                  <MapPin className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-white">
+                    {pincode === '251001' ? 'City / New Mandi' : 'Cantt / Civil Lines'}
+                  </p>
+                  <p className="text-[11px] text-semantic-text-tertiary">
+                    Pincode: {pincode} • Active Coverage
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full">
+                Active
+              </span>
+            </div>
+          ))}
+        </div>
+      </Modal>
+
+      {/* ===================================================================== */}
+      {/* 9. ADD / UPDATE EMAIL MODAL                                           */}
+      {/* ===================================================================== */}
       <Modal
         isOpen={showEmailModal}
         onClose={() => {
@@ -1408,12 +1127,37 @@ export default function Profile() {
           setEmailModalError('')
         }}
         title="Email / Gmail Address"
-        description="Add or update your email to receive official booking receipts and account notices."
+        description="Link your email to receive official receipts and job notifications."
       >
-        <form onSubmit={handleSaveEmailModal} className="space-y-4 pt-2">
+        <form
+          onSubmit={async e => {
+            e.preventDefault()
+            setEmailModalError('')
+            const trimmed = emailModalInput.trim()
+            if (!trimmed || !trimmed.includes('@')) {
+              setEmailModalError('Please enter a valid email address')
+              return
+            }
+
+            setIsSavingEmail(true)
+            try {
+              await updateEmail(trimmed)
+              setFormData(prev => ({ ...prev, email: trimmed }))
+              setShowEmailModal(false)
+              setEmailModalInput('')
+              setSaveSuccessMsg('Email updated successfully!')
+              setTimeout(() => setSaveSuccessMsg(''), 4000)
+            } catch (err) {
+              setEmailModalError(err instanceof Error ? err.message : 'Failed to save email')
+            } finally {
+              setIsSavingEmail(false)
+            }
+          }}
+          className="space-y-4 pt-2"
+        >
           {emailModalError && (
             <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{emailModalError}</span>
             </div>
           )}
@@ -1436,20 +1180,18 @@ export default function Profile() {
                 setEmailModalError('')
               }}
             >
-              {t('common.cancel', 'Cancel')}
+              Cancel
             </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              loading={isSavingEmail}
-            >
+            <Button type="submit" variant="primary" loading={isSavingEmail}>
               Save Email
             </Button>
           </div>
         </form>
       </Modal>
 
-      {/* Logout Confirmation Modal */}
+      {/* ===================================================================== */}
+      {/* 10. LOGOUT CONFIRMATION MODAL                                         */}
+      {/* ===================================================================== */}
       <Modal
         isOpen={showLogoutModal}
         onClose={() => setShowLogoutModal(false)}
