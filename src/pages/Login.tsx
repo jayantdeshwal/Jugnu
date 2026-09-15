@@ -25,14 +25,12 @@ import {
   Globe,
   Heart,
   UserPlus,
+  Eye,
+  EyeOff,
 } from 'lucide-react'
 import { checkPhoneRegistration } from '@/services/authCheck'
 
-interface LoginProps {
-  onExploreAsGuest?: () => void
-}
-
-export default function Login({ onExploreAsGuest }: LoginProps = {}) {
+export default function Login() {
   const { t } = useTranslation()
   const { language, toggleLanguage } = useLanguage()
   const navigate = useNavigate()
@@ -54,19 +52,16 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
   const queryPhone = (searchParams.get('phone') || '').replace(/\D/g, '').slice(-10)
 
   // ---------------- Customer State ----------------
-  const [customerAuthMode, setCustomerAuthMode] = useState<'otp' | 'password'>('otp')
   const [customerIdentifier, setCustomerIdentifier] = useState(queryPhone)
   const [customerPassword, setCustomerPassword] = useState('')
-  const [customerName, setCustomerName] = useState('')
-  const [customerPhone, setCustomerPhone] = useState(queryPhone)
+  const [showCustomerPassword, setShowCustomerPassword] = useState(false)
   const [customerLoading, setCustomerLoading] = useState(false)
   const [customerError, setCustomerError] = useState('')
 
   // ---------------- Worker State ----------------
-  const [workerAuthMode, setWorkerAuthMode] = useState<'otp' | 'password'>('otp')
   const [workerIdentifier, setWorkerIdentifier] = useState(queryPhone)
   const [workerPassword, setWorkerPassword] = useState('')
-  const [workerPhone, setWorkerPhone] = useState(queryPhone)
+  const [showWorkerPassword, setShowWorkerPassword] = useState(false)
   const [workerLoading, setWorkerLoading] = useState(false)
   const [workerError, setWorkerError] = useState('')
 
@@ -101,8 +96,6 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
     if (phoneParam) {
       const clean = phoneParam.replace(/\D/g, '').slice(-10)
       if (clean.length === 10) {
-        setCustomerPhone(clean)
-        setWorkerPhone(clean)
         setCustomerIdentifier(clean)
         setWorkerIdentifier(clean)
       }
@@ -170,20 +163,18 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
   }
 
   // ---------------- 1. CUSTOMER LOGIN HANDLERS ----------------
-  const handleCustomerOtpLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleCustomerOtpRecovery = async () => {
     setCustomerError('')
     setUnregisteredNotice(null)
 
-    const cleanPhone = customerPhone.replace(/\D/g, '').slice(-10)
+    const cleanPhone = customerIdentifier.trim().replace(/\D/g, '').slice(-10)
     if (cleanPhone.length !== 10) {
-      setCustomerError('Please enter a valid 10-digit mobile number')
+      setCustomerError('Please enter your 10-digit registered mobile number in the field above to verify via OTP.')
       return
     }
 
     setCustomerLoading(true)
     try {
-      // 1. Strict pre-check: verify phone is registered BEFORE opening OTP
       const check = await checkPhoneRegistration(cleanPhone)
       if (!check.isRegistered) {
         setCustomerLoading(false)
@@ -200,22 +191,14 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
         onSuccess: async () => {
           try {
             await loginWithVerifiedPhone(
-              customerName.trim() || check.fullName || 'Customer',
+              check.fullName || 'Customer',
               cleanPhone,
               'customer'
             )
             navigate('/')
           } catch (err) {
             const msg = err instanceof Error ? err.message : 'Sign in failed after OTP verification'
-            if (msg.toLowerCase().includes('no account found') || msg.toLowerCase().includes('sign up')) {
-              setUnregisteredNotice({
-                phone: cleanPhone,
-                role: 'customer',
-                message: msg
-              })
-            } else {
-              setCustomerError(msg)
-            }
+            setCustomerError(msg)
           } finally {
             setCustomerLoading(false)
           }
@@ -230,7 +213,7 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
         setCustomerLoading(false)
         setCustomerError('OTP verification widget could not be loaded. Please ensure ad-blockers are disabled.')
       }
-    } catch (err) {
+    } catch {
       setCustomerLoading(false)
       setCustomerError('Unable to launch OTP verification. Please retry.')
     }
@@ -295,21 +278,19 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
   }
 
   // ---------------- 2. WORKER LOGIN HANDLERS ----------------
-  const handleWorkerOtpLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleWorkerOtpRecovery = async () => {
     setWorkerError('')
     setUnregisteredNotice(null)
     setWorkerRoleMismatch(null)
 
-    const cleanPhone = workerPhone.replace(/\D/g, '').slice(-10)
+    const cleanPhone = workerIdentifier.trim().replace(/\D/g, '').slice(-10)
     if (cleanPhone.length !== 10) {
-      setWorkerError('Please enter a valid 10-digit mobile number')
+      setWorkerError('Please enter your 10-digit registered worker mobile number in the field above to verify via OTP.')
       return
     }
 
     setWorkerLoading(true)
     try {
-      // 1. Strict pre-check: verify worker account registration BEFORE opening OTP
       const check = await checkPhoneRegistration(cleanPhone)
       if (!check.isRegistered) {
         setWorkerLoading(false)
@@ -321,7 +302,6 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
         return
       }
 
-      // Check role: customer registered but not as worker
       if (check.role === 'customer' && !check.isWorker) {
         setWorkerLoading(false)
         setWorkerRoleMismatch({
@@ -343,15 +323,7 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
             navigate('/worker/dashboard')
           } catch (err) {
             const msg = err instanceof Error ? err.message : 'Worker login failed after OTP verification'
-            if (msg.toLowerCase().includes('no account found') || msg.toLowerCase().includes('sign up') || msg.toLowerCase().includes('register')) {
-              setUnregisteredNotice({
-                phone: cleanPhone,
-                role: 'worker',
-                message: msg
-              })
-            } else {
-              setWorkerError(msg)
-            }
+            setWorkerError(msg)
           } finally {
             setWorkerLoading(false)
           }
@@ -366,7 +338,7 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
         setWorkerLoading(false)
         setWorkerError('OTP verification widget could not be loaded. Please ensure ad-blockers are disabled.')
       }
-    } catch (err) {
+    } catch {
       setWorkerLoading(false)
       setWorkerError('Unable to launch OTP verification. Please retry.')
     }
@@ -679,38 +651,6 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
           {/* ================= 1. CUSTOMER LOGIN FORM ================= */}
           {loginRole === 'customer' && (
             <div>
-              {/* Toggle: OTP vs Password */}
-              <div className="flex bg-surface-200/60 p-1 rounded-lg mb-4 border border-semantic-border-light/60 text-xs font-medium">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCustomerAuthMode('otp')
-                    setCustomerError('')
-                  }}
-                  className={`flex-1 py-1.5 rounded-md transition-all ${
-                    customerAuthMode === 'otp'
-                      ? 'bg-surface-100 text-brand-400 font-semibold shadow-sm'
-                      : 'text-semantic-text-tertiary hover:text-semantic-text-primary'
-                  }`}
-                >
-                  {t('loginPage.modeOtp', 'Mobile Number (OTP)')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCustomerAuthMode('password')
-                    setCustomerError('')
-                  }}
-                  className={`flex-1 py-1.5 rounded-md transition-all ${
-                    customerAuthMode === 'password'
-                      ? 'bg-surface-100 text-brand-400 font-semibold shadow-sm'
-                      : 'text-semantic-text-tertiary hover:text-semantic-text-primary'
-                  }`}
-                >
-                  {t('loginPage.modePassword', 'Phone / Email & Password')}
-                </button>
-              </div>
-
               {unregisteredNotice && unregisteredNotice.role === 'customer' && (
                 <div className="mb-4 p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-2.5">
                   <div className="flex items-start gap-2.5 text-amber-300 text-xs">
@@ -744,130 +684,80 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
                     <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                     <span className="leading-relaxed">{customerError}</span>
                   </div>
-                  {customerAuthMode === 'password' && (
-                    <div className="pt-2 border-t border-red-500/20 flex items-center justify-between">
-                      <span className="text-[11px] text-semantic-text-tertiary">Signed up via Mobile OTP?</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const clean = customerIdentifier.replace(/\D/g, '').slice(-10)
-                          if (clean.length === 10) setCustomerPhone(clean)
-                          setCustomerAuthMode('otp')
-                          setCustomerError('')
-                        }}
-                        className="text-[11px] font-bold text-brand-400 hover:text-brand-300 underline cursor-pointer"
-                      >
-                        Sign in with Mobile OTP →
-                      </button>
-                    </div>
-                  )}
                 </div>
               )}
 
-              {customerAuthMode === 'otp' ? (
-                <form onSubmit={handleCustomerOtpLogin} className="space-y-4">
-                  <Input
-                    label={t('loginPage.phoneLabel', 'Mobile Number (10 digits) *')}
-                    value={customerPhone}
-                    onChange={e => {
-                      setCustomerPhone(e.target.value.replace(/\D/g, '').slice(0, 10))
-                      if (unregisteredNotice) setUnregisteredNotice(null)
-                    }}
-                    placeholder="9876543210"
-                    leftIcon={<span className="text-sm font-semibold text-semantic-text-secondary">+91</span>}
-                    required
-                    autoFocus
-                  />
+              <form onSubmit={handleCustomerPasswordLogin} className="space-y-4">
+                <Input
+                  label={t('loginPage.identifierLabel', 'Mobile Number or Email Address *')}
+                  value={customerIdentifier}
+                  onChange={e => {
+                    setCustomerIdentifier(e.target.value)
+                    if (unregisteredNotice) setUnregisteredNotice(null)
+                    if (customerError) setCustomerError('')
+                  }}
+                  placeholder="9876543210 or name@gmail.com"
+                  leftIcon={<User className="w-4 h-4 text-semantic-text-tertiary" />}
+                  required
+                  autoFocus
+                />
 
-                  <Input
-                    label={t('loginPage.fullNameOptional', 'Full Name (Optional for existing customers)')}
-                    value={customerName}
-                    onChange={e => setCustomerName(e.target.value)}
-                    placeholder="Your Name"
-                    leftIcon={<User className="w-4 h-4 text-semantic-text-tertiary" />}
-                  />
-
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    className="w-full mt-2"
-                    size="lg"
-                    loading={customerLoading}
-                  >
-                    {t('loginPage.verifyOtpBtn', 'Verify Mobile via OTP & Sign In')}
-                  </Button>
-                </form>
-              ) : (
-                <form onSubmit={handleCustomerPasswordLogin} className="space-y-4">
-                  <Input
-                    label={t('loginPage.identifierLabel', 'Mobile Number or Email Address *')}
-                    value={customerIdentifier}
-                    onChange={e => setCustomerIdentifier(e.target.value)}
-                    placeholder="9876543210 or name@gmail.com"
-                    leftIcon={<User className="w-4 h-4 text-semantic-text-tertiary" />}
-                    required
-                    autoFocus
-                  />
-
+                <div className="relative">
                   <Input
                     label={t('loginPage.passwordLabel', 'Password *')}
-                    type="password"
+                    type={showCustomerPassword ? 'text' : 'password'}
                     value={customerPassword}
-                    onChange={e => setCustomerPassword(e.target.value)}
+                    onChange={e => {
+                      setCustomerPassword(e.target.value)
+                      if (customerError) setCustomerError('')
+                    }}
                     placeholder="••••••••••••"
                     leftIcon={<Lock className="w-4 h-4 text-semantic-text-tertiary" />}
+                    rightIcon={
+                      <button
+                        type="button"
+                        onClick={() => setShowCustomerPassword(prev => !prev)}
+                        className="text-semantic-text-tertiary hover:text-white p-1"
+                        title={showCustomerPassword ? 'Hide password' : 'Show password'}
+                        aria-label={showCustomerPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showCustomerPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    }
                     required
                   />
+                </div>
 
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    className="w-full mt-2"
-                    size="lg"
-                    loading={customerLoading}
+                <div className="flex items-center justify-between text-xs pt-0.5">
+                  <span className="text-[11px] text-semantic-text-tertiary">
+                    {t('loginPage.needHelp', 'Forgot password or first login?')}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleCustomerOtpRecovery}
+                    disabled={customerLoading}
+                    className="text-[11px] font-semibold text-brand-400 hover:text-brand-300 underline cursor-pointer transition-colors"
                   >
-                    {t('loginPage.customerPasswordBtn', 'Sign In as Customer')}
-                  </Button>
-                </form>
-              )}
+                    {t('loginPage.signInWithOtpLink', 'Sign in with Mobile OTP')}
+                  </button>
+                </div>
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="w-full mt-2"
+                  size="lg"
+                  loading={customerLoading}
+                >
+                  {t('loginPage.customerPasswordBtn', 'Sign In as Customer')}
+                </Button>
+              </form>
             </div>
           )}
 
           {/* ================= 2. WORKER LOGIN FORM ================= */}
           {loginRole === 'worker' && (
             <div>
-              {/* Toggle: OTP vs Password */}
-              <div className="flex bg-surface-200/60 p-1 rounded-lg mb-4 border border-semantic-border-light/60 text-xs font-medium">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setWorkerAuthMode('otp')
-                    setWorkerError('')
-                  }}
-                  className={`flex-1 py-1.5 rounded-md transition-all ${
-                    workerAuthMode === 'otp'
-                      ? 'bg-surface-100 text-emerald-400 font-semibold shadow-sm'
-                      : 'text-semantic-text-tertiary hover:text-semantic-text-primary'
-                  }`}
-                >
-                  {t('loginPage.modeOtp', 'Mobile Number (OTP)')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setWorkerAuthMode('password')
-                    setWorkerError('')
-                  }}
-                  className={`flex-1 py-1.5 rounded-md transition-all ${
-                    workerAuthMode === 'password'
-                      ? 'bg-surface-100 text-emerald-400 font-semibold shadow-sm'
-                      : 'text-semantic-text-tertiary hover:text-semantic-text-primary'
-                  }`}
-                >
-                  {t('loginPage.modePassword', 'Phone / Email & Password')}
-                </button>
-              </div>
-
               {unregisteredNotice && unregisteredNotice.role === 'worker' && (
                 <div className="mb-4 p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-2.5">
                   <div className="flex items-start gap-2.5 text-amber-300 text-xs">
@@ -914,7 +804,7 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
                       onClick={() => {
                         setLoginRole('customer')
                         setSearchParams({ role: 'customer', phone: workerRoleMismatch.phone })
-                        setCustomerPhone(workerRoleMismatch.phone)
+                        setCustomerIdentifier(workerRoleMismatch.phone)
                         setWorkerRoleMismatch(null)
                       }}
                       className="flex-1 flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-400 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
@@ -939,85 +829,75 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
                     <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                     <span className="leading-relaxed">{workerError}</span>
                   </div>
-                  {workerAuthMode === 'password' && (
-                    <div className="pt-2 border-t border-red-500/20 flex items-center justify-between">
-                      <span className="text-[11px] text-semantic-text-tertiary">Registered via Mobile OTP?</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const clean = workerIdentifier.replace(/\D/g, '').slice(-10)
-                          if (clean.length === 10) setWorkerPhone(clean)
-                          setWorkerAuthMode('otp')
-                          setWorkerError('')
-                        }}
-                        className="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 underline cursor-pointer"
-                      >
-                        Sign in with Mobile OTP →
-                      </button>
-                    </div>
-                  )}
                 </div>
               )}
 
-              {workerAuthMode === 'otp' ? (
-                <form onSubmit={handleWorkerOtpLogin} className="space-y-4">
-                  <Input
-                    label={t('loginPage.phoneLabel', 'Worker Mobile Number (10 digits) *')}
-                    value={workerPhone}
-                    onChange={e => {
-                      setWorkerPhone(e.target.value.replace(/\D/g, '').slice(0, 10))
-                      if (unregisteredNotice) setUnregisteredNotice(null)
-                      if (workerRoleMismatch) setWorkerRoleMismatch(null)
-                    }}
-                    placeholder="9876543210"
-                    leftIcon={<span className="text-sm font-semibold text-semantic-text-secondary">+91</span>}
-                    required
-                    autoFocus
-                  />
+              <form onSubmit={handleWorkerPasswordLogin} className="space-y-4">
+                <Input
+                  label={t('loginPage.workerIdentifierLabel', 'Worker Mobile Number or Email *')}
+                  value={workerIdentifier}
+                  onChange={e => {
+                    setWorkerIdentifier(e.target.value)
+                    if (unregisteredNotice) setUnregisteredNotice(null)
+                    if (workerRoleMismatch) setWorkerRoleMismatch(null)
+                    if (workerError) setWorkerError('')
+                  }}
+                  placeholder="9876543210 or worker@gmail.com"
+                  leftIcon={<Truck className="w-4 h-4 text-semantic-text-tertiary" />}
+                  required
+                  autoFocus
+                />
 
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    className="w-full mt-2 bg-emerald-600 hover:bg-emerald-500 text-white border-none shadow-lg shadow-emerald-600/20"
-                    size="lg"
-                    loading={workerLoading}
-                  >
-                    {t('loginPage.workerOtpBtn', 'Verify via OTP & Access Worker Dashboard')}
-                  </Button>
-                </form>
-              ) : (
-                <form onSubmit={handleWorkerPasswordLogin} className="space-y-4">
-                  <Input
-                    label={t('loginPage.workerIdentifierLabel', 'Mobile Number or Registered Email *')}
-                    value={workerIdentifier}
-                    onChange={e => setWorkerIdentifier(e.target.value)}
-                    placeholder="9876543210 or worker@gmail.com"
-                    leftIcon={<Truck className="w-4 h-4 text-semantic-text-tertiary" />}
-                    required
-                    autoFocus
-                  />
-
+                <div className="relative">
                   <Input
                     label={t('loginPage.passwordLabel', 'Password *')}
-                    type="password"
+                    type={showWorkerPassword ? 'text' : 'password'}
                     value={workerPassword}
-                    onChange={e => setWorkerPassword(e.target.value)}
+                    onChange={e => {
+                      setWorkerPassword(e.target.value)
+                      if (workerError) setWorkerError('')
+                    }}
                     placeholder="••••••••••••"
                     leftIcon={<Lock className="w-4 h-4 text-semantic-text-tertiary" />}
+                    rightIcon={
+                      <button
+                        type="button"
+                        onClick={() => setShowWorkerPassword(prev => !prev)}
+                        className="text-semantic-text-tertiary hover:text-white p-1"
+                        title={showWorkerPassword ? 'Hide password' : 'Show password'}
+                        aria-label={showWorkerPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showWorkerPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    }
                     required
                   />
+                </div>
 
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    className="w-full mt-2 bg-emerald-600 hover:bg-emerald-500 text-white border-none shadow-lg shadow-emerald-600/20"
-                    size="lg"
-                    loading={workerLoading}
+                <div className="flex items-center justify-between text-xs pt-0.5">
+                  <span className="text-[11px] text-semantic-text-tertiary">
+                    {t('loginPage.needHelp', 'Forgot password or first login?')}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleWorkerOtpRecovery}
+                    disabled={workerLoading}
+                    className="text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 underline cursor-pointer transition-colors"
                   >
-                    {t('loginPage.workerPasswordBtn', 'Sign In to Worker Dashboard')}
-                  </Button>
-                </form>
-              )}
+                    {t('loginPage.signInWithOtpLink', 'Sign in with Mobile OTP')}
+                  </button>
+                </div>
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="w-full mt-2 bg-emerald-600 hover:bg-emerald-500 text-white border-none shadow-lg shadow-emerald-600/20"
+                  size="lg"
+                  loading={workerLoading}
+                >
+                  {t('loginPage.workerPasswordBtn', 'Sign In to Worker Dashboard')}
+                </Button>
+              </form>
 
               <div className="mt-4 pt-3 border-t border-semantic-border-light/60 text-center">
                 <p className="text-xs text-semantic-text-tertiary mb-1">
@@ -1207,7 +1087,7 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
             </div>
           )}
 
-          {/* Footer Callout to Register & Guest Mode */}
+          {/* Footer Callout to Register */}
           <div className="mt-5 pt-4 border-t border-semantic-border-light text-center space-y-3">
             <p className="text-xs text-semantic-text-secondary">
               {t('loginPage.newToKaamgar', 'New to Kaamgar?')}{' '}
@@ -1218,25 +1098,6 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
                 {t('loginPage.signUpLink', 'Create an account (Sign Up)')}
               </Link>
             </p>
-
-            {/* Explore as Guest Link */}
-            <div>
-              <button
-                type="button"
-                onClick={() => {
-                  if (onExploreAsGuest) {
-                    onExploreAsGuest()
-                  } else {
-                    sessionStorage.setItem('kaamgar_guest_mode', 'true')
-                    navigate('/')
-                  }
-                }}
-                className="inline-flex items-center gap-1.5 text-xs text-semantic-text-tertiary hover:text-white transition-colors cursor-pointer"
-              >
-                <span>{t('loginPage.exploreAsGuest', 'Explore services without signing in')}</span>
-                <ArrowRight className="w-3 h-3 text-brand-400" />
-              </button>
-            </div>
           </div>
         </Card>
       </div>

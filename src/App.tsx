@@ -22,16 +22,23 @@ import WorkerDashboard from './pages/WorkerDashboard'
 import { useState } from 'react'
 import { useAuth } from './context/AuthContext'
 
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth()
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-surface-950 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" />
+      </div>
+    )
+  }
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
+  return <>{children}</>
+}
+
 function RootRoute() {
   const { isAuthenticated, isLoading } = useAuth()
-  const [isGuest, setIsGuest] = useState(() => {
-    return typeof window !== 'undefined' && sessionStorage.getItem('kaamgar_guest_mode') === 'true'
-  })
-
-  const handleExploreAsGuest = () => {
-    sessionStorage.setItem('kaamgar_guest_mode', 'true')
-    setIsGuest(true)
-  }
 
   if (isLoading) {
     return (
@@ -41,34 +48,32 @@ function RootRoute() {
     )
   }
 
-  if (isAuthenticated || isGuest) {
+  if (isAuthenticated) {
     return <Home />
   }
 
-  return <Login onExploreAsGuest={handleExploreAsGuest} />
+  return <Navigate to="/login" replace />
 }
 
 function AppRoutes() {
-  const { t } = useTranslation()
-  
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
         <Route index element={<RootRoute />} />
-        <Route path="home" element={<Home />} />
-        <Route path="search" element={<Search />} />
-        <Route path="worker/:id" element={<WorkerProfile />} />
-        <Route path="booking/:workerId" element={<Booking />} />
-        <Route path="bookings" element={<Bookings />} />
+        <Route path="home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+        <Route path="search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
+        <Route path="worker/:id" element={<ProtectedRoute><WorkerProfile /></ProtectedRoute>} />
+        <Route path="booking/:workerId" element={<ProtectedRoute><Booking /></ProtectedRoute>} />
+        <Route path="bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
         <Route path="auth" element={<Login />} />
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
         <Route path="signup" element={<Navigate to="/register" replace />} />
         <Route path="register/worker" element={<WorkerRegistration />} />
-        <Route path="profile" element={<Profile />} />
-        <Route path="notifications" element={<Notifications />} />
-        <Route path="worker/dashboard" element={<WorkerDashboard />} />
-        <Route path="admin" element={<AdminDashboard />} />
+        <Route path="profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+        <Route path="worker/dashboard" element={<ProtectedRoute><WorkerDashboard /></ProtectedRoute>} />
+        <Route path="admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

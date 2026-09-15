@@ -23,12 +23,6 @@ export default function Layout() {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
 
-  const handleBackToLogin = () => {
-    sessionStorage.removeItem('kaamgar_guest_mode')
-    window.dispatchEvent(new Event('storage'))
-    navigate('/login')
-  }
-
   // Handle click outside and Escape key to close user menu dropdown
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -139,11 +133,13 @@ export default function Layout() {
     )
   }
 
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/auth'
-  const isGuestMode = typeof window !== 'undefined' && sessionStorage.getItem('kaamgar_guest_mode') === 'true'
-  const isUnauthRoot = location.pathname === '/' && !isAuthenticated && !isGuestMode
+  const isAuthPage =
+    location.pathname === '/login' ||
+    location.pathname === '/auth' ||
+    location.pathname.startsWith('/register') ||
+    location.pathname === '/signup'
 
-  if (isAuthPage || isUnauthRoot) {
+  if (isAuthPage || !isAuthenticated) {
     return (
       <>
         <NetworkStatus />
@@ -165,21 +161,7 @@ export default function Layout() {
       <header className="sticky top-0 z-40 bg-surface-950/95 backdrop-blur-md border-b border-semantic-border-light">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Main navigation">
           <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center gap-2 sm:gap-6">
-              {!isAuthenticated && (
-                <button
-                  type="button"
-                  onClick={handleBackToLogin}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-surface-850 hover:bg-surface-800 text-xs font-semibold text-semantic-text-primary hover:text-brand-400 border border-semantic-border-medium shadow-sm transition-all cursor-pointer active:scale-95"
-                  title={t('common.backToLogin', 'Back to Login')}
-                  aria-label={t('common.backToLogin', 'Back to Login')}
-                >
-                  <ArrowLeft className="w-3.5 h-3.5 text-brand-400" />
-                  <span className="hidden sm:inline">{t('common.backToLogin', 'Back to Login')}</span>
-                  <span className="sm:hidden">{t('common.back', 'Back')}</span>
-                </button>
-              )}
-
+            <div className="flex items-center gap-6">
               <NavLink to="/" className="flex items-center gap-2.5" aria-label={t('app.name')}>
                 <div className="w-8 h-8 bg-brand-500 text-surface-950 rounded-lg flex items-center justify-center font-bold">
                   <Truck className="w-5 h-5 text-surface-950" />
@@ -413,15 +395,6 @@ export default function Layout() {
                 </div>
               ) : (
                 <div className="hidden sm:flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleBackToLogin}
-                    className="text-xs text-semantic-text-secondary hover:text-white flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                    <span>{t('common.backToLogin', 'Back to Login')}</span>
-                  </Button>
                   <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
                     {t('nav.loginSignup', 'Login / Sign Up')}
                   </Button>
@@ -570,17 +543,6 @@ export default function Layout() {
 
 
                     <div className="pt-4 border-t border-semantic-border-light flex flex-col gap-2">
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start text-semantic-text-secondary hover:text-white"
-                        onClick={() => {
-                          setMobileMenuOpen(false)
-                          handleBackToLogin()
-                        }}
-                      >
-                        <ArrowLeft className="w-5 h-5 mr-2 text-brand-400" />
-                        {t('common.backToLogin', 'Back to Login')}
-                      </Button>
                       <Button variant="outline" className="w-full justify-start" onClick={() => { setMobileMenuOpen(false); navigate('/login') }}>
                         <User className="w-5 h-5 mr-2" />
                         {t('nav.loginSignup', 'Login / Sign Up')}
@@ -742,51 +704,6 @@ export default function Layout() {
         </div>
       </footer>
       
-      {/* Guest Exploration Sticky Bottom Bar */}
-      {!isAuthenticated && (
-        <aside
-          className="fixed bottom-0 left-0 right-0 z-40 bg-surface-950/95 backdrop-blur-md border-t border-semantic-border-light shadow-2xl px-3 sm:px-6 py-2.5"
-          aria-label="Guest session prompt"
-        >
-          <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-brand-500/15 border border-brand-500/30 flex items-center justify-center text-brand-400 shrink-0">
-                <ShieldCheck className="w-4 h-4" />
-              </div>
-              <div className="truncate">
-                <p className="text-xs font-semibold text-semantic-text-primary truncate">
-                  {t('guestBar.prompt', 'Browsing in Guest Mode')}
-                </p>
-                <p className="text-[11px] text-semantic-text-secondary truncate hidden sm:block">
-                  {t('guestBar.subprompt', 'Sign in to book artisans, chat, and access verified phone numbers')}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleBackToLogin}
-                className="font-medium px-3 py-1.5 text-xs text-semantic-text-secondary hover:text-white border-semantic-border-light/70 flex items-center gap-1.5 cursor-pointer active:scale-95"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>{t('common.backToLogin', 'Back to Login')}</span>
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => navigate('/login')}
-                className="font-semibold px-4 py-1.5 shadow-lg shadow-brand-500/20 text-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
-              >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>{t('nav.loginSignup', 'Login / Sign Up')}</span>
-              </Button>
-            </div>
-          </div>
-        </aside>
-      )}
-
       <NotificationToast
         notifications={notifications}
         onClose={removeNotification}

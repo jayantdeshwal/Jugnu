@@ -45,6 +45,8 @@ export default function WorkerRegistration() {
     name: user?.name || '',
     phone: user?.phone ? user.phone.replace(/\D/g, '').slice(-10) : '',
     email: user?.email || '',
+    password: '',
+    confirmPassword: '',
     category: '',
     experience: '',
     bio: '',
@@ -102,12 +104,20 @@ export default function WorkerRegistration() {
     setAlreadyRegisteredNotice(null)
     const cleanPhone = formData.phone.replace(/\D/g, '').slice(-10)
 
-    if (!formData.name.trim()) {
-      setErrors(prev => ({ ...prev, name: 'Please enter your full name' }))
+    if (!formData.name.trim() || formData.name.trim().length < 2) {
+      setErrors(prev => ({ ...prev, name: 'Please enter your full name (minimum 2 characters)' }))
       return
     }
     if (cleanPhone.length !== 10) {
       setErrors(prev => ({ ...prev, phone: 'Please enter a valid 10-digit mobile number' }))
+      return
+    }
+    if (!formData.password || formData.password.length < 6) {
+      setErrors(prev => ({ ...prev, password: 'Password must be at least 6 characters long' }))
+      return
+    }
+    if (formData.password !== formData.confirmPassword) {
+      setErrors(prev => ({ ...prev, confirmPassword: 'Passwords do not match' }))
       return
     }
 
@@ -132,7 +142,13 @@ export default function WorkerRegistration() {
           setVerifyingOtp(false)
           setErrors({})
           try {
-            await registerWithPhone(formData.name.trim(), cleanPhone, 'worker', formData.email.trim() || undefined)
+            await registerWithPhone(
+              formData.name.trim(),
+              cleanPhone,
+              'worker',
+              formData.email.trim() || undefined,
+              formData.password
+            )
           } catch (e: any) {
             if (e.message?.toLowerCase().includes('already registered')) {
               setAlreadyRegisteredNotice({
@@ -226,10 +242,12 @@ export default function WorkerRegistration() {
     const newErrors: Record<string, string> = {}
 
     if (currentStep === 0) {
-      if (!formData.name.trim()) newErrors.name = 'Full name is required'
+      if (!formData.name.trim() || formData.name.trim().length < 2) newErrors.name = 'Full name is mandatory (minimum 2 characters)'
       if (!formData.phone.trim()) newErrors.phone = 'Mobile number is required'
       else if (!/^\d{10}$/.test(formData.phone)) newErrors.phone = 'Enter a valid 10-digit number'
       else if (!phoneVerified) newErrors.phone = 'Please verify your mobile number with OTP before continuing'
+      if (!formData.password || formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters long'
+      if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match'
     }
 
     if (currentStep === 1) {
@@ -537,6 +555,30 @@ export default function WorkerRegistration() {
                   <p className="mt-1 text-xs text-semantic-text-tertiary">
                     {t('auth.workerRegistration.emailHint', 'Optional: For registration confirmation, receipts, and admin notices.')}
                   </p>
+                </div>
+
+                {/* Password & Confirm Password */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Input
+                    label="Create Password *"
+                    type="password"
+                    value={formData.password}
+                    onChange={e => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                    placeholder="Min 6 characters"
+                    leftIcon={<Lock className="w-4 h-4 text-semantic-text-tertiary" />}
+                    error={errors.password}
+                    required
+                  />
+                  <Input
+                    label="Confirm Password *"
+                    type="password"
+                    value={formData.confirmPassword}
+                    onChange={e => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    placeholder="Repeat password"
+                    leftIcon={<Lock className="w-4 h-4 text-semantic-text-tertiary" />}
+                    error={errors.confirmPassword}
+                    required
+                  />
                 </div>
 
                 {/* Verification Trigger or Verified Badge */}

@@ -109,8 +109,8 @@ export default function Register() {
     const cleanName = customerName.trim()
     const cleanPhone = customerPhone.replace(/\D/g, '').slice(-10)
 
-    if (!cleanName) {
-      setCustomerError('Please enter your full name')
+    if (!cleanName || cleanName.length < 2) {
+      setCustomerError('Full Name is mandatory (minimum 2 characters)')
       return
     }
     if (cleanPhone.length !== 10) {
@@ -196,8 +196,8 @@ export default function Register() {
     const cleanName = workerName.trim()
     const cleanPhone = workerPhone.replace(/\D/g, '').slice(-10)
 
-    if (!cleanName) {
-      setWorkerError('Please enter your full name')
+    if (!cleanName || cleanName.length < 2) {
+      setWorkerError('Full Name is mandatory (minimum 2 characters)')
       return
     }
     if (cleanPhone.length !== 10) {
@@ -436,9 +436,20 @@ export default function Register() {
                 </div>
               )}
 
+              {/* One-time OTP & Password notice */}
+              <div className="p-3.5 bg-brand-500/10 border border-brand-500/25 rounded-xl mb-5 flex items-start gap-2.5">
+                <ShieldCheck className="w-4 h-4 text-brand-400 shrink-0 mt-0.5" />
+                <div className="text-xs text-brand-200 leading-relaxed">
+                  <strong className="text-white block font-semibold mb-0.5">
+                    {t('registerPage.oneTimeNoticeTitle', 'One-Time Verification')}
+                  </strong>
+                  {t('registerPage.oneTimeNoticeDesc', 'You only need to verify your mobile number with OTP once during sign up. On subsequent visits, simply log in using your phone number and password.')}
+                </div>
+              </div>
+
               <form onSubmit={handleCustomerSubmit} className="space-y-4">
                 <Input
-                  label={t('registerPage.fullName', 'Full Name *')}
+                  label={t('registerPage.fullName', 'Full Name (Mandatory) *')}
                   value={customerName}
                   onChange={e => setCustomerName(e.target.value)}
                   placeholder="e.g. Amit Kumar"
@@ -558,7 +569,7 @@ export default function Register() {
 
               <form onSubmit={handleWorkerSubmit} className="space-y-4">
                 <Input
-                  label={t('registerPage.workerFullName', 'Full Name *')}
+                  label={t('registerPage.workerFullName', 'Full Name (Mandatory) *')}
                   value={workerName}
                   onChange={e => setWorkerName(e.target.value)}
                   placeholder="e.g. Ramesh Chandra"

@@ -45,7 +45,6 @@ import {
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAiAssistant } from '@/context/AiAssistantContext'
-import { useAuth } from '@/context/AuthContext'
 
 const iconMap: Record<string, any> = {
   zap: Zap,
@@ -75,14 +74,6 @@ export default function Home() {
   const { categories } = usePublicCatalog()
   const navigate = useNavigate()
   const aiAssistant = useAiAssistant()
-  const { isAuthenticated } = useAuth()
-  const isGuestMode = !isAuthenticated || (typeof window !== 'undefined' && sessionStorage.getItem('kaamgar_guest_mode') === 'true')
-
-  const handleBackToLogin = () => {
-    sessionStorage.removeItem('kaamgar_guest_mode')
-    window.dispatchEvent(new Event('storage'))
-    navigate('/login')
-  }
 
   // Search & Filter state
   const [selectedCategory, setSelectedCategory] = useState('')
@@ -195,25 +186,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-semantic-bg-primary text-semantic-text-primary">
-      {/* Exploration Guest Mode Banner with 1-Tap Back Button */}
-      {isGuestMode && (
-        <div className="bg-gradient-to-r from-brand-500/15 via-surface-900 to-brand-500/15 border-b border-brand-500/30 py-2.5 px-3 sm:px-6">
-          <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 text-xs text-brand-300 font-medium truncate">
-              <Sparkles className="w-3.5 h-3.5 text-brand-400 shrink-0" />
-              <span className="truncate">{t('guestBar.exploringAsGuest', 'You are exploring Muzaffarnagar Kaamgar in Guest Mode')}</span>
-            </div>
-            <button
-              type="button"
-              onClick={handleBackToLogin}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-surface-800 hover:bg-surface-750 text-xs font-bold text-white transition-all cursor-pointer border border-brand-500/40 shrink-0 shadow-sm active:scale-95"
-            >
-              <ArrowLeft className="w-3.5 h-3.5 text-brand-400" />
-              <span>{t('common.backToLogin', 'Back to Login')}</span>
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* ========================================================================= */}
       {/* 1. URBAN COMPANY STYLE STICKY SEARCH BAR (Above Hero & Docks under Navbar) */}
@@ -226,17 +198,6 @@ export default function Home() {
           {/* Location indicator & delivery speed banner */}
           <div className="flex items-center justify-between gap-2 mb-1.5 px-1">
             <div className="flex items-center gap-1.5 text-xs text-semantic-text-secondary min-w-0">
-              {isGuestMode && (
-                <button
-                  type="button"
-                  onClick={handleBackToLogin}
-                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-400 hover:text-brand-300 mr-1 pr-1.5 border-r border-semantic-border-medium cursor-pointer shrink-0 transition-colors"
-                  title={t('common.backToLogin', 'Back to Login')}
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>{t('common.back', 'Back')}</span>
-                </button>
-              )}
               <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
               <span className="font-semibold text-semantic-text-primary truncate">
                 {selectedArea ? `${selectedArea} • Muzaffarnagar` : 'Muzaffarnagar (251001 & 251002)'}
