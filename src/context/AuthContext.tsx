@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { User, UserRole } from '@kaamgar/shared'
 import { getSupabaseClient } from '@/lib/supabase'
+import { checkPhoneRegistration, recordPhoneRegistered } from '@/services/authCheck'
 
 interface AuthContextType {
   user: User | null
@@ -12,6 +13,7 @@ interface AuthContextType {
   signUpWithEmail: (email: string, password: string, fullName: string) => Promise<{ needsConfirmation: boolean }>
   signInWithGoogle: (redirectTo?: string) => Promise<void>
   loginWithVerifiedPhone: (name: string, phone: string, role?: UserRole, email?: string, customPassword?: string) => Promise<User>
+  registerWithPhone: (name: string, phone: string, role?: UserRole, email?: string, customPassword?: string) => Promise<User>
   updatePhone: (phone: string) => Promise<void>
   updateEmail: (email: string) => Promise<void>
   isAuthenticated: boolean
@@ -203,11 +205,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const cleanEmail = optionalEmail?.trim() || undefined
     const supabase = getSupabaseClient()
 
-    // 1. Check if Supabase session already exists
+    // 1. Verify user is already registered. Block if not found!
+    const check = await checkPhoneRegistration(cleanPhone)
+    if (!check.isRegistered) {
+      throw new Error('No account found with this mobile number. Please sign up to create your Kaamgar account first.')
+    }
+
+    // Role mismatch verification for Worker portal
+    if (role === 'worker' && check.role === 'customer' && !check.isWorker) {
+      throw new Error('This mobile number is registered as a Customer. Please sign in under Customer Login or register as a Worker.')
+    }
+
+    // 2. Check if Supabase session already exists
     const { data: sessionData } = await supabase.auth.getSession()
     let authUser = sessionData.session?.user
 
-    // 2. If no session, create or sign into dedicated phone account
+    // 3. If no session, sign into existing account. DO NOT auto-signup unregistered users!
     if (!authUser) {
       const phoneEmail = cleanEmail || `${cleanPhone}@phone.kaamgar.local`
       const phonePassword = customPassword || `kaamgar_phone_${cleanPhone}_secure`
@@ -218,35 +231,101 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           password: phonePassword,
         })
 
-        if (signInData.user) {
+        if (signInData?.user) {
           authUser = signInData.user
         } else if (signInErr) {
-          const { data: signUpData } = await supabase.auth.signUp({
-            email: phoneEmail,
-            password: phonePassword,
-            options: {
-              data: {
-                full_name: name || 'User',
-                phone: formattedPhone,
-              },
-            },
-          })
-          if (signUpData.user) {
-            authUser = signUpData.user
-          }
+          console.warn('Supabase phone sign-in notice:', signInErr.message)
         }
       } catch (e) {
         console.warn('Supabase phone-credential auth notice:', e)
       }
-    } else if (customPassword) {
-      try {
-        await supabase.auth.updateUser({ password: customPassword })
-      } catch (e) {
-        console.warn('Could not update user password:', e)
-      }
     }
 
-    // 3. Upsert profile row in Supabase
+    const resolvedRole = check.role || role
+    const resolvedName = check.fullName || name || authUser?.user_metadata?.full_name || 'User'
+
+    // 4. Construct and save resolved user
+    const resolvedUser: User = {
+      id: authUser?.id || `user_${cleanPhone}`,
+      name: resolvedName,
+      phone: formattedPhone,
+      email: cleanEmail || null,
+      role: resolvedRole,
+      language: 'en',
+      avatar_url: (authUser?.user_metadata?.avatar_url as string) || null,
+      created_at: new Date().toISOString(),
+    }
+
+    login(resolvedUser)
+    return resolvedUser
+  }
+
+  const registerWithPhone = async (
+    name: string,
+    rawPhone: string,
+    role: UserRole = 'customer',
+    optionalEmail?: string,
+    customPassword?: string
+  ): Promise<User> => {
+    const cleanPhone = rawPhone.replace(/\D/g, '').slice(-10)
+    const formattedPhone = `+91${cleanPhone}`
+    const cleanEmail = optionalEmail?.trim() || undefined
+    const supabase = getSupabaseClient()
+
+    // 1. Verify user is NOT already registered. Block if already exists!
+    const check = await checkPhoneRegistration(cleanPhone)
+    if (check.isRegistered) {
+      throw new Error('An account with this mobile number is already registered. Please log in instead.')
+    }
+
+    const phoneEmail = cleanEmail || `${cleanPhone}@phone.kaamgar.local`
+    const phonePassword = customPassword || `kaamgar_phone_${cleanPhone}_secure`
+
+    // 2. Perform SignUp in Supabase Auth
+    let authUser: any = null
+    try {
+      const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
+        email: phoneEmail,
+        password: phonePassword,
+        options: {
+          data: {
+            full_name: name || 'User',
+            phone: formattedPhone,
+            role: role,
+          },
+        },
+      })
+
+      if (signUpErr) {
+        if (
+          signUpErr.message?.toLowerCase().includes('already') ||
+          (signUpErr as any).code === 'user_already_exists'
+        ) {
+          throw new Error('An account with this mobile number is already registered. Please log in instead.')
+        }
+        throw signUpErr
+      }
+
+      authUser = signUpData?.user || null
+    } catch (err: any) {
+      if (err.message?.toLowerCase().includes('already')) {
+        throw new Error('An account with this mobile number is already registered. Please log in instead.')
+      }
+      throw err
+    }
+
+    if (!authUser) {
+      const { data: signInData } = await supabase.auth.signInWithPassword({
+        email: phoneEmail,
+        password: phonePassword,
+      })
+      authUser = signInData?.user || null
+    }
+
+    // 3. Record in local device cache
+    recordPhoneRegistered(cleanPhone, role, name)
+
+    // 4. Upsert profile row in Supabase
     if (authUser) {
       try {
         await (supabase.from('profiles') as any).upsert({
@@ -261,7 +340,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // 4. Construct and save resolved user
+    // 5. Construct and save resolved user
     const resolvedUser: User = {
       id: authUser?.id || `user_${cleanPhone}`,
       name: name || authUser?.user_metadata?.full_name || 'User',
@@ -344,6 +423,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signUpWithEmail,
         signInWithGoogle,
         loginWithVerifiedPhone,
+        registerWithPhone,
         updatePhone,
         updateEmail,
         isAuthenticated: !!user,

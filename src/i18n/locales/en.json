@@ -284,7 +284,19 @@
       "summaryIdProof": "ID Proof: Securely uploaded for verification",
       "summaryPhoto": "Profile Photo: Uploaded",
       "goToDashboard": "Go to Worker Dashboard"
-    }
+    },
+    "notRegisteredTitle": "Account Not Registered",
+    "notRegisteredCustomerDesc": "No account found with mobile number +91 {{phone}}. You are not registered yet. Please sign up to create your Kaamgar account first.",
+    "notRegisteredWorkerTitle": "Worker Account Not Found",
+    "notRegisteredWorkerDesc": "No worker account found with mobile number +91 {{phone}}. Please register as a verified Kaamgar artisan first to receive jobs.",
+    "signUpAsCustomerBtn": "Sign Up as Customer (Free)",
+    "registerAsWorkerBtn": "Register as Worker / Artisan",
+    "alreadyRegisteredTitle": "Mobile Number Already Registered",
+    "alreadyRegisteredDesc": "An account already exists with mobile number +91 {{phone}}. You cannot register again with this number. Please sign in instead.",
+    "goToCustomerLogin": "Sign In to Customer Account",
+    "goToWorkerLogin": "Sign In to Worker Dashboard",
+    "customerAccountDetected": "Customer Account Detected",
+    "customerAccountWorkerNotice": "Mobile +91 {{phone}} is registered as a Customer. Please sign in under Customer login, or register this number as a Worker."
   },
   "bookings": {
     "title": "My Bookings",

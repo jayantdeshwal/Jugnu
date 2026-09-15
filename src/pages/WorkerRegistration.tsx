@@ -5,6 +5,7 @@ import { Button, Input, Card, Badge } from '@kaamgar/ui'
 import { CATEGORIES, MUZAFFARNAGAR_PINCODES, getCategoryName } from '@kaamgar/shared'
 import {
   ArrowLeft,
+  ArrowRight,
   Check,
   AlertCircle,
   Image,
@@ -18,12 +19,14 @@ import {
   CheckCircle,
   ShieldCheck,
   Mail,
+  Lock,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { getSupabaseClient } from '@/lib/supabase'
 import { uploadAvatar, uploadIdProof, validateFile } from '@/services/storage'
 import { notifyAdminsOfWorkerRegistration } from '@/services/admin'
 import { openOtpWidget } from '@/services/otp'
+import { checkPhoneRegistration } from '@/services/authCheck'
 
 const STEPS = [
   { key: 'personal', labelKey: 'auth.workerRegistration.step1', fallback: 'Personal Info', icon: User },
@@ -34,7 +37,7 @@ const STEPS = [
 export default function WorkerRegistration() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
-  const { user, loginWithVerifiedPhone, signInWithGoogle } = useAuth()
+  const { user, registerWithPhone, signInWithGoogle } = useAuth()
   const [currentStep, setCurrentStep] = useState(0)
 
   // Initialize form state
@@ -55,6 +58,11 @@ export default function WorkerRegistration() {
     !!(user?.phone && user.phone.trim().length >= 10)
   )
   const [verifyingOtp, setVerifyingOtp] = useState(false)
+  const [alreadyRegisteredNotice, setAlreadyRegisteredNotice] = useState<{
+    phone: string
+    role: 'customer' | 'worker' | 'admin'
+    message?: string
+  } | null>(null)
 
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [idProofPreview, setIdProofPreview] = useState<string | null>(null)
@@ -91,7 +99,8 @@ export default function WorkerRegistration() {
   // Step 1: Verify Worker Phone via MSG91 OTP Widget
   const handleVerifyWorkerPhone = async () => {
     setErrors({})
-    const cleanPhone = formData.phone.replace(/\D/g, '')
+    setAlreadyRegisteredNotice(null)
+    const cleanPhone = formData.phone.replace(/\D/g, '').slice(-10)
 
     if (!formData.name.trim()) {
       setErrors(prev => ({ ...prev, name: 'Please enter your full name' }))
@@ -104,6 +113,18 @@ export default function WorkerRegistration() {
 
     setVerifyingOtp(true)
     try {
+      // 1. Strict pre-check: verify worker phone is NOT already registered
+      const check = await checkPhoneRegistration(cleanPhone)
+      if (check.isRegistered) {
+        setVerifyingOtp(false)
+        setAlreadyRegisteredNotice({
+          phone: cleanPhone,
+          role: check.role || 'worker',
+          message: `An account is already registered with mobile number +91 ${cleanPhone}. You cannot register again with this number. Please log in instead.`
+        })
+        return
+      }
+
       const launched = await openOtpWidget({
         identifier: cleanPhone,
         onSuccess: async () => {
@@ -111,9 +132,17 @@ export default function WorkerRegistration() {
           setVerifyingOtp(false)
           setErrors({})
           try {
-            await loginWithVerifiedPhone(formData.name.trim(), cleanPhone, 'worker', formData.email.trim() || undefined)
-          } catch (e) {
-            console.warn('Session init warning:', e)
+            await registerWithPhone(formData.name.trim(), cleanPhone, 'worker', formData.email.trim() || undefined)
+          } catch (e: any) {
+            if (e.message?.toLowerCase().includes('already registered')) {
+              setAlreadyRegisteredNotice({
+                phone: cleanPhone,
+                role: 'worker',
+                message: e.message
+              })
+            } else {
+              console.warn('Session init warning:', e)
+            }
           }
         },
         onFailure: (err) => {
@@ -227,10 +256,10 @@ export default function WorkerRegistration() {
 
     try {
       // Ensure user session exists
-      const cleanPhone = formData.phone.replace(/\D/g, '')
+      const cleanPhone = formData.phone.replace(/\D/g, '').slice(-10)
       let activeUser = user
       if (!activeUser || !activeUser.id) {
-        activeUser = await loginWithVerifiedPhone(formData.name.trim(), cleanPhone, 'worker')
+        activeUser = await registerWithPhone(formData.name.trim(), cleanPhone, 'worker')
       }
 
       let avatarUrl: string | undefined = undefined
@@ -412,6 +441,33 @@ export default function WorkerRegistration() {
 
         {/* Form Card */}
         <Card className="p-8 bg-surface-100 border border-semantic-border-light shadow-xl">
+          {alreadyRegisteredNotice && (
+            <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-3">
+              <div className="flex items-start gap-2.5 text-amber-300 text-xs">
+                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-400" />
+                <div>
+                  <p className="font-semibold text-amber-300 mb-0.5 text-sm">
+                    {t('auth.alreadyRegisteredTitle', 'Mobile Number Already Registered')}
+                  </p>
+                  <p className="text-amber-200/90 leading-relaxed">
+                    {alreadyRegisteredNotice.message ||
+                      t('auth.alreadyRegisteredDesc', 'An account already exists with mobile number +91 {{phone}}. You cannot register again with this number. Please sign in instead.', { phone: alreadyRegisteredNotice.phone })}
+                  </p>
+                </div>
+              </div>
+              <div className="pt-1">
+                <Link
+                  to={`/login?role=worker&phone=${alreadyRegisteredNotice.phone}`}
+                  className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-surface-950 font-bold text-xs shadow-md transition-transform hover:scale-[1.01] active:scale-[0.99]"
+                >
+                  <Lock className="w-4 h-4" />
+                  <span>{t('auth.goToWorkerLogin', 'Sign In to Worker Dashboard')}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+          )}
+
           {errors.form && (
             <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2 text-red-400 text-sm">
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
@@ -456,6 +512,7 @@ export default function WorkerRegistration() {
                         phone: e.target.value.replace(/\D/g, '').slice(0, 10),
                       }))
                       setPhoneVerified(false)
+                      if (alreadyRegisteredNotice) setAlreadyRegisteredNotice(null)
                     }}
                     placeholder="9876543210"
                     leftIcon={<span className="text-sm font-semibold text-semantic-text-secondary">+91</span>}

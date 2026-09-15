@@ -26,6 +26,7 @@ import { getSupabaseClient } from '@/lib/supabase'
 import { uploadIdProof, validateFile } from '@/services/storage'
 import { notifyAdminsOfWorkerRegistration } from '@/services/admin'
 import { openOtpWidget } from '@/services/otp'
+import { checkPhoneRegistration } from '@/services/authCheck'
 
 export default function Register() {
   const { t } = useTranslation()
@@ -34,11 +35,13 @@ export default function Register() {
   const initialRole = searchParams.get('role') === 'worker' ? 'worker' : 'customer'
   const [activeTab, setActiveTab] = useState<'customer' | 'worker'>(initialRole)
 
-  const { loginWithVerifiedPhone } = useAuth()
+  const { registerWithPhone } = useAuth()
+
+  const queryPhone = (searchParams.get('phone') || '').replace(/\D/g, '').slice(-10)
 
   // ---------------- Customer State ----------------
   const [customerName, setCustomerName] = useState('')
-  const [customerPhone, setCustomerPhone] = useState('')
+  const [customerPhone, setCustomerPhone] = useState(queryPhone)
   const [customerPassword, setCustomerPassword] = useState('')
   const [customerConfirmPassword, setCustomerConfirmPassword] = useState('')
   const [customerEmail, setCustomerEmail] = useState('')
@@ -47,7 +50,7 @@ export default function Register() {
 
   // ---------------- Worker State ----------------
   const [workerName, setWorkerName] = useState('')
-  const [workerPhone, setWorkerPhone] = useState('')
+  const [workerPhone, setWorkerPhone] = useState(queryPhone)
   const [workerPassword, setWorkerPassword] = useState('')
   const [workerConfirmPassword, setWorkerConfirmPassword] = useState('')
   const [workerCategory, setWorkerCategory] = useState('')
@@ -59,6 +62,13 @@ export default function Register() {
   const [workerLoading, setWorkerLoading] = useState(false)
   const [workerProgress, setWorkerProgress] = useState('')
   const [workerError, setWorkerError] = useState('')
+
+  // ---------------- Already Registered Warning ----------------
+  const [alreadyRegisteredNotice, setAlreadyRegisteredNotice] = useState<{
+    phone: string
+    role: 'customer' | 'worker' | 'admin'
+    message?: string
+  } | null>(null)
 
   // Toggle service area pincode selection
   const toggleArea = (pincode: string) => {
@@ -94,9 +104,10 @@ export default function Register() {
   const handleCustomerSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setCustomerError('')
+    setAlreadyRegisteredNotice(null)
 
     const cleanName = customerName.trim()
-    const cleanPhone = customerPhone.replace(/\D/g, '')
+    const cleanPhone = customerPhone.replace(/\D/g, '').slice(-10)
 
     if (!cleanName) {
       setCustomerError('Please enter your full name')
@@ -117,11 +128,23 @@ export default function Register() {
 
     setCustomerLoading(true)
     try {
+      // 1. Strict pre-check: verify phone is NOT already registered
+      const check = await checkPhoneRegistration(cleanPhone)
+      if (check.isRegistered) {
+        setCustomerLoading(false)
+        setAlreadyRegisteredNotice({
+          phone: cleanPhone,
+          role: check.role || 'customer',
+          message: `An account is already registered with mobile number +91 ${cleanPhone}. You cannot register again with this number. Please sign in instead.`
+        })
+        return
+      }
+
       const widgetOpened = await openOtpWidget({
         identifier: cleanPhone,
         onSuccess: async () => {
           try {
-            await loginWithVerifiedPhone(
+            await registerWithPhone(
               cleanName,
               cleanPhone,
               'customer',
@@ -130,7 +153,16 @@ export default function Register() {
             )
             navigate('/')
           } catch (err) {
-            setCustomerError(err instanceof Error ? err.message : 'Registration failed after OTP verification')
+            const msg = err instanceof Error ? err.message : 'Registration failed after OTP verification'
+            if (msg.toLowerCase().includes('already registered')) {
+              setAlreadyRegisteredNotice({
+                phone: cleanPhone,
+                role: 'customer',
+                message: msg
+              })
+            } else {
+              setCustomerError(msg)
+            }
           } finally {
             setCustomerLoading(false)
           }
@@ -159,9 +191,10 @@ export default function Register() {
   const handleWorkerSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setWorkerError('')
+    setAlreadyRegisteredNotice(null)
 
     const cleanName = workerName.trim()
-    const cleanPhone = workerPhone.replace(/\D/g, '')
+    const cleanPhone = workerPhone.replace(/\D/g, '').slice(-10)
 
     if (!cleanName) {
       setWorkerError('Please enter your full name')
@@ -197,15 +230,29 @@ export default function Register() {
     }
 
     setWorkerLoading(true)
-    setWorkerProgress('Initiating mobile verification...')
+    setWorkerProgress('Checking registration status...')
 
     try {
+      // 1. Strict pre-check: verify phone is NOT already registered as worker
+      const check = await checkPhoneRegistration(cleanPhone)
+      if (check.isRegistered) {
+        setWorkerLoading(false)
+        setWorkerProgress('')
+        setAlreadyRegisteredNotice({
+          phone: cleanPhone,
+          role: check.role || 'worker',
+          message: `An account is already registered with mobile number +91 ${cleanPhone}. You cannot register again with this number. Please sign in instead.`
+        })
+        return
+      }
+
+      setWorkerProgress('Initiating mobile verification...')
       const widgetOpened = await openOtpWidget({
         identifier: cleanPhone,
         onSuccess: async () => {
           try {
             setWorkerProgress('Creating worker account...')
-            const userSession = await loginWithVerifiedPhone(
+            const userSession = await registerWithPhone(
               cleanName,
               cleanPhone,
               'worker',
@@ -244,7 +291,16 @@ export default function Register() {
 
             navigate('/worker/dashboard')
           } catch (err) {
-            setWorkerError(err instanceof Error ? err.message : 'Worker registration failed. Please retry.')
+            const msg = err instanceof Error ? err.message : 'Worker registration failed. Please retry.'
+            if (msg.toLowerCase().includes('already registered')) {
+              setAlreadyRegisteredNotice({
+                phone: cleanPhone,
+                role: 'worker',
+                message: msg
+              })
+            } else {
+              setWorkerError(msg)
+            }
           } finally {
             setWorkerLoading(false)
             setWorkerProgress('')
@@ -308,6 +364,8 @@ export default function Register() {
               onClick={() => {
                 setActiveTab('customer')
                 setSearchParams({ role: 'customer' })
+                setAlreadyRegisteredNotice(null)
+                setCustomerError('')
               }}
               className={`flex-1 py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 ${
                 activeTab === 'customer'
@@ -323,6 +381,8 @@ export default function Register() {
               onClick={() => {
                 setActiveTab('worker')
                 setSearchParams({ role: 'worker' })
+                setAlreadyRegisteredNotice(null)
+                setWorkerError('')
               }}
               className={`flex-1 py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 ${
                 activeTab === 'worker'
@@ -338,6 +398,37 @@ export default function Register() {
           {/* ================= 1. CUSTOMER SIGN UP FORM ================= */}
           {activeTab === 'customer' && (
             <div>
+              {alreadyRegisteredNotice && (
+                <div className="mb-5 p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-2.5">
+                  <div className="flex items-start gap-2.5 text-amber-300 text-xs">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-400" />
+                    <div>
+                      <p className="font-semibold text-amber-300 mb-0.5">
+                        {t('auth.alreadyRegisteredTitle', 'Mobile Number Already Registered')}
+                      </p>
+                      <p className="text-amber-200/90 leading-relaxed">
+                        {alreadyRegisteredNotice.message ||
+                          t('auth.alreadyRegisteredDesc', 'An account already exists with mobile number +91 {{phone}}. You cannot register again with this number. Please sign in instead.', { phone: alreadyRegisteredNotice.phone })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="pt-1">
+                    <Link
+                      to={`/login?role=${alreadyRegisteredNotice.role}&phone=${alreadyRegisteredNotice.phone}`}
+                      className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-surface-950 font-bold text-xs shadow-md transition-transform hover:scale-[1.01] active:scale-[0.99]"
+                    >
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>
+                        {alreadyRegisteredNotice.role === 'worker'
+                          ? t('auth.goToWorkerLogin', 'Sign In to Worker Dashboard')
+                          : t('auth.goToCustomerLogin', 'Sign In to Customer Account')}
+                      </span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                </div>
+              )}
+
               {customerError && (
                 <div className="mb-5 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2 text-red-400 text-xs">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -417,6 +508,37 @@ export default function Register() {
           {/* ================= 2. WORKER SIGN UP FORM ================= */}
           {activeTab === 'worker' && (
             <div>
+              {alreadyRegisteredNotice && (
+                <div className="mb-5 p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-2.5">
+                  <div className="flex items-start gap-2.5 text-amber-300 text-xs">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-400" />
+                    <div>
+                      <p className="font-semibold text-amber-300 mb-0.5">
+                        {t('auth.alreadyRegisteredTitle', 'Mobile Number Already Registered')}
+                      </p>
+                      <p className="text-amber-200/90 leading-relaxed">
+                        {alreadyRegisteredNotice.message ||
+                          t('auth.alreadyRegisteredDesc', 'An account already exists with mobile number +91 {{phone}}. You cannot register again with this number. Please sign in instead.', { phone: alreadyRegisteredNotice.phone })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="pt-1">
+                    <Link
+                      to={`/login?role=${alreadyRegisteredNotice.role}&phone=${alreadyRegisteredNotice.phone}`}
+                      className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-surface-950 font-bold text-xs shadow-md transition-transform hover:scale-[1.01] active:scale-[0.99]"
+                    >
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>
+                        {alreadyRegisteredNotice.role === 'worker'
+                          ? t('auth.goToWorkerLogin', 'Sign In to Worker Dashboard')
+                          : t('auth.goToCustomerLogin', 'Sign In to Customer Account')}
+                      </span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                </div>
+              )}
+
               <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl mb-5 flex items-start gap-2.5">
                 <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
                 <div className="text-xs text-semantic-text-secondary">
@@ -448,7 +570,10 @@ export default function Register() {
                   <Input
                     label={t('registerPage.phone', 'Mobile Number (10 digits) *')}
                     value={workerPhone}
-                    onChange={e => setWorkerPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    onChange={e => {
+                      setWorkerPhone(e.target.value.replace(/\D/g, '').slice(0, 10))
+                      if (alreadyRegisteredNotice) setAlreadyRegisteredNotice(null)
+                    }}
                     placeholder="9876543210"
                     leftIcon={<span className="text-sm font-semibold text-semantic-text-secondary">+91</span>}
                     required

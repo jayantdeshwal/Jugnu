@@ -24,7 +24,9 @@ import {
   Download,
   Globe,
   Heart,
+  UserPlus,
 } from 'lucide-react'
+import { checkPhoneRegistration } from '@/services/authCheck'
 
 interface LoginProps {
   onExploreAsGuest?: () => void
@@ -49,22 +51,36 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
     updatePhone,
   } = useAuth()
 
+  const queryPhone = (searchParams.get('phone') || '').replace(/\D/g, '').slice(-10)
+
   // ---------------- Customer State ----------------
   const [customerAuthMode, setCustomerAuthMode] = useState<'otp' | 'password'>('otp')
-  const [customerIdentifier, setCustomerIdentifier] = useState('')
+  const [customerIdentifier, setCustomerIdentifier] = useState(queryPhone)
   const [customerPassword, setCustomerPassword] = useState('')
   const [customerName, setCustomerName] = useState('')
-  const [customerPhone, setCustomerPhone] = useState('')
+  const [customerPhone, setCustomerPhone] = useState(queryPhone)
   const [customerLoading, setCustomerLoading] = useState(false)
   const [customerError, setCustomerError] = useState('')
 
   // ---------------- Worker State ----------------
   const [workerAuthMode, setWorkerAuthMode] = useState<'otp' | 'password'>('otp')
-  const [workerIdentifier, setWorkerIdentifier] = useState('')
+  const [workerIdentifier, setWorkerIdentifier] = useState(queryPhone)
   const [workerPassword, setWorkerPassword] = useState('')
-  const [workerPhone, setWorkerPhone] = useState('')
+  const [workerPhone, setWorkerPhone] = useState(queryPhone)
   const [workerLoading, setWorkerLoading] = useState(false)
   const [workerError, setWorkerError] = useState('')
+
+  // ---------------- Account Check & Registration Warnings ----------------
+  const [unregisteredNotice, setUnregisteredNotice] = useState<{
+    phone: string
+    role: 'customer' | 'worker'
+    message?: string
+  } | null>(null)
+
+  const [workerRoleMismatch, setWorkerRoleMismatch] = useState<{
+    phone: string
+    fullName?: string
+  } | null>(null)
 
   // ---------------- Admin State & 2FA ----------------
   const [adminEmail, setAdminEmail] = useState('')
@@ -75,11 +91,21 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
   const [adminPhone, setAdminPhone] = useState('')
   const [adminSetupPhone, setAdminSetupPhone] = useState('')
 
-  // Sync role tab from URL params if updated externally
+  // Sync role and phone from URL params if updated externally
   useEffect(() => {
     const roleParam = searchParams.get('role')
     if (roleParam === 'worker' || roleParam === 'admin' || roleParam === 'customer') {
       setLoginRole(roleParam)
+    }
+    const phoneParam = searchParams.get('phone')
+    if (phoneParam) {
+      const clean = phoneParam.replace(/\D/g, '').slice(-10)
+      if (clean.length === 10) {
+        setCustomerPhone(clean)
+        setWorkerPhone(clean)
+        setCustomerIdentifier(clean)
+        setWorkerIdentifier(clean)
+      }
     }
   }, [searchParams])
 
@@ -140,8 +166,9 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
   const handleCustomerOtpLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setCustomerError('')
+    setUnregisteredNotice(null)
 
-    const cleanPhone = customerPhone.replace(/\D/g, '')
+    const cleanPhone = customerPhone.replace(/\D/g, '').slice(-10)
     if (cleanPhone.length !== 10) {
       setCustomerError('Please enter a valid 10-digit mobile number')
       return
@@ -149,18 +176,39 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
 
     setCustomerLoading(true)
     try {
+      // 1. Strict pre-check: verify phone is registered BEFORE opening OTP
+      const check = await checkPhoneRegistration(cleanPhone)
+      if (!check.isRegistered) {
+        setCustomerLoading(false)
+        setUnregisteredNotice({
+          phone: cleanPhone,
+          role: 'customer',
+          message: 'No account found with this mobile number. Please sign up to create your Kaamgar account first.'
+        })
+        return
+      }
+
       const widgetOpened = await openOtpWidget({
         identifier: cleanPhone,
         onSuccess: async () => {
           try {
             await loginWithVerifiedPhone(
-              customerName.trim() || 'Customer',
+              customerName.trim() || check.fullName || 'Customer',
               cleanPhone,
               'customer'
             )
             navigate('/')
           } catch (err) {
-            setCustomerError(err instanceof Error ? err.message : 'Sign in failed after OTP verification')
+            const msg = err instanceof Error ? err.message : 'Sign in failed after OTP verification'
+            if (msg.toLowerCase().includes('no account found') || msg.toLowerCase().includes('sign up')) {
+              setUnregisteredNotice({
+                phone: cleanPhone,
+                role: 'customer',
+                message: msg
+              })
+            } else {
+              setCustomerError(msg)
+            }
           } finally {
             setCustomerLoading(false)
           }
@@ -184,6 +232,7 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
   const handleCustomerPasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setCustomerError('')
+    setUnregisteredNotice(null)
 
     if (!customerIdentifier.trim()) {
       setCustomerError('Please enter your mobile number or email address')
@@ -194,8 +243,23 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
       return
     }
 
+    const clean = customerIdentifier.trim().replace(/\D/g, '').slice(-10)
     setCustomerLoading(true)
     try {
+      // If user typed a 10-digit mobile, pre-verify registration
+      if (clean.length === 10 && !customerIdentifier.includes('@')) {
+        const check = await checkPhoneRegistration(clean)
+        if (!check.isRegistered) {
+          setCustomerLoading(false)
+          setUnregisteredNotice({
+            phone: clean,
+            role: 'customer',
+            message: 'No account found with this mobile number. Please sign up to create your Kaamgar account first.'
+          })
+          return
+        }
+      }
+
       const resolvedEmail = await resolveIdentifierToEmail(customerIdentifier)
       await signInWithEmail(resolvedEmail, customerPassword)
       navigate('/')
@@ -210,8 +274,10 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
   const handleWorkerOtpLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setWorkerError('')
+    setUnregisteredNotice(null)
+    setWorkerRoleMismatch(null)
 
-    const cleanPhone = workerPhone.replace(/\D/g, '')
+    const cleanPhone = workerPhone.replace(/\D/g, '').slice(-10)
     if (cleanPhone.length !== 10) {
       setWorkerError('Please enter a valid 10-digit mobile number')
       return
@@ -219,18 +285,49 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
 
     setWorkerLoading(true)
     try {
+      // 1. Strict pre-check: verify worker account registration BEFORE opening OTP
+      const check = await checkPhoneRegistration(cleanPhone)
+      if (!check.isRegistered) {
+        setWorkerLoading(false)
+        setUnregisteredNotice({
+          phone: cleanPhone,
+          role: 'worker',
+          message: 'No worker account found with this mobile number. Please register as a verified Kaamgar artisan first.'
+        })
+        return
+      }
+
+      // Check role: customer registered but not as worker
+      if (check.role === 'customer' && !check.isWorker) {
+        setWorkerLoading(false)
+        setWorkerRoleMismatch({
+          phone: cleanPhone,
+          fullName: check.fullName
+        })
+        return
+      }
+
       const widgetOpened = await openOtpWidget({
         identifier: cleanPhone,
         onSuccess: async () => {
           try {
             await loginWithVerifiedPhone(
-              'Worker',
+              check.fullName || 'Worker',
               cleanPhone,
               'worker'
             )
             navigate('/worker/dashboard')
           } catch (err) {
-            setWorkerError(err instanceof Error ? err.message : 'Worker login failed after OTP verification')
+            const msg = err instanceof Error ? err.message : 'Worker login failed after OTP verification'
+            if (msg.toLowerCase().includes('no account found') || msg.toLowerCase().includes('sign up') || msg.toLowerCase().includes('register')) {
+              setUnregisteredNotice({
+                phone: cleanPhone,
+                role: 'worker',
+                message: msg
+              })
+            } else {
+              setWorkerError(msg)
+            }
           } finally {
             setWorkerLoading(false)
           }
@@ -254,6 +351,8 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
   const handleWorkerPasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setWorkerError('')
+    setUnregisteredNotice(null)
+    setWorkerRoleMismatch(null)
 
     if (!workerIdentifier.trim()) {
       setWorkerError('Please enter your mobile number or email')
@@ -264,8 +363,30 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
       return
     }
 
+    const clean = workerIdentifier.trim().replace(/\D/g, '').slice(-10)
     setWorkerLoading(true)
     try {
+      if (clean.length === 10 && !workerIdentifier.includes('@')) {
+        const check = await checkPhoneRegistration(clean)
+        if (!check.isRegistered) {
+          setWorkerLoading(false)
+          setUnregisteredNotice({
+            phone: clean,
+            role: 'worker',
+            message: 'No worker account found with this mobile number. Please register as a verified Kaamgar artisan first.'
+          })
+          return
+        }
+        if (check.role === 'customer' && !check.isWorker) {
+          setWorkerLoading(false)
+          setWorkerRoleMismatch({
+            phone: clean,
+            fullName: check.fullName
+          })
+          return
+        }
+      }
+
       const resolvedEmail = await resolveIdentifierToEmail(workerIdentifier)
       await signInWithEmail(resolvedEmail, workerPassword)
       navigate('/worker/dashboard')
@@ -551,6 +672,33 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
                 </button>
               </div>
 
+              {unregisteredNotice && unregisteredNotice.role === 'customer' && (
+                <div className="mb-4 p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-2.5">
+                  <div className="flex items-start gap-2.5 text-amber-300 text-xs">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-400" />
+                    <div>
+                      <p className="font-semibold text-amber-300 mb-0.5">
+                        {t('auth.notRegisteredTitle', 'Account Not Found / Not Registered')}
+                      </p>
+                      <p className="text-amber-200/90 leading-relaxed">
+                        {unregisteredNotice.message ||
+                          t('auth.notRegisteredCustomerDesc', 'No account found with mobile number +91 {{phone}}. You are not registered yet. Please sign up to create your Kaamgar account first.', { phone: unregisteredNotice.phone })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="pt-1">
+                    <Link
+                      to={`/register?role=customer&phone=${unregisteredNotice.phone}`}
+                      className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-surface-950 font-bold text-xs shadow-md transition-transform hover:scale-[1.01] active:scale-[0.99]"
+                    >
+                      <UserPlus className="w-3.5 h-3.5" />
+                      <span>{t('auth.signUpAsCustomerBtn', 'Sign Up as Customer (Free)')}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                </div>
+              )}
+
               {customerError && (
                 <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2 text-red-400 text-xs">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -563,7 +711,10 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
                   <Input
                     label={t('loginPage.phoneLabel', 'Mobile Number (10 digits) *')}
                     value={customerPhone}
-                    onChange={e => setCustomerPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    onChange={e => {
+                      setCustomerPhone(e.target.value.replace(/\D/g, '').slice(0, 10))
+                      if (unregisteredNotice) setUnregisteredNotice(null)
+                    }}
                     placeholder="9876543210"
                     leftIcon={<span className="text-sm font-semibold text-semantic-text-secondary">+91</span>}
                     required
@@ -659,6 +810,71 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
                 </button>
               </div>
 
+              {unregisteredNotice && unregisteredNotice.role === 'worker' && (
+                <div className="mb-4 p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-2.5">
+                  <div className="flex items-start gap-2.5 text-amber-300 text-xs">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-400" />
+                    <div>
+                      <p className="font-semibold text-amber-300 mb-0.5">
+                        {t('auth.notRegisteredWorkerTitle', 'Worker Account Not Found')}
+                      </p>
+                      <p className="text-amber-200/90 leading-relaxed">
+                        {unregisteredNotice.message ||
+                          t('auth.notRegisteredWorkerDesc', 'No worker account found with mobile number +91 {{phone}}. Please register as a verified Kaamgar artisan first to receive jobs.', { phone: unregisteredNotice.phone })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="pt-1">
+                    <Link
+                      to={`/register?role=worker&phone=${unregisteredNotice.phone}`}
+                      className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-transform hover:scale-[1.01] active:scale-[0.99]"
+                    >
+                      <Truck className="w-3.5 h-3.5" />
+                      <span>{t('auth.registerAsWorkerBtn', 'Register as Worker / Artisan')}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              {workerRoleMismatch && (
+                <div className="mb-4 p-3.5 bg-blue-500/10 border border-blue-500/30 rounded-xl space-y-2.5">
+                  <div className="flex items-start gap-2.5 text-blue-300 text-xs">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-400" />
+                    <div>
+                      <p className="font-semibold text-blue-300 mb-0.5">
+                        {t('auth.customerAccountDetected', 'Customer Account Detected')}
+                      </p>
+                      <p className="text-blue-200/90 leading-relaxed">
+                        {t('auth.customerAccountWorkerNotice', 'Mobile +91 {{phone}} is registered as a Customer. Please sign in under Customer login, or register this number as a Worker.', { phone: workerRoleMismatch.phone })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLoginRole('customer')
+                        setSearchParams({ role: 'customer', phone: workerRoleMismatch.phone })
+                        setCustomerPhone(workerRoleMismatch.phone)
+                        setWorkerRoleMismatch(null)
+                      }}
+                      className="flex-1 flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-400 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
+                    >
+                      <User className="w-3.5 h-3.5" />
+                      <span>{t('auth.goToCustomerLogin', 'Go to Customer Login')}</span>
+                    </button>
+                    <Link
+                      to={`/register?role=worker&phone=${workerRoleMismatch.phone}`}
+                      className="flex-1 flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-sm transition-colors text-center"
+                    >
+                      <Truck className="w-3.5 h-3.5" />
+                      <span>{t('auth.registerAsWorkerBtn', 'Register as Worker')}</span>
+                    </Link>
+                  </div>
+                </div>
+              )}
+
               {workerError && (
                 <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2 text-red-400 text-xs">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -671,7 +887,11 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
                   <Input
                     label={t('loginPage.phoneLabel', 'Worker Mobile Number (10 digits) *')}
                     value={workerPhone}
-                    onChange={e => setWorkerPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    onChange={e => {
+                      setWorkerPhone(e.target.value.replace(/\D/g, '').slice(0, 10))
+                      if (unregisteredNotice) setUnregisteredNotice(null)
+                      if (workerRoleMismatch) setWorkerRoleMismatch(null)
+                    }}
                     placeholder="9876543210"
                     leftIcon={<span className="text-sm font-semibold text-semantic-text-secondary">+91</span>}
                     required
