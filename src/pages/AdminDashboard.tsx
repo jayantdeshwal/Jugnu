@@ -47,6 +47,7 @@ import {
   AdminTeamMember,
 } from '@/services/admin'
 import { getIdProofSignedUrl } from '@/services/storage'
+import { removePhoneFromRegisteredCache } from '@/services/authCheck'
 
 interface ReviewWorkerRpc {
   rpc: (
@@ -362,6 +363,9 @@ export default function AdminDashboard() {
     setDeleteProfileError('')
     try {
       await deleteProfilePermanently(profileToDelete.id)
+      if (profileToDelete.phone) {
+        removePhoneFromRegisteredCache(profileToDelete.phone)
+      }
       const roleLabel = profileToDelete.role === 'worker' ? 'Worker' : 'Customer'
       setDeleteSuccessMessage(`Successfully deleted ${roleLabel} "${profileToDelete.name}" permanently.`)
       setTimeout(() => setDeleteSuccessMessage(''), 5000)

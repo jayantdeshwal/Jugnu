@@ -31,6 +31,18 @@ export function recordPhoneRegistered(cleanPhone: string, role: 'customer' | 'wo
   }
 }
 
+export function removePhoneFromRegisteredCache(rawPhone?: string | null) {
+  if (typeof window === 'undefined' || !rawPhone) return
+  try {
+    const clean = rawPhone.replace(/\D/g, '').slice(-10)
+    const cache = getLocalCache()
+    delete cache[clean]
+    localStorage.setItem(LOCAL_REGISTERED_PHONES_KEY, JSON.stringify(cache))
+  } catch (e) {
+    console.warn('Could not remove phone from cache:', e)
+  }
+}
+
 /**
  * Checks whether a given phone number is registered as a customer or worker.
  * Uses the security-definer RPC `check_phone_registration` with multi-layered fallbacks.
