@@ -511,301 +511,435 @@ export default function Profile() {
         {/* 3. THREE QUICK ACTION CARDS ROW (Exact 3-card layout of uc2.jpeg)     */}
         {/* ===================================================================== */}
         <div className="grid grid-cols-3 gap-2.5 sm:gap-3 mb-6">
-          {/* Card 1: My Bookings */}
-          <button
-            type="button"
-            onClick={() => navigate('/bookings')}
-            className="p-3 sm:p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-brand-500/40 hover:bg-surface-200/80 transition-all flex flex-col items-center justify-center text-center group shadow-sm active:scale-95"
-          >
-            <div className="w-10 h-10 rounded-xl bg-surface-200 group-hover:bg-brand-500/15 flex items-center justify-center text-brand-400 mb-2 transition-colors">
-              <ClipboardList className="w-5 h-5" />
-            </div>
-            <span className="text-xs font-bold text-semantic-text-primary group-hover:text-brand-400 leading-tight">
-              {t('profile.myBookings', 'My bookings')}
-            </span>
-          </button>
+          {isAdmin ? (
+            <>
+              {/* Admin Card 1: Admin Dashboard */}
+              <button
+                type="button"
+                onClick={() => navigate('/admin')}
+                className="p-3 sm:p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-rose-500/40 hover:bg-surface-200/80 transition-all flex flex-col items-center justify-center text-center group shadow-sm active:scale-95"
+              >
+                <div className="w-10 h-10 rounded-xl bg-rose-500/15 flex items-center justify-center text-rose-400 mb-2 group-hover:scale-105 transition-transform">
+                  <Shield className="w-5 h-5" />
+                </div>
+                <span className="text-xs font-bold text-semantic-text-primary group-hover:text-rose-400 leading-tight">
+                  Admin Dashboard
+                </span>
+              </button>
 
-          {/* Card 2: Worker Mode / Become a Worker */}
-          {isWorker ? (
-            <button
-              type="button"
-              onClick={handleToggleAvailability}
-              className="p-3 sm:p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-emerald-500/40 hover:bg-surface-200/80 transition-all flex flex-col items-center justify-center text-center group shadow-sm active:scale-95"
-            >
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center text-emerald-400 mb-2">
-                <Power className={`w-5 h-5 ${workerDetails?.is_available ? 'animate-pulse text-emerald-400' : 'text-amber-400'}`} />
-              </div>
-              <span className="text-xs font-bold text-semantic-text-primary leading-tight">
-                {workerDetails?.is_available ? 'Online / Ready' : 'Offline'}
-              </span>
-            </button>
-          ) : isAdmin ? (
-            <button
-              type="button"
-              onClick={() => navigate('/admin')}
-              className="p-3 sm:p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-rose-500/40 hover:bg-surface-200/80 transition-all flex flex-col items-center justify-center text-center group shadow-sm active:scale-95"
-            >
-              <div className="w-10 h-10 rounded-xl bg-rose-500/15 flex items-center justify-center text-rose-400 mb-2">
-                <Shield className="w-5 h-5" />
-              </div>
-              <span className="text-xs font-bold text-semantic-text-primary leading-tight">
-                Admin Portal
-              </span>
-            </button>
+              {/* Admin Card 2: Worker Approvals */}
+              <button
+                type="button"
+                onClick={() => navigate('/admin?tab=workers')}
+                className="p-3 sm:p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-amber-500/40 hover:bg-surface-200/80 transition-all flex flex-col items-center justify-center text-center group shadow-sm active:scale-95"
+              >
+                <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center text-amber-400 mb-2 group-hover:scale-105 transition-transform">
+                  <UserCheck className="w-5 h-5" />
+                </div>
+                <span className="text-xs font-bold text-semantic-text-primary group-hover:text-amber-400 leading-tight">
+                  Worker Approvals
+                </span>
+              </button>
+
+              {/* Admin Card 3: Platform Alerts */}
+              <button
+                type="button"
+                onClick={() => navigate('/admin?tab=notifications')}
+                className="p-3 sm:p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-brand-500/40 hover:bg-surface-200/80 transition-all flex flex-col items-center justify-center text-center group shadow-sm active:scale-95"
+              >
+                <div className="w-10 h-10 rounded-xl bg-brand-500/15 flex items-center justify-center text-brand-400 mb-2 group-hover:scale-105 transition-transform">
+                  <Bell className="w-5 h-5" />
+                </div>
+                <span className="text-xs font-bold text-semantic-text-primary group-hover:text-brand-400 leading-tight">
+                  Platform Alerts
+                </span>
+              </button>
+            </>
           ) : (
-            <button
-              type="button"
-              onClick={() => navigate('/register/worker')}
-              className="p-3 sm:p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-emerald-500/40 hover:bg-surface-200/80 transition-all flex flex-col items-center justify-center text-center group shadow-sm active:scale-95"
-            >
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center text-emerald-400 mb-2">
-                <Briefcase className="w-5 h-5" />
-              </div>
-              <span className="text-xs font-bold text-semantic-text-primary group-hover:text-emerald-400 leading-tight">
-                {t('profile.becomeWorker', 'Earn with Kaamgar')}
-              </span>
-            </button>
-          )}
+            <>
+              {/* Card 1: My Bookings */}
+              <button
+                type="button"
+                onClick={() => navigate('/bookings')}
+                className="p-3 sm:p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-brand-500/40 hover:bg-surface-200/80 transition-all flex flex-col items-center justify-center text-center group shadow-sm active:scale-95"
+              >
+                <div className="w-10 h-10 rounded-xl bg-surface-200 group-hover:bg-brand-500/15 flex items-center justify-center text-brand-400 mb-2 transition-colors">
+                  <ClipboardList className="w-5 h-5" />
+                </div>
+                <span className="text-xs font-bold text-semantic-text-primary group-hover:text-brand-400 leading-tight">
+                  {t('profile.myBookings', 'My bookings')}
+                </span>
+              </button>
 
-          {/* Card 3: Help & Support */}
-          <button
-            type="button"
-            onClick={() => setShowSupportModal(true)}
-            className="p-3 sm:p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-blue-500/40 hover:bg-surface-200/80 transition-all flex flex-col items-center justify-center text-center group shadow-sm active:scale-95"
-          >
-            <div className="w-10 h-10 rounded-xl bg-surface-200 group-hover:bg-blue-500/15 flex items-center justify-center text-blue-400 mb-2 transition-colors">
-              <Headphones className="w-5 h-5" />
-            </div>
-            <span className="text-xs font-bold text-semantic-text-primary group-hover:text-blue-400 leading-tight">
-              {t('profile.helpSupport', 'Help & support')}
-            </span>
-          </button>
+              {/* Card 2: Worker Mode / Become a Worker */}
+              {isWorker ? (
+                <button
+                  type="button"
+                  onClick={handleToggleAvailability}
+                  className="p-3 sm:p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-emerald-500/40 hover:bg-surface-200/80 transition-all flex flex-col items-center justify-center text-center group shadow-sm active:scale-95"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center text-emerald-400 mb-2">
+                    <Power className={`w-5 h-5 ${workerDetails?.is_available ? 'animate-pulse text-emerald-400' : 'text-amber-400'}`} />
+                  </div>
+                  <span className="text-xs font-bold text-semantic-text-primary leading-tight">
+                    {workerDetails?.is_available ? 'Online / Ready' : 'Offline'}
+                  </span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => navigate('/register/worker')}
+                  className="p-3 sm:p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-emerald-500/40 hover:bg-surface-200/80 transition-all flex flex-col items-center justify-center text-center group shadow-sm active:scale-95"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center text-emerald-400 mb-2">
+                    <Briefcase className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs font-bold text-semantic-text-primary group-hover:text-emerald-400 leading-tight">
+                    {t('profile.becomeWorker', 'Earn with Kaamgar')}
+                  </span>
+                </button>
+              )}
+
+              {/* Card 3: Help & Support */}
+              <button
+                type="button"
+                onClick={() => setShowSupportModal(true)}
+                className="p-3 sm:p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-blue-500/40 hover:bg-surface-200/80 transition-all flex flex-col items-center justify-center text-center group shadow-sm active:scale-95"
+              >
+                <div className="w-10 h-10 rounded-xl bg-surface-200 group-hover:bg-blue-500/15 flex items-center justify-center text-blue-400 mb-2 transition-colors">
+                  <Headphones className="w-5 h-5" />
+                </div>
+                <span className="text-xs font-bold text-semantic-text-primary group-hover:text-blue-400 leading-tight">
+                  {t('profile.helpSupport', 'Help & support')}
+                </span>
+              </button>
+            </>
+          )}
         </div>
 
         {/* Divider line */}
         <div className="border-t border-semantic-border-light/60 my-4" />
 
         {/* ===================================================================== */}
-        {/* 4. CLEAN MENU ROWS LIST (Exact layout of uc2.jpeg)                    */}
+        {/* 4. CLEAN MENU ROWS LIST                                               */}
         {/* ===================================================================== */}
         <div className="space-y-1">
-          {/* Row: My Bookings / Orders */}
-          <div
-            onClick={() => navigate('/bookings')}
-            className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
-          >
-            <div className="flex items-center gap-3.5">
-              <Calendar className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
-              <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
-                {t('profile.myBookings', 'My bookings')}
-              </span>
-            </div>
-            <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
-          </div>
-
-          {/* Row: Worker Dashboard (Worker only) */}
-          {isWorker && (
-            <div
-              onClick={() => navigate('/worker/dashboard')}
-              className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
-            >
-              <div className="flex items-center gap-3.5">
-                <Briefcase className="w-5 h-5 text-emerald-400" />
-                <span className="text-sm font-medium text-semantic-text-primary group-hover:text-emerald-400">
-                  {t('nav.workerDashboard', 'Worker Dashboard')}
-                </span>
+          {isAdmin ? (
+            /* Admin Specific Menu Rows */
+            <>
+              <div
+                onClick={() => navigate('/admin')}
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+              >
+                <div className="flex items-center gap-3.5">
+                  <Shield className="w-5 h-5 text-rose-400" />
+                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-rose-400">
+                    Admin Management Portal
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-rose-400 group-hover:translate-x-0.5 transition-all" />
               </div>
-              <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
-            </div>
-          )}
 
-          {/* Row: Admin Dashboard (Admin only) */}
-          {isAdmin && (
-            <div
-              onClick={() => navigate('/admin')}
-              className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
-            >
-              <div className="flex items-center gap-3.5">
-                <Shield className="w-5 h-5 text-rose-400" />
-                <span className="text-sm font-medium text-semantic-text-primary group-hover:text-rose-400">
-                  {t('admin.dashboard', 'Admin Controls')}
-                </span>
+              <div
+                onClick={() => navigate('/admin?tab=workers')}
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+              >
+                <div className="flex items-center gap-3.5">
+                  <UserCheck className="w-5 h-5 text-amber-400" />
+                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                    Pending Worker ID Approvals
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
               </div>
-              <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-rose-400 group-hover:translate-x-0.5 transition-all" />
-            </div>
-          )}
 
-          {/* Row: My Rating & Reviews */}
-          <div
-            onClick={() => navigate('/bookings')}
-            className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
-          >
-            <div className="flex items-center gap-3.5">
-              <Star className="w-5 h-5 text-amber-400" />
-              <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
-                {t('profile.reviewsRatings', 'My rating & reviews')}
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              {workerDetails && workerDetails.rating > 0 && (
-                <span className="text-xs font-bold text-amber-400">
-                  ★ {workerDetails.rating.toFixed(1)}
-                </span>
+              <div
+                onClick={() => navigate('/admin?tab=notifications')}
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+              >
+                <div className="flex items-center gap-3.5">
+                  <Bell className="w-5 h-5 text-brand-400" />
+                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                    Platform Notifications & Alerts
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+              </div>
+
+              <div
+                onClick={() => setShowAddressModal(true)}
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+              >
+                <div className="flex items-center gap-3.5">
+                  <MapPin className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
+                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                    Service Localities (251001 & 251002)
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+              </div>
+
+              <div
+                onClick={() => {
+                  setEmailModalInput(formData.email || user?.email || '')
+                  setEmailModalError('')
+                  setShowEmailModal(true)
+                }}
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+              >
+                <div className="flex items-center gap-3.5">
+                  <Mail className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
+                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                    Admin Email & Security
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-semantic-text-tertiary truncate max-w-[130px]">
+                    {formData.email || 'Add Email'}
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+                </div>
+              </div>
+
+              <div
+                onClick={toggleLanguage}
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+              >
+                <div className="flex items-center gap-3.5">
+                  <Globe className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
+                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                    {language === 'en' ? 'App Language' : 'ऐप की भाषा'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" size="sm" className="font-semibold text-brand-400 border-brand-500/30">
+                    {language === 'en' ? 'English' : 'हिंदी'}
+                  </Badge>
+                  <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+                </div>
+              </div>
+
+              <div
+                onClick={() => setShowLogoutModal(true)}
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-red-500/10 cursor-pointer transition-colors group"
+              >
+                <div className="flex items-center gap-3.5">
+                  <LogOut className="w-5 h-5 text-red-400" />
+                  <span className="text-sm font-medium text-red-400">
+                    {t('nav.logout', 'Log out')}
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-red-400/60 group-hover:translate-x-0.5 transition-all" />
+              </div>
+            </>
+          ) : (
+            /* Customer & Worker Menu Rows */
+            <>
+              {/* Row: My Bookings / Orders */}
+              <div
+                onClick={() => navigate('/bookings')}
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+              >
+                <div className="flex items-center gap-3.5">
+                  <Calendar className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
+                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                    {t('profile.myBookings', 'My bookings')}
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+              </div>
+
+              {/* Row: Worker Dashboard (Worker only) */}
+              {isWorker && (
+                <div
+                  onClick={() => navigate('/worker/dashboard')}
+                  className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <Briefcase className="w-5 h-5 text-emerald-400" />
+                    <span className="text-sm font-medium text-semantic-text-primary group-hover:text-emerald-400">
+                      {t('nav.workerDashboard', 'Worker Dashboard')}
+                    </span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
+                </div>
               )}
-              <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
-            </div>
-          </div>
 
-          {/* Row: Manage Addresses & Localities */}
-          <div
-            onClick={() => setShowAddressModal(true)}
-            className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
-          >
-            <div className="flex items-center gap-3.5">
-              <MapPin className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
-              <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
-                {t('profile.manageAddresses', 'Manage addresses & localities')}
-              </span>
-            </div>
-            <div className="flex items-center gap-1 text-xs text-semantic-text-tertiary">
-              <span>Muzaffarnagar</span>
-              <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
-            </div>
-          </div>
+              {/* Row: My Rating & Reviews */}
+              <div
+                onClick={() => navigate('/bookings')}
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+              >
+                <div className="flex items-center gap-3.5">
+                  <Star className="w-5 h-5 text-amber-400" />
+                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                    {t('profile.reviewsRatings', 'My rating & reviews')}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {workerDetails && workerDetails.rating > 0 && (
+                    <span className="text-xs font-bold text-amber-400">
+                      ★ {workerDetails.rating.toFixed(1)}
+                    </span>
+                  )}
+                  <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+                </div>
+              </div>
 
-          {/* Row: Email & Notifications */}
-          <div
-            onClick={() => {
-              setEmailModalInput(formData.email || user?.email || '')
-              setEmailModalError('')
-              setShowEmailModal(true)
-            }}
-            className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
-          >
-            <div className="flex items-center gap-3.5">
-              <Mail className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
-              <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
-                {t('profile.emailReceipts', 'Email & notifications')}
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-semantic-text-tertiary truncate max-w-[130px]">
-                {formData.email || 'Add Email'}
-              </span>
-              <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
-            </div>
-          </div>
+              {/* Row: Manage Addresses & Localities */}
+              <div
+                onClick={() => setShowAddressModal(true)}
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+              >
+                <div className="flex items-center gap-3.5">
+                  <MapPin className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
+                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                    {t('profile.manageAddresses', 'Manage addresses & localities')}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 text-xs text-semantic-text-tertiary">
+                  <span>Muzaffarnagar</span>
+                  <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+                </div>
+              </div>
 
-          {/* Row: App Language Toggle */}
-          <div
-            onClick={toggleLanguage}
-            className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
-          >
-            <div className="flex items-center gap-3.5">
-              <Globe className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
-              <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
-                {language === 'en' ? 'App Language' : 'ऐप की भाषा'}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" size="sm" className="font-semibold text-brand-400 border-brand-500/30">
-                {language === 'en' ? 'English' : 'हिंदी'}
-              </Badge>
-              <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
-            </div>
-          </div>
+              {/* Row: Email & Notifications */}
+              <div
+                onClick={() => {
+                  setEmailModalInput(formData.email || user?.email || '')
+                  setEmailModalError('')
+                  setShowEmailModal(true)
+                }}
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+              >
+                <div className="flex items-center gap-3.5">
+                  <Mail className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
+                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                    {t('profile.emailReceipts', 'Email & notifications')}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-semantic-text-tertiary truncate max-w-[130px]">
+                    {formData.email || 'Add Email'}
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+                </div>
+              </div>
 
-          {/* Row: Dedicated PWA Install Button (Strictly in Profile section as instructed) */}
-          <div
-            onClick={() => triggerPWAInstall()}
-            className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
-          >
-            <div className="flex items-center gap-3.5">
-              <Smartphone className="w-5 h-5 text-brand-400" />
-              <span className="text-sm font-medium text-brand-400 font-semibold">
-                {t('pwa.installApp', 'Install Mobile App')}
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] bg-brand-500/15 text-brand-300 font-bold px-2 py-0.5 rounded-full border border-brand-500/30">
-                Fast & Offline
-              </span>
-              <ChevronRight className="w-4 h-4 text-brand-400 group-hover:translate-x-0.5 transition-all" />
-            </div>
-          </div>
+              {/* Row: App Language Toggle */}
+              <div
+                onClick={toggleLanguage}
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+              >
+                <div className="flex items-center gap-3.5">
+                  <Globe className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
+                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                    {language === 'en' ? 'App Language' : 'ऐप की भाषा'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" size="sm" className="font-semibold text-brand-400 border-brand-500/30">
+                    {language === 'en' ? 'English' : 'हिंदी'}
+                  </Badge>
+                  <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+                </div>
+              </div>
 
-          {/* Row: Help Center & FAQs */}
-          <div
-            onClick={() => setShowSupportModal(true)}
-            className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
-          >
-            <div className="flex items-center gap-3.5">
-              <HelpCircle className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
-              <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
-                {t('profile.faqsHelp', 'Help Center & FAQs')}
-              </span>
-            </div>
-            <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
-          </div>
+              {/* Row: Dedicated PWA Install Button (Strictly in Profile section as instructed) */}
+              <div
+                onClick={() => triggerPWAInstall()}
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+              >
+                <div className="flex items-center gap-3.5">
+                  <Smartphone className="w-5 h-5 text-brand-400" />
+                  <span className="text-sm font-medium text-brand-400 font-semibold">
+                    {t('pwa.installApp', 'Install Mobile App')}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] bg-brand-500/15 text-brand-300 font-bold px-2 py-0.5 rounded-full border border-brand-500/30">
+                    Fast & Offline
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-brand-400 group-hover:translate-x-0.5 transition-all" />
+                </div>
+              </div>
 
-          {/* Row: About Kaamgar */}
-          <div
-            onClick={() => navigate('/')}
-            className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
-          >
-            <div className="flex items-center gap-3.5">
-              <Info className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
-              <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
-                {t('profile.aboutApp', 'About Muzaffarnagar Kaamgar')}
-              </span>
-            </div>
-            <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
-          </div>
+              {/* Row: Help Center & FAQs */}
+              <div
+                onClick={() => setShowSupportModal(true)}
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+              >
+                <div className="flex items-center gap-3.5">
+                  <HelpCircle className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
+                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                    {t('profile.faqsHelp', 'Help Center & FAQs')}
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+              </div>
 
-          {/* Row: Log Out */}
-          <div
-            onClick={() => setShowLogoutModal(true)}
-            className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-red-500/10 cursor-pointer transition-colors group"
-          >
-            <div className="flex items-center gap-3.5">
-              <LogOut className="w-5 h-5 text-red-400" />
-              <span className="text-sm font-medium text-red-400">
-                {t('nav.logout', 'Log out')}
-              </span>
-            </div>
-            <ChevronRight className="w-4 h-4 text-red-400/60 group-hover:translate-x-0.5 transition-all" />
-          </div>
+              {/* Row: About Kaamgar */}
+              <div
+                onClick={() => navigate('/')}
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+              >
+                <div className="flex items-center gap-3.5">
+                  <Info className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
+                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                    {t('profile.aboutApp', 'About Muzaffarnagar Kaamgar')}
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+              </div>
+
+              {/* Row: Log Out */}
+              <div
+                onClick={() => setShowLogoutModal(true)}
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-red-500/10 cursor-pointer transition-colors group"
+              >
+                <div className="flex items-center gap-3.5">
+                  <LogOut className="w-5 h-5 text-red-400" />
+                  <span className="text-sm font-medium text-red-400">
+                    {t('nav.logout', 'Log out')}
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-red-400/60 group-hover:translate-x-0.5 transition-all" />
+              </div>
+            </>
+          )}
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-semantic-border-light/60 my-6" />
-
         {/* ===================================================================== */}
-        {/* 5. REFER & SHARE CARD AT BOTTOM (Exact match to uc2.jpeg gift card)    */}
+        {/* 5. REFER & SHARE CARD AT BOTTOM (Hidden for Admin)                     */}
         {/* ===================================================================== */}
-        <div className="p-5 rounded-3xl bg-gradient-to-r from-purple-950/40 via-surface-100 to-brand-500/10 border border-purple-500/30 flex items-center justify-between gap-4 shadow-xl">
-          <div className="flex-1 min-w-0">
-            <h3 className="text-sm sm:text-base font-extrabold text-white mb-1">
-              {t('profile.referTitle', 'Share Kaamgar & Earn Goodwill')}
-            </h3>
-            <p className="text-xs text-semantic-text-secondary leading-relaxed mb-3">
-              {t('profile.referDesc', 'Help your friends and family find verified local electricians, plumbers, and technicians without middlemen.')}
-            </p>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={handleShareApp}
-              className="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-1.5 shadow-md shadow-purple-600/30 flex items-center gap-1.5"
-            >
-              <Share2 className="w-3.5 h-3.5" />
-              <span>{t('profile.referNow', 'Refer now')}</span>
-            </Button>
-          </div>
+        {!isAdmin && (
+          <>
+            <div className="border-t border-semantic-border-light/60 my-6" />
+            <div className="p-5 rounded-3xl bg-gradient-to-r from-purple-950/40 via-surface-100 to-brand-500/10 border border-purple-500/30 flex items-center justify-between gap-4 shadow-xl">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm sm:text-base font-extrabold text-white mb-1">
+                  {t('profile.referTitle', 'Share Kaamgar & Earn Goodwill')}
+                </h3>
+                <p className="text-xs text-semantic-text-secondary leading-relaxed mb-3">
+                  {t('profile.referDesc', 'Help your friends and family find verified local electricians, plumbers, and technicians without middlemen.')}
+                </p>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleShareApp}
+                  className="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-1.5 shadow-md shadow-purple-600/30 flex items-center gap-1.5"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>{t('profile.referNow', 'Refer now')}</span>
+                </Button>
+              </div>
 
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 shrink-0 shadow-inner">
-            <Gift className="w-8 h-8 sm:w-10 sm:h-10 text-purple-300" />
-          </div>
-        </div>
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 shrink-0 shadow-inner">
+                <Gift className="w-8 h-8 sm:w-10 sm:h-10 text-purple-300" />
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* ===================================================================== */}

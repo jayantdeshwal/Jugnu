@@ -626,92 +626,7 @@ export default function Home() {
       </section>
 
       {/* ========================================================================= */}
-      {/* 3. ALL TRADES DIRECTORY & METRICS                                         */}
-      {/* ========================================================================= */}
-      <section className="section bg-semantic-bg-primary py-12">
-        <div className="container-app">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
-            <div>
-              <div className="inline-flex items-center gap-1.5 text-brand-400 text-xs font-semibold uppercase tracking-wider mb-1.5">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>{t('home.nativeServices', 'Verified Muzaffarnagar Services')}</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-semantic-text-primary">
-                {t('home.popularCategories')}
-              </h2>
-              <p className="text-xs sm:text-sm text-semantic-text-secondary mt-1 max-w-xl">
-                {t('home.servicesSubtitle')}
-              </p>
-            </div>
-
-            <Link
-              to="/search"
-              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-brand-400 hover:text-brand-300 transition-colors shrink-0"
-            >
-              <span>{t('home.viewAllServices')}</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-            {categories.map((cat, index) => {
-              const Icon = iconMap[cat.icon as keyof typeof iconMap] || Truck
-              const stat = workerStats[cat.id]
-              const totalWorkers = stat ? stat.total : 0
-
-              return (
-                <motion.div
-                  key={cat.id}
-                  initial={{ opacity: 0, y: 15 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.3, delay: index * 0.04 }}
-                >
-                  <Link
-                    to={`/search?category=${cat.id}`}
-                    className="group block p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-brand-500/50 hover:shadow-xl hover:shadow-brand-500/5 transition-all duration-300 relative overflow-hidden"
-                  >
-                    <div className="w-10 h-10 mb-3 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400 group-hover:bg-brand-500 group-hover:text-surface-950 transition-all duration-300 group-hover:scale-105">
-                      <Icon className="w-5 h-5 transition-colors" />
-                    </div>
-
-                    <h3 className="font-semibold text-xs sm:text-sm text-semantic-text-primary group-hover:text-brand-400 transition-colors mb-1">
-                      {getCategoryName(cat, i18n.language === 'hi' ? 'hi' : 'en')}
-                    </h3>
-
-                    <div className="mb-3">
-                      {loadingStats ? (
-                        <span className="text-[11px] text-semantic-text-tertiary animate-pulse">
-                          {t('common.loading', 'Loading...')}
-                        </span>
-                      ) : totalWorkers > 0 ? (
-                        <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                          {totalWorkers === 1
-                            ? t('home.workerCountAvailable', { count: totalWorkers })
-                            : t('home.workerCountAvailablePlural', { count: totalWorkers })}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-brand-300/90 bg-brand-500/10 px-2 py-0.5 rounded-full border border-brand-500/20">
-                          Available Today
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="pt-2.5 border-t border-semantic-border-light flex items-center justify-between text-xs text-semantic-text-tertiary group-hover:text-brand-400 transition-colors">
-                      <span className="font-medium text-[11px]">Book Directly</span>
-                      <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </Link>
-                </motion.div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* 4. WHY CHOOSE KAAMGAR: TRUST & QUALITY ASSURANCE PILLARS                 */}
+      {/* 3. WHY CHOOSE KAAMGAR: TRUST & QUALITY ASSURANCE PILLARS                 */}
       {/* ========================================================================= */}
       <section className="section bg-surface-900/60 border-y border-semantic-border-light py-12">
         <div className="container-app">
@@ -781,7 +696,7 @@ export default function Home() {
       </section>
 
       {/* ========================================================================= */}
-      {/* 5. HOW IT WORKS                                                           */}
+      {/* 4. HOW IT WORKS                                                           */}
       {/* ========================================================================= */}
       <section className="section bg-semantic-bg-primary py-12">
         <div className="container-app">
@@ -800,25 +715,25 @@ export default function Home() {
                 step: '01',
                 title: t('home.howStep1Title'),
                 desc: t('home.howStep1Desc'),
-                badge: 'Pincode Filter',
+                badge: t('home.howStep1Badge'),
               },
               {
                 step: '02',
                 title: t('home.howStep2Title'),
                 desc: t('home.howStep2Desc'),
-                badge: 'Verified Badges',
+                badge: t('home.howStep2Badge'),
               },
               {
                 step: '03',
                 title: t('home.howStep3Title'),
                 desc: t('home.howStep3Desc'),
-                badge: 'Direct WhatsApp',
+                badge: t('home.howStep3Badge'),
               },
               {
                 step: '04',
                 title: t('home.howStep4Title'),
                 desc: t('home.howStep4Desc'),
-                badge: 'Local Review',
+                badge: t('home.howStep4Badge'),
               },
             ].map(item => (
               <div
