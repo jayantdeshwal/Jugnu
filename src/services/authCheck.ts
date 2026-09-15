@@ -5,12 +5,13 @@ export interface PhoneCheckResult {
   role?: 'customer' | 'worker' | 'admin'
   fullName?: string
   isWorker?: boolean
+  email?: string
   error?: string
 }
 
 const LOCAL_REGISTERED_PHONES_KEY = 'kaamgar_registered_phones_cache'
 
-function getLocalCache(): Record<string, { role?: string; name?: string }> {
+function getLocalCache(): Record<string, { role?: string; name?: string; email?: string }> {
   if (typeof window === 'undefined') return {}
   try {
     const raw = localStorage.getItem(LOCAL_REGISTERED_PHONES_KEY)
@@ -20,11 +21,16 @@ function getLocalCache(): Record<string, { role?: string; name?: string }> {
   }
 }
 
-export function recordPhoneRegistered(cleanPhone: string, role: 'customer' | 'worker' | 'admin' = 'customer', name?: string) {
+export function recordPhoneRegistered(
+  cleanPhone: string,
+  role: 'customer' | 'worker' | 'admin' = 'customer',
+  name?: string,
+  email?: string
+) {
   if (typeof window === 'undefined') return
   try {
     const cache = getLocalCache()
-    cache[cleanPhone] = { role, name }
+    cache[cleanPhone] = { role, name, email }
     localStorage.setItem(LOCAL_REGISTERED_PHONES_KEY, JSON.stringify(cache))
   } catch (e) {
     console.warn('Could not update phone cache:', e)
@@ -66,7 +72,8 @@ export async function checkPhoneRegistration(rawPhone: string): Promise<PhoneChe
       isRegistered: true,
       role: (cached.role as any) || 'customer',
       isWorker: cached.role === 'worker',
-      fullName: cached.name
+      fullName: cached.name,
+      email: cached.email
     }
   }
 
@@ -78,12 +85,13 @@ export async function checkPhoneRegistration(rawPhone: string): Promise<PhoneChe
 
     if (!error && data) {
       if (data.registered === true) {
-        recordPhoneRegistered(cleanPhone, data.role, data.full_name)
+        recordPhoneRegistered(cleanPhone, data.role, data.full_name, data.email)
         return {
           isRegistered: true,
           role: data.role || 'customer',
           isWorker: Boolean(data.is_worker),
-          fullName: data.full_name
+          fullName: data.full_name,
+          email: data.email
         }
       } else if (data.registered === false) {
         return {

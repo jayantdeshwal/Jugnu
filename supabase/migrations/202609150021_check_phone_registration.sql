@@ -44,7 +44,8 @@ begin
       'registered', true,
       'role', coalesce(v_profile.role, 'customer'),
       'is_worker', (v_profile.role = 'worker' or v_has_worker_profile),
-      'full_name', v_profile.full_name
+      'full_name', v_profile.full_name,
+      'email', v_profile.email
     );
   end if;
 

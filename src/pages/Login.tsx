@@ -144,22 +144,29 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
   }, [user, navigate])
 
   // Helper: Resolve phone or email to Supabase email for password authentication
-  const resolveIdentifierToEmail = async (rawIdentifier: string): Promise<string> => {
+  const resolveIdentifierToEmail = async (rawIdentifier: string): Promise<{ primaryEmail: string; fallbackEmail?: string }> => {
     const trimmed = rawIdentifier.trim()
     if (trimmed.includes('@')) {
-      return trimmed.toLowerCase()
+      return { primaryEmail: trimmed.toLowerCase() }
     }
     const cleanPhone = trimmed.replace(/\D/g, '').slice(-10)
-    const supabase = getSupabaseClient()
-    const { data: profile } = await (supabase.from('profiles') as any)
-      .select('email')
-      .eq('phone', `+91${cleanPhone}`)
-      .maybeSingle()
 
-    if (profile?.email) {
-      return profile.email.toLowerCase()
+    // Check RPC registration info first (which returns user's registered email even without auth)
+    let registeredEmail: string | undefined
+    try {
+      const check = await checkPhoneRegistration(cleanPhone)
+      if (check.email && check.email.includes('@') && !check.email.includes('@phone.kaamgar.local')) {
+        registeredEmail = check.email.toLowerCase()
+      }
+    } catch {
+      // Ignore and fallback
     }
-    return `${cleanPhone}@phone.kaamgar.local`
+
+    const defaultPhoneEmail = `${cleanPhone}@phone.kaamgar.local`
+    if (registeredEmail) {
+      return { primaryEmail: registeredEmail, fallbackEmail: defaultPhoneEmail }
+    }
+    return { primaryEmail: defaultPhoneEmail }
   }
 
   // ---------------- 1. CUSTOMER LOGIN HANDLERS ----------------
@@ -244,10 +251,12 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
     }
 
     const clean = customerIdentifier.trim().replace(/\D/g, '').slice(-10)
+    const isPhone = clean.length === 10 && !customerIdentifier.includes('@')
+
     setCustomerLoading(true)
     try {
       // If user typed a 10-digit mobile, pre-verify registration
-      if (clean.length === 10 && !customerIdentifier.includes('@')) {
+      if (isPhone) {
         const check = await checkPhoneRegistration(clean)
         if (!check.isRegistered) {
           setCustomerLoading(false)
@@ -260,9 +269,24 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
         }
       }
 
-      const resolvedEmail = await resolveIdentifierToEmail(customerIdentifier)
-      await signInWithEmail(resolvedEmail, customerPassword)
-      navigate('/')
+      const { primaryEmail, fallbackEmail } = await resolveIdentifierToEmail(customerIdentifier)
+      try {
+        await signInWithEmail(primaryEmail, customerPassword)
+        navigate('/')
+        return
+      } catch (firstErr) {
+        // If phone number was used, try alternative email format
+        if (fallbackEmail) {
+          try {
+            await signInWithEmail(fallbackEmail, customerPassword)
+            navigate('/')
+            return
+          } catch {
+            // Both failed, throw original error
+          }
+        }
+        throw firstErr
+      }
     } catch (err) {
       setCustomerError(err instanceof Error ? err.message : 'Invalid login credentials. Please check and retry.')
     } finally {
@@ -364,9 +388,10 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
     }
 
     const clean = workerIdentifier.trim().replace(/\D/g, '').slice(-10)
+    const isPhone = clean.length === 10 && !workerIdentifier.includes('@')
     setWorkerLoading(true)
     try {
-      if (clean.length === 10 && !workerIdentifier.includes('@')) {
+      if (isPhone) {
         const check = await checkPhoneRegistration(clean)
         if (!check.isRegistered) {
           setWorkerLoading(false)
@@ -387,9 +412,23 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
         }
       }
 
-      const resolvedEmail = await resolveIdentifierToEmail(workerIdentifier)
-      await signInWithEmail(resolvedEmail, workerPassword)
-      navigate('/worker/dashboard')
+      const { primaryEmail, fallbackEmail } = await resolveIdentifierToEmail(workerIdentifier)
+      try {
+        await signInWithEmail(primaryEmail, workerPassword)
+        navigate('/worker/dashboard')
+        return
+      } catch (firstErr) {
+        if (fallbackEmail) {
+          try {
+            await signInWithEmail(fallbackEmail, workerPassword)
+            navigate('/worker/dashboard')
+            return
+          } catch {
+            // Both failed
+          }
+        }
+        throw firstErr
+      }
     } catch (err) {
       setWorkerError(err instanceof Error ? err.message : 'Invalid worker credentials. Please check and retry.')
     } finally {
@@ -700,9 +739,28 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
               )}
 
               {customerError && (
-                <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2 text-red-400 text-xs">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                  <span>{customerError}</span>
+                <div className="mb-4 p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl space-y-2 text-xs">
+                  <div className="flex items-start gap-2 text-red-400">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <span className="leading-relaxed">{customerError}</span>
+                  </div>
+                  {customerAuthMode === 'password' && (
+                    <div className="pt-2 border-t border-red-500/20 flex items-center justify-between">
+                      <span className="text-[11px] text-semantic-text-tertiary">Signed up via Mobile OTP?</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const clean = customerIdentifier.replace(/\D/g, '').slice(-10)
+                          if (clean.length === 10) setCustomerPhone(clean)
+                          setCustomerAuthMode('otp')
+                          setCustomerError('')
+                        }}
+                        className="text-[11px] font-bold text-brand-400 hover:text-brand-300 underline cursor-pointer"
+                      >
+                        Sign in with Mobile OTP →
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -876,9 +934,28 @@ export default function Login({ onExploreAsGuest }: LoginProps = {}) {
               )}
 
               {workerError && (
-                <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2 text-red-400 text-xs">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                  <span>{workerError}</span>
+                <div className="mb-4 p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl space-y-2 text-xs">
+                  <div className="flex items-start gap-2 text-red-400">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <span className="leading-relaxed">{workerError}</span>
+                  </div>
+                  {workerAuthMode === 'password' && (
+                    <div className="pt-2 border-t border-red-500/20 flex items-center justify-between">
+                      <span className="text-[11px] text-semantic-text-tertiary">Registered via Mobile OTP?</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const clean = workerIdentifier.replace(/\D/g, '').slice(-10)
+                          if (clean.length === 10) setWorkerPhone(clean)
+                          setWorkerAuthMode('otp')
+                          setWorkerError('')
+                        }}
+                        className="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 underline cursor-pointer"
+                      >
+                        Sign in with Mobile OTP →
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
