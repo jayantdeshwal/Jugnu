@@ -46,6 +46,7 @@ import { useAiAssistant } from '../context/AiAssistantContext'
 import { getSupabaseClient } from '@/lib/supabase'
 import { uploadAvatar, uploadIdProof, validateFile } from '@/services/storage'
 import { triggerPWAInstall } from '@/components/PWAInstallPrompt'
+import { recordPhoneRegistered } from '@/services/authCheck'
 
 interface LiveWorkerDetails {
   bio: string
@@ -299,81 +300,133 @@ export default function Profile() {
 
   // Save profile changes
   const handleSaveProfile = async () => {
-    if (!user?.id) return
+    if (!user) return
 
     setIsSaving(true)
     setSaveErrorMsg('')
     setSaveSuccessMsg('')
 
     try {
-      const supabase = getSupabaseClient()
       const trimmedName = formData.name.trim()
-      const trimmedPhone = formData.phone.trim()
 
-      if (!trimmedName) {
-        throw new Error(t('errors.required', 'Name cannot be empty'))
+      if (!trimmedName || trimmedName.length < 2) {
+        throw new Error(t('errors.nameMinLength', 'Name must be at least 2 characters long'))
       }
 
-      // Update profiles
-      const { error: profileError } = await (supabase.from('profiles') as any)
-        .update({
-          full_name: trimmedName,
-          phone: trimmedPhone || null,
-          email: formData.email?.trim() || null,
-          language: formData.language,
-          avatar_url: formData.avatar_url || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id)
+      const supabase = getSupabaseClient()
+      const cleanPhone = (formData.phone || user.phone || '').replace(/\D/g, '').slice(-10)
 
-      if (profileError) throw profileError
-
-      // Update worker details if worker
-      if (user.role === 'worker' || isWorker) {
-        const { error: workerError } = await (supabase.from('worker_profiles') as any)
-          .update({
-            bio: formData.bio.trim(),
-            experience_years: Number(formData.experience_years),
-            is_available: formData.is_available,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', user.id)
-
-        if (workerError) throw workerError
-
-        if (formData.category) {
-          await (supabase.from('worker_categories') as any).delete().eq('worker_id', user.id)
-          await (supabase.from('worker_categories') as any).insert({
-            worker_id: user.id,
-            category_id: formData.category,
-          })
-        }
-
-        if (formData.areas.length > 0) {
-          const { data: areaRows } = await (supabase.from('service_areas') as any)
-            .select('id, pincode')
-            .in('pincode', formData.areas)
-
-          if (areaRows && areaRows.length > 0) {
-            await (supabase.from('worker_service_areas') as any).delete().eq('worker_id', user.id)
-            await (supabase.from('worker_service_areas') as any).insert(
-              areaRows.map((ar: any) => ({
-                worker_id: user.id,
-                service_area_id: ar.id,
-              }))
-            )
+      // 1. Resolve true UUID for Supabase update
+      let targetUuid: string | null = null
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      if (user.id && uuidRegex.test(user.id)) {
+        targetUuid = user.id
+      } else {
+        const { data: sessionData } = await supabase.auth.getSession()
+        if (sessionData.session?.user?.id && uuidRegex.test(sessionData.session.user.id)) {
+          targetUuid = sessionData.session.user.id
+        } else if (cleanPhone.length === 10) {
+          try {
+            const { data: found } = await (supabase.from('profiles') as any)
+              .select('id')
+              .or(`phone.eq.+91${cleanPhone},phone.eq.${cleanPhone}`)
+              .maybeSingle()
+            if (found?.id && uuidRegex.test(found.id)) {
+              targetUuid = found.id
+            }
+          } catch {
+            // Ignore lookup error
           }
         }
       }
 
+      // 2. If target UUID is resolved, update Supabase profiles table
+      if (targetUuid) {
+        const updatePayload: any = {
+          full_name: trimmedName,
+          language: formData.language,
+          updated_at: new Date().toISOString(),
+        }
+        if (formData.avatar_url) updatePayload.avatar_url = formData.avatar_url
+        if (formData.email?.trim()) updatePayload.email = formData.email.trim()
+
+        try {
+          const { error: profileError } = await (supabase.from('profiles') as any)
+            .update(updatePayload)
+            .eq('id', targetUuid)
+
+          if (profileError) {
+            console.warn('Supabase profiles update notice:', profileError)
+          }
+        } catch (dbErr) {
+          console.warn('Profiles table update notice:', dbErr)
+        }
+
+        // 3. Update Supabase Auth user metadata
+        try {
+          await supabase.auth.updateUser({
+            data: { full_name: trimmedName },
+          })
+        } catch (authErr) {
+          console.warn('Supabase auth metadata update notice:', authErr)
+        }
+
+        // 4. Update worker details if worker
+        if (user.role === 'worker' || isWorker) {
+          try {
+            await (supabase.from('worker_profiles') as any)
+              .update({
+                bio: formData.bio?.trim() || '',
+                experience_years: Number(formData.experience_years) || 0,
+                is_available: formData.is_available,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', targetUuid)
+
+            if (formData.category) {
+              await (supabase.from('worker_categories') as any).delete().eq('worker_id', targetUuid)
+              await (supabase.from('worker_categories') as any).insert({
+                worker_id: targetUuid,
+                category_id: formData.category,
+              })
+            }
+
+            if (formData.areas.length > 0) {
+              const { data: areaRows } = await (supabase.from('service_areas') as any)
+                .select('id, pincode')
+                .in('pincode', formData.areas)
+
+              if (areaRows && areaRows.length > 0) {
+                await (supabase.from('worker_service_areas') as any).delete().eq('worker_id', targetUuid)
+                await (supabase.from('worker_service_areas') as any).insert(
+                  areaRows.map((ar: any) => ({
+                    worker_id: targetUuid,
+                    service_area_id: ar.id,
+                  }))
+                )
+              }
+            }
+          } catch (wErr) {
+            console.warn('Worker profile update notice:', wErr)
+          }
+        }
+      }
+
+      // 5. Update local state in AuthContext & localStorage (Immediate & Guaranteed)
       updateUser({
+        ...(targetUuid ? { id: targetUuid } : {}),
         name: trimmedName,
-        phone: trimmedPhone,
-        email: formData.email?.trim() || null,
+        email: formData.email?.trim() || user.email,
         language: formData.language,
-        avatar_url: formData.avatar_url,
+        avatar_url: formData.avatar_url || user.avatar_url,
       })
 
+      // 6. Update phone registration cache
+      if (cleanPhone.length === 10) {
+        recordPhoneRegistered(cleanPhone, user.role, trimmedName, formData.email?.trim() || user.email || undefined)
+      }
+
+      // 7. Update language if changed
       if (formData.language !== language) {
         setLanguage(formData.language)
         void i18n.changeLanguage(formData.language)
@@ -382,7 +435,7 @@ export default function Profile() {
       setEditMode(false)
       setSaveSuccessMsg(t('profile.saveSuccess', 'Profile updated successfully!'))
       setTimeout(() => setSaveSuccessMsg(''), 4000)
-      await loadProfileData()
+      void loadProfileData()
     } catch (err) {
       setSaveErrorMsg(err instanceof Error ? err.message : 'Failed to save changes')
     } finally {

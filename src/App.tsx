@@ -37,8 +37,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-function RootRoute() {
+function GuestOrAuthRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth()
+  const isGuestMode = typeof window !== 'undefined' && sessionStorage.getItem('kaamgar_guest_mode') === 'true'
 
   if (isLoading) {
     return (
@@ -48,7 +49,26 @@ function RootRoute() {
     )
   }
 
-  if (isAuthenticated) {
+  if (isAuthenticated || isGuestMode) {
+    return <>{children}</>
+  }
+
+  return <Navigate to="/login" replace />
+}
+
+function RootRoute() {
+  const { isAuthenticated, isLoading } = useAuth()
+  const isGuestMode = typeof window !== 'undefined' && sessionStorage.getItem('kaamgar_guest_mode') === 'true'
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-surface-950 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" />
+      </div>
+    )
+  }
+
+  if (isAuthenticated || isGuestMode) {
     return <Home />
   }
 
@@ -60,9 +80,9 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Layout />}>
         <Route index element={<RootRoute />} />
-        <Route path="home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-        <Route path="search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
-        <Route path="worker/:id" element={<ProtectedRoute><WorkerProfile /></ProtectedRoute>} />
+        <Route path="home" element={<GuestOrAuthRoute><Home /></GuestOrAuthRoute>} />
+        <Route path="search" element={<GuestOrAuthRoute><Search /></GuestOrAuthRoute>} />
+        <Route path="worker/:id" element={<GuestOrAuthRoute><WorkerProfile /></GuestOrAuthRoute>} />
         <Route path="booking/:workerId" element={<ProtectedRoute><Booking /></ProtectedRoute>} />
         <Route path="bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
         <Route path="auth" element={<Login />} />

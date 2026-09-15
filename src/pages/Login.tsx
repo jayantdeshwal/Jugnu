@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Button, Input, Card, Badge } from '@kaamgar/ui'
+import { Button, Input, Card, Badge, Modal } from '@kaamgar/ui'
 import { useAuth } from '../context/AuthContext'
 import { openOtpWidget } from '@/services/otp'
 import { getSupabaseClient } from '@/lib/supabase'
@@ -162,61 +162,155 @@ export default function Login() {
     return { primaryEmail: defaultPhoneEmail }
   }
 
-  // ---------------- 1. CUSTOMER LOGIN HANDLERS ----------------
-  const handleCustomerOtpRecovery = async () => {
-    setCustomerError('')
-    setUnregisteredNotice(null)
+  // ---------------- Forgot Password via Mobile OTP State ----------------
+  const [forgotModalOpen, setForgotModalOpen] = useState(false)
+  const [forgotRole, setForgotRole] = useState<'customer' | 'worker'>('customer')
+  const [forgotPhone, setForgotPhone] = useState('')
+  const [forgotStep, setForgotStep] = useState<'enter_phone' | 'set_new_password'>('enter_phone')
+  const [forgotNewPassword, setForgotNewPassword] = useState('')
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState('')
+  const [showForgotNewPassword, setShowForgotNewPassword] = useState(false)
+  const [forgotLoading, setForgotLoading] = useState(false)
+  const [forgotError, setForgotError] = useState('')
+  const [verifiedUserInfo, setVerifiedUserInfo] = useState<{
+    phone: string
+    name: string
+    role: 'customer' | 'worker'
+    email?: string
+  } | null>(null)
 
-    const cleanPhone = customerIdentifier.trim().replace(/\D/g, '').slice(-10)
+  const openForgotPasswordModal = (role: 'customer' | 'worker') => {
+    setForgotRole(role)
+    const currentInput = role === 'customer' ? customerIdentifier : workerIdentifier
+    const clean = currentInput.trim().replace(/\D/g, '').slice(-10)
+    setForgotPhone(clean.length === 10 ? clean : '')
+    setForgotStep('enter_phone')
+    setForgotNewPassword('')
+    setForgotConfirmPassword('')
+    setForgotError('')
+    setVerifiedUserInfo(null)
+    setForgotModalOpen(true)
+  }
+
+  const handleForgotSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setForgotError('')
+    const cleanPhone = forgotPhone.trim().replace(/\D/g, '').slice(-10)
     if (cleanPhone.length !== 10) {
-      setCustomerError('Please enter your 10-digit registered mobile number in the field above to verify via OTP.')
+      setForgotError(t('loginPage.invalidMobile', 'Please enter a valid 10-digit mobile number'))
       return
     }
 
-    setCustomerLoading(true)
+    setForgotLoading(true)
     try {
       const check = await checkPhoneRegistration(cleanPhone)
       if (!check.isRegistered) {
-        setCustomerLoading(false)
-        setUnregisteredNotice({
-          phone: cleanPhone,
-          role: 'customer',
-          message: 'No account found with this mobile number. Please sign up to create your Kaamgar account first.'
-        })
+        setForgotLoading(false)
+        setForgotError(
+          forgotRole === 'worker'
+            ? 'No registered worker account found with this mobile number. Please register as a worker first.'
+            : 'No registered customer account found with this mobile number. Please sign up to create an account first.'
+        )
+        return
+      }
+
+      if (forgotRole === 'worker' && check.role === 'customer' && !check.isWorker) {
+        setForgotLoading(false)
+        setForgotError('This mobile number is registered as a customer. Please sign in via Customer login.')
         return
       }
 
       const widgetOpened = await openOtpWidget({
         identifier: cleanPhone,
         onSuccess: async () => {
-          try {
-            await loginWithVerifiedPhone(
-              check.fullName || 'Customer',
-              cleanPhone,
-              'customer'
-            )
-            navigate('/')
-          } catch (err) {
-            const msg = err instanceof Error ? err.message : 'Sign in failed after OTP verification'
-            setCustomerError(msg)
-          } finally {
-            setCustomerLoading(false)
-          }
+          setVerifiedUserInfo({
+            phone: cleanPhone,
+            name: check.fullName || (forgotRole === 'worker' ? 'Worker' : 'Customer'),
+            role: (check.role as 'customer' | 'worker') || forgotRole,
+            email: check.email,
+          })
+          setForgotStep('set_new_password')
+          setForgotLoading(false)
         },
         onFailure: (err) => {
-          setCustomerLoading(false)
-          setCustomerError(typeof err === 'string' ? err : 'OTP verification was cancelled or failed.')
+          setForgotLoading(false)
+          setForgotError(typeof err === 'string' ? err : 'Mobile OTP verification was cancelled or failed.')
         },
       })
 
       if (!widgetOpened) {
-        setCustomerLoading(false)
-        setCustomerError('OTP verification widget could not be loaded. Please ensure ad-blockers are disabled.')
+        setForgotLoading(false)
+        setForgotError('OTP widget could not be launched. Please ensure ad-blockers are disabled and retry.')
       }
     } catch {
-      setCustomerLoading(false)
-      setCustomerError('Unable to launch OTP verification. Please retry.')
+      setForgotLoading(false)
+      setForgotError('Unable to verify mobile registration. Please retry.')
     }
+  }
+
+  const handleForgotResetPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setForgotError('')
+    if (!verifiedUserInfo) return
+
+    if (!forgotNewPassword || forgotNewPassword.length < 6) {
+      setForgotError('Password must be at least 6 characters long')
+      return
+    }
+    if (forgotNewPassword !== forgotConfirmPassword) {
+      setForgotError('Passwords do not match')
+      return
+    }
+
+    setForgotLoading(true)
+    try {
+      await loginWithVerifiedPhone(
+        verifiedUserInfo.name,
+        verifiedUserInfo.phone,
+        verifiedUserInfo.role,
+        verifiedUserInfo.email,
+        forgotNewPassword
+      )
+
+      try {
+        const supabase = getSupabaseClient()
+        await supabase.auth.updateUser({ password: forgotNewPassword })
+      } catch (authErr) {
+        console.warn('Supabase password update notice:', authErr)
+      }
+
+      setForgotModalOpen(false)
+      navigate(verifiedUserInfo.role === 'worker' ? '/worker/dashboard' : '/')
+    } catch (err) {
+      setForgotError(err instanceof Error ? err.message : 'Unable to update password. Please retry.')
+    } finally {
+      setForgotLoading(false)
+    }
+  }
+
+  const handleForgotDirectLoginWithoutReset = async () => {
+    if (!verifiedUserInfo) return
+    setForgotLoading(true)
+    try {
+      await loginWithVerifiedPhone(
+        verifiedUserInfo.name,
+        verifiedUserInfo.phone,
+        verifiedUserInfo.role,
+        verifiedUserInfo.email
+      )
+      setForgotModalOpen(false)
+      navigate(verifiedUserInfo.role === 'worker' ? '/worker/dashboard' : '/')
+    } catch (err) {
+      setForgotError(err instanceof Error ? err.message : 'Login failed. Please retry.')
+    } finally {
+      setForgotLoading(false)
+    }
+  }
+
+  const handleExploreAsGuest = () => {
+    sessionStorage.setItem('kaamgar_guest_mode', 'true')
+    window.dispatchEvent(new Event('storage'))
+    navigate('/')
   }
 
   const handleCustomerPasswordLogin = async (e: React.FormEvent) => {
@@ -277,72 +371,7 @@ export default function Login() {
     }
   }
 
-  // ---------------- 2. WORKER LOGIN HANDLERS ----------------
-  const handleWorkerOtpRecovery = async () => {
-    setWorkerError('')
-    setUnregisteredNotice(null)
-    setWorkerRoleMismatch(null)
 
-    const cleanPhone = workerIdentifier.trim().replace(/\D/g, '').slice(-10)
-    if (cleanPhone.length !== 10) {
-      setWorkerError('Please enter your 10-digit registered worker mobile number in the field above to verify via OTP.')
-      return
-    }
-
-    setWorkerLoading(true)
-    try {
-      const check = await checkPhoneRegistration(cleanPhone)
-      if (!check.isRegistered) {
-        setWorkerLoading(false)
-        setUnregisteredNotice({
-          phone: cleanPhone,
-          role: 'worker',
-          message: 'No worker account found with this mobile number. Please register as a verified Kaamgar artisan first.'
-        })
-        return
-      }
-
-      if (check.role === 'customer' && !check.isWorker) {
-        setWorkerLoading(false)
-        setWorkerRoleMismatch({
-          phone: cleanPhone,
-          fullName: check.fullName
-        })
-        return
-      }
-
-      const widgetOpened = await openOtpWidget({
-        identifier: cleanPhone,
-        onSuccess: async () => {
-          try {
-            await loginWithVerifiedPhone(
-              check.fullName || 'Worker',
-              cleanPhone,
-              'worker'
-            )
-            navigate('/worker/dashboard')
-          } catch (err) {
-            const msg = err instanceof Error ? err.message : 'Worker login failed after OTP verification'
-            setWorkerError(msg)
-          } finally {
-            setWorkerLoading(false)
-          }
-        },
-        onFailure: (err) => {
-          setWorkerLoading(false)
-          setWorkerError(typeof err === 'string' ? err : 'OTP verification was cancelled or failed.')
-        },
-      })
-
-      if (!widgetOpened) {
-        setWorkerLoading(false)
-        setWorkerError('OTP verification widget could not be loaded. Please ensure ad-blockers are disabled.')
-      }
-    } catch {
-      setWorkerLoading(false)
-      setWorkerError('Unable to launch OTP verification. Please retry.')
-    }
-  }
 
   const handleWorkerPasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -728,17 +757,14 @@ export default function Login() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between text-xs pt-0.5">
-                  <span className="text-[11px] text-semantic-text-tertiary">
-                    {t('loginPage.needHelp', 'Forgot password or first login?')}
-                  </span>
+                <div className="flex items-center justify-end text-xs pt-0.5">
                   <button
                     type="button"
-                    onClick={handleCustomerOtpRecovery}
+                    onClick={() => openForgotPasswordModal('customer')}
                     disabled={customerLoading}
-                    className="text-[11px] font-semibold text-brand-400 hover:text-brand-300 underline cursor-pointer transition-colors"
+                    className="text-xs font-semibold text-brand-400 hover:text-brand-300 underline cursor-pointer transition-colors"
                   >
-                    {t('loginPage.signInWithOtpLink', 'Sign in with Mobile OTP')}
+                    {t('loginPage.forgotPassword', 'Forgot Password?')}
                   </button>
                 </div>
 
@@ -874,17 +900,14 @@ export default function Login() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between text-xs pt-0.5">
-                  <span className="text-[11px] text-semantic-text-tertiary">
-                    {t('loginPage.needHelp', 'Forgot password or first login?')}
-                  </span>
+                <div className="flex items-center justify-end text-xs pt-0.5">
                   <button
                     type="button"
-                    onClick={handleWorkerOtpRecovery}
+                    onClick={() => openForgotPasswordModal('worker')}
                     disabled={workerLoading}
-                    className="text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 underline cursor-pointer transition-colors"
+                    className="text-xs font-semibold text-amber-400 hover:text-amber-300 underline cursor-pointer transition-colors"
                   >
-                    {t('loginPage.signInWithOtpLink', 'Sign in with Mobile OTP')}
+                    {t('loginPage.forgotPassword', 'Forgot Password?')}
                   </button>
                 </div>
 
@@ -1087,7 +1110,7 @@ export default function Login() {
             </div>
           )}
 
-          {/* Footer Callout to Register */}
+          {/* Footer Callout to Register & Guest Exploration */}
           <div className="mt-5 pt-4 border-t border-semantic-border-light text-center space-y-3">
             <p className="text-xs text-semantic-text-secondary">
               {t('loginPage.newToKaamgar', 'New to Kaamgar?')}{' '}
@@ -1098,6 +1121,20 @@ export default function Login() {
                 {t('loginPage.signUpLink', 'Create an account (Sign Up)')}
               </Link>
             </p>
+
+            {loginRole !== 'admin' && (
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={handleExploreAsGuest}
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-surface-850 hover:bg-surface-800 border border-brand-500/25 text-xs font-semibold text-brand-300 hover:text-white transition-all cursor-pointer shadow-sm active:scale-98"
+                >
+                  <Sparkles className="w-4 h-4 text-brand-400" />
+                  <span>{t('loginPage.exploreAsGuest', 'Explore services without signing in')}</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-brand-400 ml-0.5" />
+                </button>
+              </div>
+            )}
           </div>
         </Card>
       </div>
@@ -1119,6 +1156,150 @@ export default function Login() {
           © 2026 {t('app.name')} • Hyperlocal Pilot
         </p>
       </footer>
+
+      {/* Forgot Password Modal with Mobile OTP */}
+      <Modal
+        isOpen={forgotModalOpen}
+        onClose={() => {
+          if (!forgotLoading) {
+            setForgotModalOpen(false)
+            setForgotError('')
+          }
+        }}
+        title={t('loginPage.forgotPasswordTitle', 'Forgot Password')}
+        description={
+          forgotStep === 'enter_phone'
+            ? t('loginPage.forgotPasswordDesc', 'Verify your registered mobile number with OTP to recover your account.')
+            : t('loginPage.setNewPasswordDesc', 'Mobile verified! Set your new password to secure your account.')
+        }
+        size="md"
+      >
+        <div className="space-y-4 pt-2">
+          {forgotError && (
+            <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-2.5 text-xs text-red-300">
+              <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+              <span>{forgotError}</span>
+            </div>
+          )}
+
+          {forgotStep === 'enter_phone' ? (
+            <form onSubmit={handleForgotSendOtp} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-semantic-text-secondary mb-1.5">
+                  {t('loginPage.registeredMobile', 'Registered Mobile Number')}
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-xs font-bold text-semantic-text-tertiary">
+                    +91
+                  </div>
+                  <input
+                    type="tel"
+                    value={forgotPhone}
+                    onChange={(e) => setForgotPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    placeholder="9876543210"
+                    maxLength={10}
+                    className="w-full pl-11 pr-3 py-2.5 rounded-xl bg-surface-900 border border-semantic-border-light text-white placeholder:text-surface-500 text-sm focus:outline-none focus:border-brand-500 transition-colors"
+                    required
+                    autoFocus
+                  />
+                </div>
+                <p className="text-[11px] text-semantic-text-tertiary mt-1.5">
+                  {t('loginPage.otpInfo', 'We will send an OTP via MSG91 SMS to verify your identity.')}
+                </p>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  disabled={forgotLoading}
+                  onClick={() => setForgotModalOpen(false)}
+                >
+                  {t('common.cancel', 'Cancel')}
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="flex-1"
+                  loading={forgotLoading}
+                >
+                  <Phone className="w-4 h-4 mr-1.5" />
+                  {t('loginPage.sendOtpBtn', 'Send Mobile OTP')}
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleForgotResetPasswordSubmit} className="space-y-4">
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center gap-2 text-xs text-emerald-300">
+                <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>Mobile number +91 {verifiedUserInfo?.phone} verified successfully!</span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-semantic-text-secondary mb-1.5">
+                  {t('loginPage.newPasswordLabel', 'Enter New Password')}
+                </label>
+                <div className="relative">
+                  <input
+                    type={showForgotNewPassword ? 'text' : 'password'}
+                    value={forgotNewPassword}
+                    onChange={(e) => setForgotNewPassword(e.target.value)}
+                    placeholder="At least 6 characters"
+                    className="w-full pl-3 pr-10 py-2.5 rounded-xl bg-surface-900 border border-semantic-border-light text-white placeholder:text-surface-500 text-sm focus:outline-none focus:border-brand-500 transition-colors"
+                    required
+                    minLength={6}
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotNewPassword(prev => !prev)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-surface-400 hover:text-white"
+                  >
+                    {showForgotNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-semantic-text-secondary mb-1.5">
+                  {t('loginPage.confirmNewPasswordLabel', 'Confirm New Password')}
+                </label>
+                <input
+                  type={showForgotNewPassword ? 'text' : 'password'}
+                  value={forgotConfirmPassword}
+                  onChange={(e) => setForgotConfirmPassword(e.target.value)}
+                  placeholder="Re-enter new password"
+                  className="w-full px-3 py-2.5 rounded-xl bg-surface-900 border border-semantic-border-light text-white placeholder:text-surface-500 text-sm focus:outline-none focus:border-brand-500 transition-colors"
+                  required
+                  minLength={6}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2 pt-2">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="w-full"
+                  loading={forgotLoading}
+                >
+                  <Lock className="w-4 h-4 mr-1.5" />
+                  {t('loginPage.saveAndLoginBtn', 'Update Password & Log In')}
+                </Button>
+
+                <button
+                  type="button"
+                  onClick={handleForgotDirectLoginWithoutReset}
+                  disabled={forgotLoading}
+                  className="w-full py-2 text-xs font-semibold text-semantic-text-secondary hover:text-white cursor-pointer transition-colors text-center"
+                >
+                  {t('loginPage.skipPasswordReset', 'Skip password update and log in directly')}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </Modal>
     </div>
   )
 }

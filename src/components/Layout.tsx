@@ -4,7 +4,7 @@ import { useLanguage } from '../context/LanguageContext'
 import { useAuth } from '../context/AuthContext'
 import { useNotifications } from '../context/NotificationContext'
 import { Button, Avatar, Badge } from '@kaamgar/ui'
-import { Menu, X, Bell, User, LogOut, Settings, Shield, Home, Search, List, UserPlus, Truck, Star, Briefcase, ChevronDown, Globe, Phone, Mail, MapPin, ShieldCheck, ArrowRight, ArrowLeft, Heart, Smartphone, LogIn } from 'lucide-react'
+import { Menu, X, Bell, User, LogOut, Settings, Shield, Home, Search, List, UserPlus, Truck, Star, Briefcase, ChevronDown, Globe, Phone, Mail, MapPin, ShieldCheck, ArrowRight, ArrowLeft, Heart, Smartphone, LogIn, Sparkles } from 'lucide-react'
 import { CATEGORIES, getCategoryName } from '@kaamgar/shared'
 import { useState, useRef, useEffect } from 'react'
 import NetworkStatus from './NetworkStatus'
@@ -88,6 +88,14 @@ export default function Layout() {
     ? workerNavItems
     : customerNavItems
   
+  const isGuestMode = typeof window !== 'undefined' && sessionStorage.getItem('kaamgar_guest_mode') === 'true'
+
+  const handleBackToLogin = () => {
+    sessionStorage.removeItem('kaamgar_guest_mode')
+    window.dispatchEvent(new Event('storage'))
+    navigate('/login')
+  }
+
   const isActive = (path: string) => location.pathname === path || (path !== '/' && location.pathname.startsWith(path))
   
   if (isLoading) {
@@ -139,7 +147,7 @@ export default function Layout() {
     location.pathname.startsWith('/register') ||
     location.pathname === '/signup'
 
-  if (isAuthPage || !isAuthenticated) {
+  if (isAuthPage || (!isAuthenticated && !isGuestMode)) {
     return (
       <>
         <NetworkStatus />
@@ -395,6 +403,15 @@ export default function Layout() {
                 </div>
               ) : (
                 <div className="hidden sm:flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleBackToLogin}
+                    className="text-xs text-semantic-text-secondary hover:text-white flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>{t('common.backToLogin', 'Back to Login')}</span>
+                  </Button>
                   <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
                     {t('nav.loginSignup', 'Login / Sign Up')}
                   </Button>
@@ -543,6 +560,17 @@ export default function Layout() {
 
 
                     <div className="pt-4 border-t border-semantic-border-light flex flex-col gap-2">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-semantic-text-secondary hover:text-white"
+                        onClick={() => {
+                          setMobileMenuOpen(false)
+                          handleBackToLogin()
+                        }}
+                      >
+                        <ArrowLeft className="w-5 h-5 mr-2 text-brand-400" />
+                        {t('common.backToLogin', 'Back to Login')}
+                      </Button>
                       <Button variant="outline" className="w-full justify-start" onClick={() => { setMobileMenuOpen(false); navigate('/login') }}>
                         <User className="w-5 h-5 mr-2" />
                         {t('nav.loginSignup', 'Login / Sign Up')}
@@ -704,6 +732,35 @@ export default function Layout() {
         </div>
       </footer>
       
+      {/* Sticky Bottom Guest Mode Action Bar */}
+      {!isAuthenticated && isGuestMode && (
+        <div className="sticky bottom-0 z-40 bg-surface-950/95 backdrop-blur-md border-t border-brand-500/30 px-4 py-2.5 shadow-2xl">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-xs text-brand-300 truncate">
+              <Sparkles className="w-4 h-4 text-brand-400 shrink-0" />
+              <span className="truncate">{t('guestBar.exploringAsGuest', 'Exploring in Guest Mode')}</span>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={handleBackToLogin}
+                className="text-xs text-semantic-text-secondary hover:text-white px-2.5 py-1 rounded-lg border border-semantic-border-light/60 hover:bg-surface-800 cursor-pointer transition-colors"
+              >
+                {t('common.exit', 'Exit Guest')}
+              </button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => navigate('/login')}
+                className="text-xs font-bold shadow-md shadow-brand-500/20"
+              >
+                {t('nav.loginSignup', 'Sign In / Register')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <NotificationToast
         notifications={notifications}
         onClose={removeNotification}
