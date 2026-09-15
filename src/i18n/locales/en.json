@@ -40,6 +40,7 @@
     "confirm": "Confirm",
     "back": "Back",
     "backToHome": "Back to Home",
+    "backToLogin": "Back to Login",
     "next": "Next",
     "skip": "Skip",
     "done": "Done",
@@ -752,7 +753,8 @@
   },
   "guestBar": {
     "prompt": "Browsing in Guest Mode",
-    "subprompt": "Sign in to book artisans, chat, and access verified phone numbers"
+    "subprompt": "Sign in to book artisans, chat, and access verified phone numbers",
+    "exploringAsGuest": "You are exploring Muzaffarnagar Kaamgar in Guest Mode"
   },
   "profile": {
     "title": "My Account",

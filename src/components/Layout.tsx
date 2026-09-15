@@ -4,7 +4,7 @@ import { useLanguage } from '../context/LanguageContext'
 import { useAuth } from '../context/AuthContext'
 import { useNotifications } from '../context/NotificationContext'
 import { Button, Avatar, Badge } from '@kaamgar/ui'
-import { Menu, X, Bell, User, LogOut, Settings, Shield, Home, Search, List, UserPlus, Truck, Star, Briefcase, ChevronDown, Globe, Phone, Mail, MapPin, ShieldCheck, ArrowRight, Heart, Smartphone, LogIn } from 'lucide-react'
+import { Menu, X, Bell, User, LogOut, Settings, Shield, Home, Search, List, UserPlus, Truck, Star, Briefcase, ChevronDown, Globe, Phone, Mail, MapPin, ShieldCheck, ArrowRight, ArrowLeft, Heart, Smartphone, LogIn } from 'lucide-react'
 import { CATEGORIES, getCategoryName } from '@kaamgar/shared'
 import { useState, useRef, useEffect } from 'react'
 import NetworkStatus from './NetworkStatus'
@@ -22,6 +22,12 @@ export default function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
+
+  const handleBackToLogin = () => {
+    sessionStorage.removeItem('kaamgar_guest_mode')
+    window.dispatchEvent(new Event('storage'))
+    navigate('/login')
+  }
 
   // Handle click outside and Escape key to close user menu dropdown
   useEffect(() => {
@@ -159,7 +165,21 @@ export default function Layout() {
       <header className="sticky top-0 z-40 bg-surface-950/95 backdrop-blur-md border-b border-semantic-border-light">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Main navigation">
           <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2 sm:gap-6">
+              {!isAuthenticated && (
+                <button
+                  type="button"
+                  onClick={handleBackToLogin}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-surface-850 hover:bg-surface-800 text-xs font-semibold text-semantic-text-primary hover:text-brand-400 border border-semantic-border-medium shadow-sm transition-all cursor-pointer active:scale-95"
+                  title={t('common.backToLogin', 'Back to Login')}
+                  aria-label={t('common.backToLogin', 'Back to Login')}
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 text-brand-400" />
+                  <span className="hidden sm:inline">{t('common.backToLogin', 'Back to Login')}</span>
+                  <span className="sm:hidden">{t('common.back', 'Back')}</span>
+                </button>
+              )}
+
               <NavLink to="/" className="flex items-center gap-2.5" aria-label={t('app.name')}>
                 <div className="w-8 h-8 bg-brand-500 text-surface-950 rounded-lg flex items-center justify-center font-bold">
                   <Truck className="w-5 h-5 text-surface-950" />
@@ -393,6 +413,15 @@ export default function Layout() {
                 </div>
               ) : (
                 <div className="hidden sm:flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleBackToLogin}
+                    className="text-xs text-semantic-text-secondary hover:text-white flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>{t('common.backToLogin', 'Back to Login')}</span>
+                  </Button>
                   <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
                     {t('nav.loginSignup', 'Login / Sign Up')}
                   </Button>
@@ -541,7 +570,18 @@ export default function Layout() {
 
 
                     <div className="pt-4 border-t border-semantic-border-light flex flex-col gap-2">
-                      <Button variant="outline" className="w-full justify-start" onClick={() => { setMobileMenuOpen(false); navigate('/auth') }}>
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-semantic-text-secondary hover:text-white"
+                        onClick={() => {
+                          setMobileMenuOpen(false)
+                          handleBackToLogin()
+                        }}
+                      >
+                        <ArrowLeft className="w-5 h-5 mr-2 text-brand-400" />
+                        {t('common.backToLogin', 'Back to Login')}
+                      </Button>
+                      <Button variant="outline" className="w-full justify-start" onClick={() => { setMobileMenuOpen(false); navigate('/login') }}>
                         <User className="w-5 h-5 mr-2" />
                         {t('nav.loginSignup', 'Login / Sign Up')}
                       </Button>
@@ -562,7 +602,7 @@ export default function Layout() {
         <Outlet />
       </main>
       
-      <footer className="bg-surface-950 text-semantic-text-secondary border-t border-semantic-border-light pt-14 pb-10">
+      <footer className={`bg-surface-950 text-semantic-text-secondary border-t border-semantic-border-light pt-14 ${!isAuthenticated ? 'pb-24 sm:pb-28' : 'pb-10'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 pb-12 border-b border-surface-800/80">
             {/* Column 1: Brand & Identity (spans 2 cols on lg) */}
@@ -725,10 +765,19 @@ export default function Layout() {
 
             <div className="flex items-center gap-2 shrink-0">
               <Button
+                variant="outline"
+                size="sm"
+                onClick={handleBackToLogin}
+                className="font-medium px-3 py-1.5 text-xs text-semantic-text-secondary hover:text-white border-semantic-border-light/70 flex items-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>{t('common.backToLogin', 'Back to Login')}</span>
+              </Button>
+              <Button
                 variant="primary"
                 size="sm"
                 onClick={() => navigate('/login')}
-                className="font-semibold px-4 py-1.5 shadow-lg shadow-brand-500/20 text-xs flex items-center gap-1.5 cursor-pointer"
+                className="font-semibold px-4 py-1.5 shadow-lg shadow-brand-500/20 text-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>{t('nav.loginSignup', 'Login / Sign Up')}</span>

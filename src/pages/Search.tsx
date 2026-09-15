@@ -5,7 +5,7 @@ import { useSearchParams } from 'react-router-dom'
 import { Button, Card, Avatar, Badge, RatingStars, Chip, Input } from '@/ui'
 import { getCategoryName } from '@kaamgar/shared'
 import { usePublicCatalog } from '@/hooks/usePublicCatalog'
-import { Search as SearchIcon, Filter, MapPin, Star, Clock, CheckCircle, Truck, X, ChevronDown, ArrowRight, Power } from 'lucide-react'
+import { Search as SearchIcon, Filter, MapPin, Star, Clock, CheckCircle, Truck, X, ChevronDown, ArrowRight, ArrowLeft, Power } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { fetchApprovedWorkers } from '@/services/workers'
@@ -290,6 +290,15 @@ export default function Search() {
         className="bg-semantic-bg-primary border-b border-semantic-border-light sticky top-0 z-30"
       >
         <div className="container-app py-4">
+          <div className="flex items-center justify-between mb-3">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-850 hover:bg-surface-800 text-xs font-semibold text-semantic-text-secondary hover:text-white border border-semantic-border-light transition-all active:scale-95 cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-brand-400" />
+              <span>{t('common.backToHome', 'Back to Home')}</span>
+            </Link>
+          </div>
           <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 mb-4">
             <div className="flex-1 relative">
               <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-semantic-text-tertiary" />

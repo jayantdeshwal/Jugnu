@@ -41,9 +41,11 @@ import {
   AlertCircle,
   XCircle,
   Bot,
+  ArrowLeft,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAiAssistant } from '@/context/AiAssistantContext'
+import { useAuth } from '@/context/AuthContext'
 
 const iconMap: Record<string, any> = {
   zap: Zap,
@@ -73,6 +75,14 @@ export default function Home() {
   const { categories } = usePublicCatalog()
   const navigate = useNavigate()
   const aiAssistant = useAiAssistant()
+  const { isAuthenticated } = useAuth()
+  const isGuestMode = !isAuthenticated || (typeof window !== 'undefined' && sessionStorage.getItem('kaamgar_guest_mode') === 'true')
+
+  const handleBackToLogin = () => {
+    sessionStorage.removeItem('kaamgar_guest_mode')
+    window.dispatchEvent(new Event('storage'))
+    navigate('/login')
+  }
 
   // Search & Filter state
   const [selectedCategory, setSelectedCategory] = useState('')
@@ -185,67 +195,53 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-semantic-bg-primary text-semantic-text-primary">
-      {/* ========================================================================= */}
-      {/* 1. HERO INTRODUCTION SECTION (Stage 1: Clean, Attractive & Easy to Understand) */}
-      {/* ========================================================================= */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-surface-950 via-surface-900 to-surface-950 pt-8 sm:pt-14 pb-8 border-b border-semantic-border-light/40">
-        {/* Subtle Ambient Background Glow */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-96 sm:w-[600px] h-64 bg-brand-500/10 rounded-full blur-3xl" />
-        </div>
-
-        <div className="container-app relative z-10">
-          <div className="max-w-4xl mx-auto text-center">
-            {/* Hyperlocal Trust Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: -12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/25 text-brand-400 text-xs font-semibold tracking-wide mb-3.5 shadow-sm backdrop-blur-xs"
-            >
+      {/* Exploration Guest Mode Banner with 1-Tap Back Button */}
+      {isGuestMode && (
+        <div className="bg-gradient-to-r from-brand-500/15 via-surface-900 to-brand-500/15 border-b border-brand-500/30 py-2.5 px-3 sm:px-6">
+          <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-xs text-brand-300 font-medium truncate">
               <Sparkles className="w-3.5 h-3.5 text-brand-400 shrink-0" />
-              <span>{t('home.heroBadge')}</span>
-            </motion.div>
-
-            {/* Main Headline (Option 3: Attractive & Crystal-Clear) */}
-            <motion.h1
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ type: 'spring', stiffness: 350, damping: 24, delay: 0.05 }}
-              className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight mb-3 sm:mb-4 drop-shadow-sm"
+              <span className="truncate">{t('guestBar.exploringAsGuest', 'You are exploring Muzaffarnagar Kaamgar in Guest Mode')}</span>
+            </div>
+            <button
+              type="button"
+              onClick={handleBackToLogin}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-surface-800 hover:bg-surface-750 text-xs font-bold text-white transition-all cursor-pointer border border-brand-500/40 shrink-0 shadow-sm active:scale-95"
             >
-              {t('home.heroTitle')}
-            </motion.h1>
-
-            {/* Subtitle */}
-            <motion.p
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ type: 'spring', stiffness: 350, damping: 24, delay: 0.1 }}
-              className="text-xs sm:text-sm md:text-base text-semantic-text-secondary max-w-2xl mx-auto leading-relaxed"
-            >
-              {t('home.heroSubtitle')}
-            </motion.p>
+              <ArrowLeft className="w-3.5 h-3.5 text-brand-400" />
+              <span>{t('common.backToLogin', 'Back to Login')}</span>
+            </button>
           </div>
         </div>
-      </section>
+      )}
 
       {/* ========================================================================= */}
-      {/* 2. URBAN COMPANY STYLE STICKY SEARCH BAR (Docks under navbar on scroll)   */}
+      {/* 1. URBAN COMPANY STYLE STICKY SEARCH BAR (Above Hero & Docks under Navbar) */}
       {/* ========================================================================= */}
       <div
         ref={searchContainerRef}
         className="sticky top-16 z-30 bg-surface-950/95 backdrop-blur-md border-b border-semantic-border-light shadow-md transition-all"
       >
         <div className="max-w-4xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 relative">
-          {/* Location indicator & delivery speed banner (like UC1) */}
+          {/* Location indicator & delivery speed banner */}
           <div className="flex items-center justify-between gap-2 mb-1.5 px-1">
-            <div className="flex items-center gap-1.5 text-xs text-semantic-text-secondary">
+            <div className="flex items-center gap-1.5 text-xs text-semantic-text-secondary min-w-0">
+              {isGuestMode && (
+                <button
+                  type="button"
+                  onClick={handleBackToLogin}
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-400 hover:text-brand-300 mr-1 pr-1.5 border-r border-semantic-border-medium cursor-pointer shrink-0 transition-colors"
+                  title={t('common.backToLogin', 'Back to Login')}
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>{t('common.back', 'Back')}</span>
+                </button>
+              )}
               <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
               <span className="font-semibold text-semantic-text-primary truncate">
                 {selectedArea ? `${selectedArea} • Muzaffarnagar` : 'Muzaffarnagar (251001 & 251002)'}
               </span>
-              <span className="text-[10px] bg-emerald-500/15 text-emerald-300 font-bold px-1.5 py-0.2 rounded border border-emerald-500/30">
+              <span className="text-[10px] bg-emerald-500/15 text-emerald-300 font-bold px-1.5 py-0.2 rounded border border-emerald-500/30 shrink-0">
                 ⚡ 30-45 mins
               </span>
             </div>
@@ -332,8 +328,92 @@ export default function Home() {
                   transition={{ duration: 0.18 }}
                   className="absolute left-3 right-3 sm:left-6 sm:right-6 top-full mt-2 z-50 p-4 sm:p-5 rounded-2xl bg-surface-900/95 backdrop-blur-xl border border-semantic-border-medium shadow-2xl max-h-[70vh] overflow-y-auto space-y-4"
                 >
-                  {/* 1. All Service Categories Grid */}
+                  {/* Top Bar with Back Button & Cross (Cut) Button */}
+                  <div className="flex items-center justify-between pb-3 border-b border-semantic-border-light">
+                    <button
+                      type="button"
+                      onClick={() => setIsSearchOpen(false)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-800 hover:bg-surface-750 text-xs font-semibold text-semantic-text-secondary hover:text-white transition-colors cursor-pointer border border-semantic-border-light/60 active:scale-95"
+                      aria-label="Back to Homepage"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5 text-brand-400" />
+                      <span>{t('common.backToHome', 'Back to Home')}</span>
+                    </button>
+
+                    <span className="text-xs font-bold text-white uppercase tracking-wider hidden sm:inline-block">
+                      {t('home.exploreServices', 'Explore Services & Areas')}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsSearchOpen(false)}
+                      className="w-8 h-8 rounded-xl bg-surface-800 hover:bg-rose-500/20 text-semantic-text-tertiary hover:text-rose-300 flex items-center justify-center transition-colors cursor-pointer border border-semantic-border-light/60 active:scale-95"
+                      aria-label="Close"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* 1. SELECT LOCAL AREA (On Top as requested) */}
                   <div>
+                    <h4 className="text-xs font-bold text-semantic-text-secondary uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>{t('home.stickyAreasTitle', 'Select Local Area')}</span>
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedArea('')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
+                          !selectedArea
+                            ? 'bg-emerald-500/20 border-emerald-500/60 text-emerald-300'
+                            : 'bg-surface-800 border-semantic-border-light text-semantic-text-secondary hover:text-white'
+                        }`}
+                      >
+                        All Muzaffarnagar
+                      </button>
+                      {MUZAFFARNAGAR_PINCODES.map(pincode => (
+                        <button
+                          key={pincode}
+                          type="button"
+                          onClick={() => handleAreaSelect(pincode)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
+                            selectedArea === pincode
+                              ? 'bg-emerald-500/20 border-emerald-500/60 text-emerald-300'
+                              : 'bg-surface-800 border-semantic-border-light text-semantic-text-secondary hover:text-white'
+                          }`}
+                        >
+                          {pincode} - {pincode === '251001' ? 'City / New Mandi' : 'Cantt / Civil Lines'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 2. POPULAR SEARCHES (Second as requested) */}
+                  <div className="pt-2 border-t border-semantic-border-light/60">
+                    <h4 className="text-xs font-bold text-semantic-text-secondary uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                      <Flame className="w-3.5 h-3.5 text-amber-400" />
+                      <span>{t('home.stickyPopularSearches', 'Popular Searches')}</span>
+                    </h4>
+                    <div className="flex flex-wrap gap-1.5">
+                      {POPULAR_SEARCHES.map(item => (
+                        <button
+                          key={item.label}
+                          type="button"
+                          onClick={() => {
+                            setSelectedCategory(item.category)
+                            handleQuickPick(item.category)
+                          }}
+                          className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-surface-800/80 hover:bg-surface-750 border border-semantic-border-light text-semantic-text-secondary hover:text-white transition-colors cursor-pointer"
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 3. ALL SERVICE CATEGORIES (Third as requested, with 1-Click Direct Access) */}
+                  <div className="pt-2 border-t border-semantic-border-light/60">
                     <div className="flex items-center justify-between mb-2.5">
                       <h4 className="text-xs font-bold text-semantic-text-secondary uppercase tracking-wider flex items-center gap-1.5">
                         <Grid className="w-3.5 h-3.5 text-brand-400" />
@@ -376,64 +456,6 @@ export default function Home() {
                           </button>
                         )
                       })}
-                    </div>
-                  </div>
-
-                  {/* 2. Pincode / Area Filter Chips */}
-                  <div className="pt-2 border-t border-semantic-border-light/60">
-                    <h4 className="text-xs font-bold text-semantic-text-secondary uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>{t('home.stickyAreasTitle', 'Select Local Area')}</span>
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedArea('')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
-                          !selectedArea
-                            ? 'bg-emerald-500/20 border-emerald-500/60 text-emerald-300'
-                            : 'bg-surface-800 border-semantic-border-light text-semantic-text-secondary hover:text-white'
-                        }`}
-                      >
-                        All Muzaffarnagar
-                      </button>
-                      {MUZAFFARNAGAR_PINCODES.map(pincode => (
-                        <button
-                          key={pincode}
-                          type="button"
-                          onClick={() => handleAreaSelect(pincode)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
-                            selectedArea === pincode
-                              ? 'bg-emerald-500/20 border-emerald-500/60 text-emerald-300'
-                              : 'bg-surface-800 border-semantic-border-light text-semantic-text-secondary hover:text-white'
-                          }`}
-                        >
-                          {pincode} - {pincode === '251001' ? 'City / New Mandi' : 'Cantt / Civil Lines'}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* 3. Popular Common Searches */}
-                  <div className="pt-2 border-t border-semantic-border-light/60">
-                    <h4 className="text-xs font-bold text-semantic-text-secondary uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                      <Flame className="w-3.5 h-3.5 text-amber-400" />
-                      <span>{t('home.stickyPopularSearches', 'Popular Searches')}</span>
-                    </h4>
-                    <div className="flex flex-wrap gap-1.5">
-                      {POPULAR_SEARCHES.map(item => (
-                        <button
-                          key={item.label}
-                          type="button"
-                          onClick={() => {
-                            setSelectedCategory(item.category)
-                            handleQuickPick(item.category)
-                          }}
-                          className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-surface-800/80 hover:bg-surface-700 border border-semantic-border-light text-semantic-text-secondary hover:text-white transition-colors cursor-pointer"
-                        >
-                          {item.label}
-                        </button>
-                      ))}
                     </div>
                   </div>
 
@@ -488,14 +510,24 @@ export default function Home() {
                     >
                       Clear All Filters
                     </Button>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => handleSearchSubmit()}
-                      className="text-xs font-bold px-5 cursor-pointer"
-                    >
-                      Apply & View Results →
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsSearchOpen(false)}
+                        className="text-xs font-medium px-3 border-semantic-border-light text-semantic-text-secondary hover:text-white cursor-pointer"
+                      >
+                        {t('common.close', 'Close')}
+                      </Button>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => handleSearchSubmit()}
+                        className="text-xs font-bold px-5 cursor-pointer"
+                      >
+                        Apply & View Results →
+                      </Button>
+                    </div>
                   </div>
                 </motion.div>
               </>
@@ -503,6 +535,51 @@ export default function Home() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* 2. HERO INTRODUCTION SECTION (Below Sticky Search Bar)                   */}
+      {/* ========================================================================= */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-surface-950 via-surface-900 to-surface-950 pt-8 sm:pt-14 pb-8 border-b border-semantic-border-light/40">
+        {/* Subtle Ambient Background Glow */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-96 sm:w-[600px] h-64 bg-brand-500/10 rounded-full blur-3xl" />
+        </div>
+
+        <div className="container-app relative z-10">
+          <div className="max-w-4xl mx-auto text-center">
+            {/* Hyperlocal Trust Badge */}
+            <motion.div
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 350, damping: 24 }}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/25 text-brand-400 text-xs font-semibold tracking-wide mb-3.5 shadow-sm backdrop-blur-xs"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-brand-400 shrink-0" />
+              <span>{t('home.heroBadge')}</span>
+            </motion.div>
+
+            {/* Main Headline (Option 3: Attractive & Crystal-Clear) */}
+            <motion.h1
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 350, damping: 24, delay: 0.05 }}
+              className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight mb-3 sm:mb-4 drop-shadow-sm"
+            >
+              {t('home.heroTitle')}
+            </motion.h1>
+
+            {/* Subtitle */}
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 350, damping: 24, delay: 0.1 }}
+              className="text-xs sm:text-sm md:text-base text-semantic-text-secondary max-w-2xl mx-auto leading-relaxed"
+            >
+              {t('home.heroSubtitle')}
+            </motion.p>
+          </div>
+        </div>
+      </section>
 
       {/* ========================================================================= */}
       {/* 2. AUTHENTIC SOCIAL PROOF STRIP (Strict Zero Fake Data • Verified Only)   */}
