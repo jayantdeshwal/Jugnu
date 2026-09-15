@@ -9,6 +9,8 @@ import { CATEGORIES, getCategoryName } from '@kaamgar/shared'
 import { useState, useRef, useEffect } from 'react'
 import NetworkStatus from './NetworkStatus'
 import PWAInstallPrompt from './PWAInstallPrompt'
+import AiAssistantModal from './ai/AiAssistantModal'
+import AiFloatingTrigger from './ai/AiFloatingTrigger'
 
 export default function Layout() {
   const { t } = useTranslation()
@@ -742,6 +744,8 @@ export default function Layout() {
       />
       
       <PWAInstallPrompt />
+      <AiFloatingTrigger />
+      <AiAssistantModal />
     </>
   )
 }

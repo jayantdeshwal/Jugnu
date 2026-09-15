@@ -750,5 +750,22 @@
     "logoutModalTitle": "लॉगआउट पुष्टि",
     "logoutModalDesc": "क्या आप वाकई अपने खाते से लॉगआउट करना चाहते हैं?",
     "confirmLogout": "लॉगआउट करें"
+  },
+  "aiAssistant": {
+    "bookingMitra": "बुकिंग मित्र",
+    "careMitra": "कामगार समाधान",
+    "workerSarathi": "कामगार सारथी",
+    "bookingMitraTitle": "सेवा खोज व दर मार्गदर्शक",
+    "careMitraTitle": "ग्राहक सहायता एवं समाधान",
+    "workerSarathiTitle": "कारीगर व्यवसाय व ड्यूटी मार्गदर्शक",
+    "fastSupport": "24x7 त्वरित सहायता",
+    "askBookingMitra": "बुकिंग मित्र से पूछें...",
+    "askCare": "कामगार समाधान से पूछें...",
+    "askSarathi": "सारथी AI से पूछें...",
+    "openAssistant": "AI सहायक से पूछें",
+    "customerBannerTitle": "कामगार AI सहायता (24x7)",
+    "customerBannerDesc": "कारीगर खोजने के लिए 'बुकिंग मित्र' या शिकायत/देरी के लिए 'समाधान मित्र' चुनें",
+    "workerBannerTitle": "कामगार सारथी AI (कारीगर साथी)",
+    "workerBannerDesc": "ग्राहक को व्हाट्सऐप मैसेज, अधिक काम पाने के तरीके और 0% कमीशन नियम जानें"
   }
 }

@@ -40,7 +40,9 @@ import {
   MessageCircle,
   Power,
   Sparkles,
+  Bot,
 } from 'lucide-react'
+import { useAiAssistant } from '../context/AiAssistantContext'
 import { getSupabaseClient } from '@/lib/supabase'
 import { uploadAvatar, uploadIdProof, validateFile } from '@/services/storage'
 import { triggerPWAInstall } from '@/components/PWAInstallPrompt'
@@ -64,6 +66,7 @@ export default function Profile() {
   const navigate = useNavigate()
   const { user, updateUser, updateEmail, logout, isWorker, isAdmin, isLoading: authLoading } = useAuth()
   const { language, setLanguage, toggleLanguage } = useLanguage()
+  const { openAssistant } = useAiAssistant()
 
   const [editMode, setEditMode] = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
@@ -600,17 +603,17 @@ export default function Profile() {
                 </button>
               )}
 
-              {/* Card 3: Help & Support */}
+              {/* Card 3: Help & Support (AI Assistant) */}
               <button
                 type="button"
-                onClick={() => setShowSupportModal(true)}
+                onClick={() => openAssistant(isWorker ? 'worker_sarathi' : 'customer_care')}
                 className="p-3 sm:p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-blue-500/40 hover:bg-surface-200/80 transition-all flex flex-col items-center justify-center text-center group shadow-sm active:scale-95"
               >
                 <div className="w-10 h-10 rounded-xl bg-surface-200 group-hover:bg-blue-500/15 flex items-center justify-center text-blue-400 mb-2 transition-colors">
-                  <Headphones className="w-5 h-5" />
+                  <Bot className="w-5 h-5 text-brand-400" />
                 </div>
-                <span className="text-xs font-bold text-semantic-text-primary group-hover:text-blue-400 leading-tight">
-                  {t('profile.helpSupport', 'Help & support')}
+                <span className="text-xs font-bold text-semantic-text-primary group-hover:text-brand-400 leading-tight">
+                  {isWorker ? 'सारथी AI' : t('profile.helpSupport', 'AI Support')}
                 </span>
               </button>
             </>
@@ -864,9 +867,9 @@ export default function Profile() {
                 </div>
               </div>
 
-              {/* Row: Help Center & FAQs */}
+              {/* Row: Help Center & AI Assistant */}
               <div
-                onClick={() => setShowSupportModal(true)}
+                onClick={() => openAssistant(isWorker ? 'worker_sarathi' : 'customer_care')}
                 className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
               >
                 <div className="flex items-center gap-3.5">

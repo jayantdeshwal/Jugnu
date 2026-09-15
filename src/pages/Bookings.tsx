@@ -3,8 +3,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button, Card, Avatar, Badge, RatingStars, Modal } from '@kaamgar/ui'
 import { CATEGORIES, getCategoryName } from '@kaamgar/shared'
-import { Calendar, Clock, MapPin, Star, Truck, CheckCircle, XCircle, AlertCircle, Loader2, MessageSquare, Phone, RefreshCw, Play } from 'lucide-react'
+import { Calendar, Clock, MapPin, Star, Truck, CheckCircle, XCircle, AlertCircle, Loader2, MessageSquare, Phone, RefreshCw, Play, Shield, Bot, Sparkles } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
+import { useAiAssistant } from '@/context/AiAssistantContext'
 import { getSupabaseClient } from '@/lib/supabase'
 import ContactModal from '@/components/ContactModal'
 import { buildCustomerToWorkerWhatsAppMessage } from '@/utils/contact'
@@ -42,6 +43,7 @@ const statusConfig = {
 export default function Bookings() {
   const { t, i18n } = useTranslation()
   const { user } = useAuth()
+  const { openAssistant } = useAiAssistant()
   const [allBookings, setAllBookings] = useState<BookingRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -326,6 +328,47 @@ export default function Bookings() {
           <div className="py-12 text-center text-semantic-text-secondary">{t('bookings.loading', 'Loading bookings...')}</div>
         )}
         
+        {/* 2 Customer AI Assistants Support Banner */}
+        <div className="mb-6 p-4 rounded-2xl bg-surface-100 border border-brand-500/30 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-500/20 to-emerald-500/20 border border-brand-500/40 flex items-center justify-center text-xl shadow-inner shrink-0">
+              🤖
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-xs font-bold text-white tracking-tight">
+                  {i18n.language === 'hi' ? 'कामगार AI सहायता (24x7)' : 'Kaamgar AI Assistants (24x7)'}
+                </h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                  {i18n.language === 'hi' ? 'त्वरित सहायता' : 'Fast Support'}
+                </span>
+              </div>
+              <p className="text-[11px] text-semantic-text-secondary">
+                {i18n.language === 'hi'
+                  ? 'कारीगर खोजने के लिए "बुकिंग मित्र" या शिकायत/देरी के लिए "समाधान मित्र" चुनें'
+                  : 'Select an assistant for service recommendations or post-booking resolution'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+            <button
+              onClick={() => openAssistant('customer_booking')}
+              className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-brand-500 hover:bg-brand-400 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all"
+            >
+              <span>🛠️</span>
+              <span>{i18n.language === 'hi' ? 'बुकिंग मित्र' : 'Booking Mitra'}</span>
+            </button>
+            <button
+              onClick={() => openAssistant('customer_care')}
+              className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-surface-200 hover:bg-surface-300 text-semantic-text-primary hover:text-white border border-semantic-border-light text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+            >
+              <Shield className="w-3.5 h-3.5 text-emerald-400" />
+              <span>{i18n.language === 'hi' ? 'समाधान मित्र' : 'Care & Support'}</span>
+            </button>
+          </div>
+        </div>
+
         {!isLoading && (
           <div className="flex gap-2 mb-6 bg-surface-200/80 border border-semantic-border-light rounded-xl p-1">
             <button

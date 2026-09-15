@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { LanguageProvider } from './context/LanguageContext'
 import { AuthProvider } from './context/AuthContext'
 import { NotificationProvider } from './context/NotificationContext'
+import { AiAssistantProvider } from './context/AiAssistantContext'
 import Layout from './components/Layout'
 import Home from './pages/Home'
 import Search from './pages/Search'
@@ -79,7 +80,9 @@ function App() {
     <LanguageProvider>
       <AuthProvider>
         <NotificationProvider>
-          <AppRoutes />
+          <AiAssistantProvider>
+            <AppRoutes />
+          </AiAssistantProvider>
         </NotificationProvider>
       </AuthProvider>
     </LanguageProvider>
