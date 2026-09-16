@@ -206,18 +206,18 @@ export default function Home() {
 
       {/* Exploration Guest Mode Banner with 1-Tap Back Button */}
       {isGuestMode && (
-        <div className="bg-gradient-to-r from-brand-500/15 via-surface-900 to-brand-500/15 border-b border-brand-500/30 py-2 px-3 sm:px-6">
+        <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-amber-500/10 dark:from-brand-500/15 dark:via-zinc-900 dark:to-brand-500/15 border-b border-amber-500/30 py-2 px-3 sm:px-6">
           <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 text-xs text-brand-300 font-medium truncate">
-              <Sparkles className="w-3.5 h-3.5 text-brand-400 shrink-0" />
+            <div className="flex items-center gap-2 text-xs text-amber-800 dark:text-brand-300 font-medium truncate">
+              <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
               <span className="truncate">{t('guestBar.exploringAsGuest', 'You are exploring Muzaffarnagar Kaamgar in Guest Mode')}</span>
             </div>
             <button
               type="button"
               onClick={handleBackToLogin}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-surface-800 hover:bg-surface-750 text-xs font-bold text-white transition-all cursor-pointer border border-brand-500/40 shrink-0 shadow-sm active:scale-95"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 text-xs font-bold text-slate-900 dark:text-white transition-all cursor-pointer border border-amber-500/40 shrink-0 shadow-xs active:scale-95"
             >
-              <ArrowLeft className="w-3.5 h-3.5 text-brand-400" />
+              <ArrowLeft className="w-3.5 h-3.5 text-amber-500" />
               <span>{t('common.backToLogin', 'Sign In / Register')}</span>
             </button>
           </div>
@@ -229,35 +229,35 @@ export default function Home() {
       {/* ========================================================================= */}
       <div
         ref={searchContainerRef}
-        className="sticky top-16 z-30 bg-surface-950/95 backdrop-blur-md border-b border-semantic-border-light shadow-md transition-all"
+        className="sticky top-16 z-30 bg-white/90 dark:bg-zinc-950/95 backdrop-blur-md border-b border-slate-200/80 dark:border-zinc-800 shadow-sm transition-all"
       >
         <div className="max-w-4xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 relative">
           {/* Location indicator & delivery speed banner */}
           <div className="flex items-center justify-between gap-2 mb-1.5 px-1">
-            <div className="flex items-center gap-1.5 text-xs text-semantic-text-secondary min-w-0">
+            <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-zinc-400 min-w-0">
               {isGuestMode && (
                 <button
                   type="button"
                   onClick={handleBackToLogin}
-                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-400 hover:text-brand-300 mr-1 pr-1.5 border-r border-semantic-border-medium cursor-pointer shrink-0 transition-colors"
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400 hover:text-amber-700 mr-1 pr-1.5 border-r border-slate-200 dark:border-zinc-700 cursor-pointer shrink-0 transition-colors"
                   title={t('common.backToLogin', 'Back to Login')}
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>{t('common.back', 'Back')}</span>
                 </button>
               )}
-              <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span className="font-semibold text-semantic-text-primary truncate">
+              <MapPin className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+              <span className="font-semibold text-slate-900 dark:text-zinc-100 truncate">
                 {selectedArea ? `${selectedArea} • Muzaffarnagar` : 'Muzaffarnagar (251001 & 251002)'}
               </span>
-              <span className="text-[10px] bg-emerald-500/15 text-emerald-300 font-bold px-1.5 py-0.2 rounded border border-emerald-500/30 shrink-0">
+              <span className="text-[10px] bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 font-bold px-1.5 py-0.2 rounded border border-emerald-200 dark:border-emerald-700/50 shrink-0">
                 ⚡ 30-45 mins
               </span>
             </div>
             <button
               type="button"
               onClick={() => setIsSearchOpen(prev => !prev)}
-              className="text-[11px] text-brand-400 hover:text-brand-300 font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+              className="text-[11px] text-amber-600 dark:text-amber-400 hover:text-amber-700 font-semibold flex items-center gap-1 cursor-pointer transition-colors"
             >
               <SlidersHorizontal className="w-3 h-3" />
               <span>{isSearchOpen ? t('common.close', 'Close') : t('common.filter', 'Options')}</span>
@@ -270,8 +270,8 @@ export default function Home() {
             className={`
               relative rounded-2xl border transition-all duration-200 flex items-center px-3 sm:px-4 py-2 sm:py-2.5 shadow-sm
               ${isSearchOpen
-                ? 'bg-surface-900 border-brand-500/80 ring-2 ring-brand-500/20'
-                : 'bg-surface-850 hover:bg-surface-800 border-semantic-border-medium hover:border-brand-500/50'
+                ? 'bg-white dark:bg-zinc-900 border-amber-500/80 ring-2 ring-amber-500/20'
+                : 'bg-slate-50 dark:bg-zinc-850 hover:bg-white dark:hover:bg-zinc-800 border-slate-200 dark:border-zinc-700 hover:border-amber-500/50'
               }
             `}
           >
@@ -335,28 +335,28 @@ export default function Home() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -8, scale: 0.99 }}
                   transition={{ duration: 0.18 }}
-                  className="absolute left-3 right-3 sm:left-6 sm:right-6 top-full mt-2 z-50 p-4 sm:p-5 rounded-2xl bg-surface-900/95 backdrop-blur-xl border border-semantic-border-medium shadow-2xl max-h-[70vh] overflow-y-auto space-y-4"
+                  className="absolute left-3 right-3 sm:left-6 sm:right-6 top-full mt-2 z-50 p-4 sm:p-5 rounded-2xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-slate-200 dark:border-zinc-800 shadow-2xl max-h-[70vh] overflow-y-auto space-y-4"
                 >
                   {/* Top Bar with Back Button & Cross (Cut) Button */}
-                  <div className="flex items-center justify-between pb-3 border-b border-semantic-border-light">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-zinc-800">
                     <button
                       type="button"
                       onClick={() => setIsSearchOpen(false)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-800 hover:bg-surface-750 text-xs font-semibold text-semantic-text-secondary hover:text-white transition-colors cursor-pointer border border-semantic-border-light/60 active:scale-95"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer border border-slate-200 dark:border-zinc-700 active:scale-95"
                       aria-label="Back to Homepage"
                     >
-                      <ArrowLeft className="w-3.5 h-3.5 text-brand-400" />
+                      <ArrowLeft className="w-3.5 h-3.5 text-amber-500 dark:text-brand-400" />
                       <span>{t('common.backToHome', 'Back to Home')}</span>
                     </button>
 
-                    <span className="text-xs font-bold text-white uppercase tracking-wider hidden sm:inline-block">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider hidden sm:inline-block">
                       {t('home.exploreServices', 'Explore Services & Areas')}
                     </span>
 
                     <button
                       type="button"
                       onClick={() => setIsSearchOpen(false)}
-                      className="w-8 h-8 rounded-xl bg-surface-800 hover:bg-rose-500/20 text-semantic-text-tertiary hover:text-rose-300 flex items-center justify-center transition-colors cursor-pointer border border-semantic-border-light/60 active:scale-95"
+                      className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-rose-50 dark:bg-zinc-800 dark:hover:bg-rose-500/20 text-slate-500 dark:text-zinc-400 hover:text-rose-600 dark:hover:text-rose-300 flex items-center justify-center transition-colors cursor-pointer border border-slate-200 dark:border-zinc-700 active:scale-95"
                       aria-label="Close"
                     >
                       <X className="w-4 h-4" />
@@ -365,8 +365,8 @@ export default function Home() {
 
                   {/* 1. SELECT LOCAL AREA (On Top as requested) */}
                   <div>
-                    <h4 className="text-xs font-bold text-semantic-text-secondary uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+                    <h4 className="text-xs font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                       <span>{t('home.stickyAreasTitle', 'Select Local Area')}</span>
                     </h4>
                     <div className="flex flex-wrap gap-2">
@@ -375,8 +375,8 @@ export default function Home() {
                         onClick={() => setSelectedArea('')}
                         className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
                           !selectedArea
-                            ? 'bg-emerald-500/20 border-emerald-500/60 text-emerald-300'
-                            : 'bg-surface-800 border-semantic-border-light text-semantic-text-secondary hover:text-white'
+                            ? 'bg-emerald-50 dark:bg-emerald-500/20 border-emerald-500 text-emerald-700 dark:text-emerald-300 font-bold'
+                            : 'bg-slate-50 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:text-white'
                         }`}
                       >
                         All Muzaffarnagar
@@ -388,8 +388,8 @@ export default function Home() {
                           onClick={() => handleAreaSelect(pincode)}
                           className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
                             selectedArea === pincode
-                              ? 'bg-emerald-500/20 border-emerald-500/60 text-emerald-300'
-                              : 'bg-surface-800 border-semantic-border-light text-semantic-text-secondary hover:text-white'
+                              ? 'bg-emerald-50 dark:bg-emerald-500/20 border-emerald-500 text-emerald-700 dark:text-emerald-300 font-bold'
+                              : 'bg-slate-50 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:text-white'
                           }`}
                         >
                           {pincode} - {pincode === '251001' ? 'City / New Mandi' : 'Cantt / Civil Lines'}
@@ -399,9 +399,9 @@ export default function Home() {
                   </div>
 
                   {/* 2. POPULAR SEARCHES (Second as requested) */}
-                  <div className="pt-2 border-t border-semantic-border-light/60">
-                    <h4 className="text-xs font-bold text-semantic-text-secondary uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                      <Flame className="w-3.5 h-3.5 text-amber-400" />
+                  <div className="pt-2 border-t border-slate-200 dark:border-zinc-800">
+                    <h4 className="text-xs font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                      <Flame className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
                       <span>{t('home.stickyPopularSearches', 'Popular Searches')}</span>
                     </h4>
                     <div className="flex flex-wrap gap-1.5">
@@ -413,7 +413,7 @@ export default function Home() {
                             setSelectedCategory(item.category)
                             handleQuickPick(item.category)
                           }}
-                          className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-surface-800/80 hover:bg-surface-750 border border-semantic-border-light text-semantic-text-secondary hover:text-white transition-colors cursor-pointer"
+                          className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-slate-50 hover:bg-slate-100 dark:bg-zinc-800/80 dark:hover:bg-zinc-750 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
                         >
                           {item.label}
                         </button>
@@ -422,13 +422,13 @@ export default function Home() {
                   </div>
 
                   {/* 3. ALL SERVICE CATEGORIES (Third as requested, with 1-Click Direct Access) */}
-                  <div className="pt-2 border-t border-semantic-border-light/60">
+                  <div className="pt-2 border-t border-slate-200 dark:border-zinc-800">
                     <div className="flex items-center justify-between mb-2.5">
-                      <h4 className="text-xs font-bold text-semantic-text-secondary uppercase tracking-wider flex items-center gap-1.5">
-                        <Grid className="w-3.5 h-3.5 text-brand-400" />
+                      <h4 className="text-xs font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <Grid className="w-3.5 h-3.5 text-amber-500 dark:text-brand-400" />
                         <span>{t('home.stickyCategoriesTitle', 'All Service Categories')}</span>
                       </h4>
-                      <span className="text-[11px] text-brand-400 font-medium">1-Click Direct Access</span>
+                      <span className="text-[11px] text-amber-600 dark:text-brand-400 font-semibold">1-Click Direct Access</span>
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -446,19 +446,19 @@ export default function Home() {
                             className={`
                               p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all cursor-pointer
                               ${isSelected
-                                ? 'bg-brand-500/20 border-brand-500 text-brand-300'
-                                : 'bg-surface-800/80 hover:bg-surface-750 border-semantic-border-light text-semantic-text-primary hover:border-brand-500/40'
+                                ? 'bg-amber-50 dark:bg-brand-500/20 border-amber-500 text-amber-800 dark:text-brand-300 shadow-sm'
+                                : 'bg-slate-50/80 hover:bg-slate-100 dark:bg-zinc-800/80 dark:hover:bg-zinc-750 border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-200 hover:border-amber-500/40'
                               }
                             `}
                           >
-                            <div className="w-8 h-8 rounded-lg bg-brand-500/15 border border-brand-500/25 flex items-center justify-center text-brand-400 shrink-0">
+                            <div className="w-8 h-8 rounded-lg bg-amber-500/10 dark:bg-brand-500/15 border border-amber-500/25 dark:border-brand-500/25 flex items-center justify-center text-amber-600 dark:text-brand-400 shrink-0">
                               <Icon className="w-4 h-4" />
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="text-xs font-semibold truncate">
                                 {getCategoryName(cat, i18n.language === 'hi' ? 'hi' : 'en')}
                               </p>
-                              <p className="text-[10px] text-semantic-text-tertiary truncate">
+                              <p className="text-[10px] text-slate-500 dark:text-zinc-400 truncate">
                                 {totalCount > 0 ? `${totalCount} Verified` : 'Same-day'}
                               </p>
                             </div>
@@ -470,8 +470,8 @@ export default function Home() {
 
                   {/* 4. Live Worker Search Results (if typing) */}
                   {filteredSuggestions.length > 0 && (
-                    <div className="pt-2 border-t border-semantic-border-light/60">
-                      <h4 className="text-xs font-bold text-semantic-text-secondary uppercase tracking-wider mb-2">
+                    <div className="pt-2 border-t border-slate-200 dark:border-zinc-800">
+                      <h4 className="text-xs font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wider mb-2">
                         Matching Verified Artisans
                       </h4>
                       <div className="space-y-1.5">
@@ -482,21 +482,21 @@ export default function Home() {
                               setIsSearchOpen(false)
                               navigate(`/search?q=${encodeURIComponent(worker.name)}`)
                             }}
-                            className="flex items-center justify-between p-2 rounded-xl bg-surface-800 hover:bg-surface-750 border border-semantic-border-light cursor-pointer transition-colors"
+                            className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-zinc-800 dark:hover:bg-zinc-750 border border-slate-200 dark:border-zinc-700 cursor-pointer transition-colors"
                           >
                             <div className="flex items-center gap-2.5">
-                              <div className="w-8 h-8 rounded-full bg-brand-500/20 text-brand-300 font-bold flex items-center justify-center text-xs">
+                              <div className="w-8 h-8 rounded-full bg-amber-500/15 text-amber-700 dark:text-brand-300 font-bold flex items-center justify-center text-xs">
                                 {worker.name.charAt(0)}
                               </div>
                               <div>
-                                <p className="text-xs font-bold text-white">{worker.name}</p>
-                                <p className="text-[10px] text-semantic-text-tertiary capitalize">
+                                <p className="text-xs font-bold text-slate-900 dark:text-white">{worker.name}</p>
+                                <p className="text-[10px] text-slate-500 dark:text-zinc-400 capitalize">
                                   {worker.categories.join(', ')} • {worker.experience} yrs exp
                                 </p>
                               </div>
                             </div>
-                            <div className="flex items-center gap-1 text-amber-400 text-xs font-semibold">
-                              <Star className="w-3.5 h-3.5 fill-amber-400" />
+                            <div className="flex items-center gap-1 text-amber-500 text-xs font-semibold">
+                              <Star className="w-3.5 h-3.5 fill-amber-500" />
                               <span>{worker.rating > 0 ? worker.rating.toFixed(1) : '5.0'}</span>
                             </div>
                           </div>
@@ -506,7 +506,7 @@ export default function Home() {
                   )}
 
                   {/* Bottom Actions */}
-                  <div className="pt-3 border-t border-semantic-border-light flex items-center justify-between">
+                  <div className="pt-3 border-t border-slate-200 dark:border-zinc-800 flex items-center justify-between">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -515,7 +515,7 @@ export default function Home() {
                         setSelectedArea('')
                         setSearchQuery('')
                       }}
-                      className="text-xs text-semantic-text-tertiary hover:text-white cursor-pointer"
+                      className="text-xs text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white cursor-pointer"
                     >
                       Clear All Filters
                     </Button>
@@ -524,7 +524,7 @@ export default function Home() {
                         variant="outline"
                         size="sm"
                         onClick={() => setIsSearchOpen(false)}
-                        className="text-xs font-medium px-3 border-semantic-border-light text-semantic-text-secondary hover:text-white cursor-pointer"
+                        className="text-xs font-medium px-3 border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white cursor-pointer"
                       >
                         {t('common.close', 'Close')}
                       </Button>
@@ -548,10 +548,10 @@ export default function Home() {
       {/* ========================================================================= */}
       {/* 2. HERO INTRODUCTION SECTION (Below Sticky Search Bar)                   */}
       {/* ========================================================================= */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-surface-950 via-surface-900 to-surface-950 pt-8 sm:pt-14 pb-8 border-b border-semantic-border-light/40">
+      <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/60 to-white dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 pt-8 sm:pt-14 pb-8 border-b border-slate-200/80 dark:border-zinc-800/60">
         {/* Subtle Ambient Background Glow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-96 sm:w-[600px] h-64 bg-brand-500/10 rounded-full blur-3xl" />
+          <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-96 sm:w-[600px] h-64 bg-amber-500/10 dark:bg-brand-500/10 rounded-full blur-3xl" />
         </div>
 
         <div className="container-app relative z-10">
@@ -561,9 +561,9 @@ export default function Home() {
               initial={{ opacity: 0, y: -12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/25 text-brand-400 text-xs font-semibold tracking-wide mb-3.5 shadow-sm backdrop-blur-xs"
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-xs font-semibold tracking-wide mb-3.5 shadow-sm backdrop-blur-xs"
             >
-              <Sparkles className="w-3.5 h-3.5 text-brand-400 shrink-0" />
+              <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
               <span>{t('home.heroBadge')}</span>
             </motion.div>
 
@@ -572,7 +572,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ type: 'spring', stiffness: 350, damping: 24, delay: 0.05 }}
-              className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight mb-3 sm:mb-4 drop-shadow-sm"
+              className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white leading-tight mb-3 sm:mb-4 drop-shadow-xs"
             >
               {t('home.heroTitle')}
             </motion.h1>
@@ -582,7 +582,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ type: 'spring', stiffness: 350, damping: 24, delay: 0.1 }}
-              className="text-xs sm:text-sm md:text-base text-semantic-text-secondary max-w-2xl mx-auto leading-relaxed"
+              className="text-xs sm:text-sm md:text-base text-slate-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed"
             >
               {t('home.heroSubtitle')}
             </motion.p>
@@ -593,22 +593,22 @@ export default function Home() {
       {/* ========================================================================= */}
       {/* 2. AUTHENTIC SOCIAL PROOF STRIP (Strict Zero Fake Data • Verified Only)   */}
       {/* ========================================================================= */}
-      <section className="py-5 sm:py-6 bg-surface-950 border-b border-semantic-border-light/40">
+      <section className="py-5 sm:py-6 bg-slate-50/80 dark:bg-zinc-950 border-b border-slate-200/80 dark:border-zinc-800/60">
         <div className="container-app">
           <div className="max-w-5xl mx-auto">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3.5">
               <motion.div
                 whileHover={{ y: -3, scale: 1.02 }}
                 transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-                className="p-3.5 sm:p-4 rounded-2xl bg-surface-900/70 border border-semantic-border-light hover:border-emerald-500/40 transition-all flex flex-col items-center justify-center text-center gap-1 shadow-sm"
+                className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-zinc-900/70 border border-slate-200/80 dark:border-zinc-800 hover:border-emerald-500/50 hover:shadow-md transition-all flex flex-col items-center justify-center text-center gap-1 shadow-sm"
               >
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-1">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-1">
                   <ShieldCheck className="w-4 h-4" />
                 </div>
-                <span className="text-xs sm:text-sm font-bold text-white">
+                <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                   {t('home.statVerified')}
                 </span>
-                <span className="text-[10px] text-semantic-text-tertiary">
+                <span className="text-[10px] text-slate-500 dark:text-zinc-400">
                   Aadhaar & Admin Approved
                 </span>
               </motion.div>
@@ -616,15 +616,15 @@ export default function Home() {
               <motion.div
                 whileHover={{ y: -3, scale: 1.02 }}
                 transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-                className="p-3.5 sm:p-4 rounded-2xl bg-surface-900/70 border border-semantic-border-light hover:border-brand-500/40 transition-all flex flex-col items-center justify-center text-center gap-1 shadow-sm"
+                className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-zinc-900/70 border border-slate-200/80 dark:border-zinc-800 hover:border-amber-500/50 hover:shadow-md transition-all flex flex-col items-center justify-center text-center gap-1 shadow-sm"
               >
-                <div className="w-8 h-8 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400 mb-1">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-1">
                   <Percent className="w-4 h-4" />
                 </div>
-                <span className="text-xs sm:text-sm font-bold text-white">
+                <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                   {t('home.statCommission')}
                 </span>
-                <span className="text-[10px] text-semantic-text-tertiary">
+                <span className="text-[10px] text-slate-500 dark:text-zinc-400">
                   Zero Middleman Markup
                 </span>
               </motion.div>
@@ -632,15 +632,15 @@ export default function Home() {
               <motion.div
                 whileHover={{ y: -3, scale: 1.02 }}
                 transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-                className="p-3.5 sm:p-4 rounded-2xl bg-surface-900/70 border border-semantic-border-light hover:border-blue-500/40 transition-all flex flex-col items-center justify-center text-center gap-1 shadow-sm"
+                className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-zinc-900/70 border border-slate-200/80 dark:border-zinc-800 hover:border-blue-500/50 hover:shadow-md transition-all flex flex-col items-center justify-center text-center gap-1 shadow-sm"
               >
-                <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 mb-1">
+                <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-1">
                   <PhoneCall className="w-4 h-4" />
                 </div>
-                <span className="text-xs sm:text-sm font-bold text-white">
+                <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                   {t('home.statDirect')}
                 </span>
-                <span className="text-[10px] text-semantic-text-tertiary">
+                <span className="text-[10px] text-slate-500 dark:text-zinc-400">
                   Direct WhatsApp & Call
                 </span>
               </motion.div>
@@ -648,15 +648,15 @@ export default function Home() {
               <motion.div
                 whileHover={{ y: -3, scale: 1.02 }}
                 transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-                className="p-3.5 sm:p-4 rounded-2xl bg-surface-900/70 border border-semantic-border-light hover:border-amber-500/40 transition-all flex flex-col items-center justify-center text-center gap-1 shadow-sm"
+                className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-zinc-900/70 border border-slate-200/80 dark:border-zinc-800 hover:border-amber-500/50 hover:shadow-md transition-all flex flex-col items-center justify-center text-center gap-1 shadow-sm"
               >
-                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-1">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-1">
                   <Users className="w-4 h-4" />
                 </div>
-                <span className="text-xs sm:text-sm font-bold text-white">
+                <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                   {allWorkers.length > 0 ? `${allWorkers.length}+ Verified Artisans` : t('home.statHyperlocal')}
                 </span>
-                <span className="text-[10px] text-semantic-text-tertiary">
+                <span className="text-[10px] text-slate-500 dark:text-zinc-400">
                   Dedicated to 251001 & 251002
                 </span>
               </motion.div>
@@ -668,7 +668,7 @@ export default function Home() {
       {/* ========================================================================= */}
       {/* 3. THE REAL PROBLEM SECTION (Stage 3: Interactive Problem vs. Solution)   */}
       {/* ========================================================================= */}
-      <section className="py-12 sm:py-16 bg-surface-900/40 border-b border-semantic-border-light relative overflow-hidden">
+      <section className="py-12 sm:py-16 bg-white dark:bg-surface-900/40 border-b border-slate-200 dark:border-semantic-border-light relative overflow-hidden">
         {/* Subtle Ambient Glow */}
         <div className="absolute top-0 right-1/4 w-80 h-80 bg-rose-500/5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-1/4 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
@@ -680,9 +680,9 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-              className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-400 text-xs font-semibold tracking-wide mb-3 shadow-sm"
+              className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-400 text-xs font-semibold tracking-wide mb-3 shadow-sm"
             >
-              <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <AlertCircle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
               <span>{t('home.problemBadge')}</span>
             </motion.div>
 
@@ -691,7 +691,7 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ type: 'spring', stiffness: 350, damping: 24, delay: 0.05 }}
-              className="text-xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight"
+              className="text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight"
             >
               {t('home.problemTitle')}
             </motion.h2>
@@ -700,7 +700,7 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ type: 'spring', stiffness: 350, damping: 24, delay: 0.1 }}
-              className="text-xs sm:text-sm text-semantic-text-secondary mt-2 max-w-2xl mx-auto leading-relaxed"
+              className="text-xs sm:text-sm text-slate-600 dark:text-semantic-text-secondary mt-2 max-w-2xl mx-auto leading-relaxed"
             >
               {t('home.problemSubtitle')}
             </motion.p>
@@ -715,19 +715,19 @@ export default function Home() {
               viewport={{ once: true, amount: 0.2 }}
               whileHover={{ y: -6, scale: 1.012 }}
               transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-              className="rounded-3xl p-5 sm:p-6 bg-surface-900/90 border border-rose-500/25 relative overflow-hidden shadow-xl hover:border-rose-500/50 hover:shadow-2xl transition-all"
+              className="rounded-3xl p-5 sm:p-6 bg-rose-50/50 dark:bg-surface-900/90 border border-rose-200 dark:border-rose-500/25 relative overflow-hidden shadow-xl hover:border-rose-300 dark:hover:border-rose-500/50 hover:shadow-2xl transition-all"
             >
-              <div className="flex items-center justify-between pb-4 mb-4 border-b border-rose-500/20">
+              <div className="flex items-center justify-between pb-4 mb-4 border-b border-rose-200 dark:border-rose-500/20">
                 <div>
-                  <h3 className="text-sm sm:text-base font-extrabold text-rose-400 flex items-center gap-2">
-                    <XCircle className="w-5 h-5 text-rose-400 shrink-0" />
+                  <h3 className="text-sm sm:text-base font-extrabold text-rose-600 dark:text-rose-400 flex items-center gap-2">
+                    <XCircle className="w-5 h-5 text-rose-500 dark:text-rose-400 shrink-0" />
                     <span>{t('home.problemOldHeader')}</span>
                   </h3>
-                  <p className="text-[11px] text-semantic-text-tertiary mt-0.5">
+                  <p className="text-[11px] text-slate-500 dark:text-semantic-text-tertiary mt-0.5">
                     {t('home.problemOldSub')}
                   </p>
                 </div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-500/30">
                   Unreliable
                 </span>
               </div>
@@ -741,16 +741,16 @@ export default function Home() {
                 ].map((item, idx) => (
                   <div
                     key={idx}
-                    className="p-3 rounded-2xl bg-rose-950/20 border border-rose-500/15 flex items-start gap-3 transition-colors hover:bg-rose-950/30"
+                    className="p-3 rounded-2xl bg-white/90 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-500/15 flex items-start gap-3 transition-colors hover:bg-white dark:hover:bg-rose-950/30 shadow-xs"
                   >
-                    <div className="w-6 h-6 rounded-full bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0 mt-0.5">
+                    <div className="w-6 h-6 rounded-full bg-rose-100 dark:bg-rose-500/15 border border-rose-200 dark:border-rose-500/30 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0 mt-0.5">
                       <X className="w-3.5 h-3.5" />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-white leading-tight">
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
                         {item.title}
                       </h4>
-                      <p className="text-[11px] text-semantic-text-secondary mt-0.5 leading-snug">
+                      <p className="text-[11px] text-slate-600 dark:text-semantic-text-secondary mt-0.5 leading-snug">
                         {item.desc}
                       </p>
                     </div>
@@ -766,19 +766,19 @@ export default function Home() {
               viewport={{ once: true, amount: 0.2 }}
               whileHover={{ y: -6, scale: 1.012 }}
               transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-              className="rounded-3xl p-5 sm:p-6 bg-surface-900/90 border border-emerald-500/30 relative overflow-hidden shadow-xl hover:border-emerald-500/60 hover:shadow-2xl transition-all"
+              className="rounded-3xl p-5 sm:p-6 bg-emerald-50/50 dark:bg-surface-900/90 border border-emerald-200 dark:border-emerald-500/30 relative overflow-hidden shadow-xl hover:border-emerald-300 dark:hover:border-emerald-500/60 hover:shadow-2xl transition-all"
             >
-              <div className="flex items-center justify-between pb-4 mb-4 border-b border-emerald-500/20">
+              <div className="flex items-center justify-between pb-4 mb-4 border-b border-emerald-200 dark:border-emerald-500/20">
                 <div>
-                  <h3 className="text-sm sm:text-base font-extrabold text-emerald-400 flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                  <h3 className="text-sm sm:text-base font-extrabold text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                     <span>{t('home.problemNewHeader')}</span>
                   </h3>
-                  <p className="text-[11px] text-semantic-text-tertiary mt-0.5">
+                  <p className="text-[11px] text-slate-500 dark:text-semantic-text-tertiary mt-0.5">
                     {t('home.problemNewSub')}
                   </p>
                 </div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30">
                   Direct & Trusted
                 </span>
               </div>
@@ -792,16 +792,16 @@ export default function Home() {
                 ].map((item, idx) => (
                   <div
                     key={idx}
-                    className="p-3 rounded-2xl bg-emerald-950/20 border border-emerald-500/20 flex items-start gap-3 transition-colors hover:bg-emerald-950/30"
+                    className="p-3 rounded-2xl bg-white/90 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-500/20 flex items-start gap-3 transition-colors hover:bg-white dark:hover:bg-emerald-950/30 shadow-xs"
                   >
-                    <div className="w-6 h-6 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 mt-0.5">
+                    <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5">
                       <Check className="w-3.5 h-3.5" />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-white leading-tight">
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
                         {item.title}
                       </h4>
-                      <p className="text-[11px] text-semantic-text-secondary mt-0.5 leading-snug">
+                      <p className="text-[11px] text-slate-600 dark:text-semantic-text-secondary mt-0.5 leading-snug">
                         {item.desc}
                       </p>
                     </div>
@@ -816,25 +816,25 @@ export default function Home() {
       {/* ========================================================================= */}
       {/* 4. SOLUTION & POPULAR TRADE SERVICES (Stage 4: High Converting Services)  */}
       {/* ========================================================================= */}
-      <section className="py-10 sm:py-14 bg-surface-950 border-b border-semantic-border-light">
+      <section className="py-10 sm:py-14 bg-slate-50/60 dark:bg-surface-950 border-b border-slate-200 dark:border-semantic-border-light">
         <div className="container-app relative z-10">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center justify-between mb-5 px-1">
               <div>
-                <h2 className="text-base sm:text-xl font-extrabold text-white flex items-center gap-2">
+                <h2 className="text-base sm:text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
                   <span>{t('home.popularCategories', 'Popular Services')}</span>
-                  <span className="text-[10px] bg-brand-500/20 text-brand-300 font-bold px-2 py-0.5 rounded-full border border-brand-500/30">
+                  <span className="text-[10px] bg-amber-500/15 text-amber-700 dark:text-brand-300 font-bold px-2 py-0.5 rounded-full border border-amber-500/30">
                     Same-Day
                   </span>
                 </h2>
-                <p className="text-xs sm:text-sm text-semantic-text-secondary mt-0.5">
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-semantic-text-secondary mt-0.5">
                   Book verified local technicians with 0% commission
                 </p>
               </div>
 
               <Link
                 to="/search"
-                className="text-xs sm:text-sm font-bold text-brand-400 hover:text-brand-300 flex items-center gap-1 transition-colors"
+                className="text-xs sm:text-sm font-bold text-amber-600 dark:text-brand-400 hover:text-amber-700 dark:hover:text-brand-300 flex items-center gap-1 transition-colors"
               >
                 <span>{t('common.viewAll', 'View All')}</span>
                 <ArrowRight className="w-4 h-4" />
@@ -849,15 +849,15 @@ export default function Home() {
                 whileTap={{ scale: 0.97 }}
                 transition={{ type: 'spring', stiffness: 350, damping: 24 }}
                 onClick={() => navigate('/search?filter=quick')}
-                className="group p-4 sm:p-5 rounded-2xl bg-surface-100/90 border border-semantic-border-light hover:border-brand-500/60 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden flex flex-col items-center text-center"
+                className="group p-4 sm:p-5 rounded-2xl bg-white dark:bg-surface-100/90 border border-slate-200/90 dark:border-semantic-border-light hover:border-amber-500/60 dark:hover:border-brand-500/60 shadow-sm hover:shadow-xl transition-all cursor-pointer relative overflow-hidden flex flex-col items-center text-center"
               >
-                <div className="w-12 h-12 mb-2.5 rounded-2xl bg-brand-500/15 border border-brand-500/30 flex items-center justify-center text-brand-400 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 mb-2.5 rounded-2xl bg-amber-500/10 dark:bg-brand-500/15 border border-amber-500/25 dark:border-brand-500/30 flex items-center justify-center text-amber-600 dark:text-brand-400 group-hover:scale-110 transition-transform">
                   <Zap className="w-6 h-6" />
                 </div>
-                <h3 className="font-bold text-xs sm:text-sm text-white group-hover:text-brand-400 transition-colors">
+                <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-brand-400 transition-colors">
                   {t('home.instaHelp', 'InstaHelp (30 Mins)')}
                 </h3>
-                <span className="mt-1 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                <span className="mt-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/60 dark:border-transparent px-2 py-0.5 rounded-full">
                   ⚡ Fastest Arrival
                 </span>
               </motion.div>
@@ -868,15 +868,15 @@ export default function Home() {
                 whileTap={{ scale: 0.97 }}
                 transition={{ type: 'spring', stiffness: 350, damping: 24 }}
                 onClick={() => handleQuickPick('women_spa')}
-                className="group p-4 sm:p-5 rounded-2xl bg-surface-100/90 border border-semantic-border-light hover:border-pink-500/60 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden flex flex-col items-center text-center"
+                className="group p-4 sm:p-5 rounded-2xl bg-white dark:bg-surface-100/90 border border-slate-200/90 dark:border-semantic-border-light hover:border-pink-500/60 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden flex flex-col items-center text-center shadow-sm"
               >
-                <div className="w-12 h-12 mb-2.5 rounded-2xl bg-pink-500/15 border border-pink-500/30 flex items-center justify-center text-pink-400 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 mb-2.5 rounded-2xl bg-pink-500/10 dark:bg-pink-500/15 border border-pink-500/25 dark:border-pink-500/30 flex items-center justify-center text-pink-600 dark:text-pink-400 group-hover:scale-110 transition-transform">
                   <Flower2 className="w-6 h-6" />
                 </div>
-                <h3 className="font-bold text-xs sm:text-sm text-white group-hover:text-pink-400 transition-colors">
+                <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors">
                   {t('categories.women_spa', 'Women\'s Salon & Spa')}
                 </h3>
-                <span className="mt-1 text-[10px] font-semibold text-pink-300 bg-pink-500/10 px-2 py-0.5 rounded-full">
+                <span className="mt-1 text-[10px] font-semibold text-pink-700 dark:text-pink-300 bg-pink-50 dark:bg-pink-500/10 border border-pink-200/60 dark:border-transparent px-2 py-0.5 rounded-full">
                   Home Service
                 </span>
               </motion.div>
@@ -887,15 +887,15 @@ export default function Home() {
                 whileTap={{ scale: 0.97 }}
                 transition={{ type: 'spring', stiffness: 350, damping: 24 }}
                 onClick={() => handleQuickPick('men_salon')}
-                className="group p-4 sm:p-5 rounded-2xl bg-surface-100/90 border border-semantic-border-light hover:border-blue-500/60 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden flex flex-col items-center text-center"
+                className="group p-4 sm:p-5 rounded-2xl bg-white dark:bg-surface-100/90 border border-slate-200/90 dark:border-semantic-border-light hover:border-blue-500/60 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden flex flex-col items-center text-center shadow-sm"
               >
-                <div className="w-12 h-12 mb-2.5 rounded-2xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 mb-2.5 rounded-2xl bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/25 dark:border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
                   <Scissors className="w-6 h-6" />
                 </div>
-                <h3 className="font-bold text-xs sm:text-sm text-white group-hover:text-blue-400 transition-colors">
+                <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                   {t('categories.men_salon', 'Men\'s Salon & Grooming')}
                 </h3>
-                <span className="mt-1 text-[10px] font-semibold text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded-full">
+                <span className="mt-1 text-[10px] font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-500/10 border border-blue-200/60 dark:border-transparent px-2 py-0.5 rounded-full">
                   Hair & Grooming
                 </span>
               </motion.div>
@@ -906,15 +906,15 @@ export default function Home() {
                 whileTap={{ scale: 0.97 }}
                 transition={{ type: 'spring', stiffness: 350, damping: 24 }}
                 onClick={() => handleQuickPick('cleaning')}
-                className="group p-4 sm:p-5 rounded-2xl bg-surface-100/90 border border-semantic-border-light hover:border-emerald-500/60 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden flex flex-col items-center text-center"
+                className="group p-4 sm:p-5 rounded-2xl bg-white dark:bg-surface-100/90 border border-slate-200/90 dark:border-semantic-border-light hover:border-emerald-500/60 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden flex flex-col items-center text-center shadow-sm"
               >
-                <div className="w-12 h-12 mb-2.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 mb-2.5 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/25 dark:border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
                   <Sparkles className="w-6 h-6" />
                 </div>
-                <h3 className="font-bold text-xs sm:text-sm text-white group-hover:text-emerald-400 transition-colors">
+                <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                   {t('categories.cleaning', 'Cleaning & Pest Control')}
                 </h3>
-                <span className="mt-1 text-[10px] font-semibold text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                <span className="mt-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/60 dark:border-transparent px-2 py-0.5 rounded-full">
                   Deep Clean
                 </span>
               </motion.div>
@@ -925,15 +925,15 @@ export default function Home() {
                 whileTap={{ scale: 0.97 }}
                 transition={{ type: 'spring', stiffness: 350, damping: 24 }}
                 onClick={() => handleQuickPick('ac')}
-                className="group p-4 sm:p-5 rounded-2xl bg-surface-100/90 border border-semantic-border-light hover:border-cyan-500/60 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden flex flex-col items-center text-center"
+                className="group p-4 sm:p-5 rounded-2xl bg-white dark:bg-surface-100/90 border border-slate-200/90 dark:border-semantic-border-light hover:border-cyan-500/60 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden flex flex-col items-center text-center shadow-sm"
               >
-                <div className="w-12 h-12 mb-2.5 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 mb-2.5 rounded-2xl bg-cyan-500/10 dark:bg-cyan-500/15 border border-cyan-500/25 dark:border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 group-hover:scale-110 transition-transform">
                   <Snowflake className="w-6 h-6" />
                 </div>
-                <h3 className="font-bold text-xs sm:text-sm text-white group-hover:text-cyan-400 transition-colors">
+                <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
                   {t('categories.ac', 'AC & Appliance Repair')}
                 </h3>
-                <span className="mt-1 text-[10px] font-semibold text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded-full">
+                <span className="mt-1 text-[10px] font-semibold text-cyan-700 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-200/60 dark:border-transparent px-2 py-0.5 rounded-full">
                   ⚡ 44 mins
                 </span>
               </motion.div>
@@ -944,15 +944,15 @@ export default function Home() {
                 whileTap={{ scale: 0.97 }}
                 transition={{ type: 'spring', stiffness: 350, damping: 24 }}
                 onClick={() => setIsSearchOpen(true)}
-                className="group p-4 sm:p-5 rounded-2xl bg-surface-100/90 border border-semantic-border-light hover:border-brand-500/60 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden flex flex-col items-center text-center"
+                className="group p-4 sm:p-5 rounded-2xl bg-white dark:bg-surface-100/90 border border-slate-200/90 dark:border-semantic-border-light hover:border-amber-500/60 dark:hover:border-brand-500/60 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden flex flex-col items-center text-center shadow-sm"
               >
-                <div className="w-12 h-12 mb-2.5 rounded-2xl bg-brand-500/15 border border-brand-500/30 flex items-center justify-center text-brand-400 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 mb-2.5 rounded-2xl bg-amber-500/10 dark:bg-brand-500/15 border border-amber-500/25 dark:border-brand-500/30 flex items-center justify-center text-amber-600 dark:text-brand-400 group-hover:scale-110 transition-transform">
                   <Grid className="w-6 h-6" />
                 </div>
-                <h3 className="font-bold text-xs sm:text-sm text-white group-hover:text-brand-400 transition-colors">
+                <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-brand-400 transition-colors">
                   {t('home.allServicesGrid', 'All Services')}
                 </h3>
-                <span className="mt-1 text-[10px] font-semibold text-brand-300 bg-brand-500/10 px-2 py-0.5 rounded-full">
+                <span className="mt-1 text-[10px] font-semibold text-amber-700 dark:text-brand-300 bg-amber-50 dark:bg-brand-500/10 border border-amber-200/60 dark:border-transparent px-2 py-0.5 rounded-full">
                   Electrician, Plumber +
                 </span>
               </motion.div>
@@ -964,13 +964,13 @@ export default function Home() {
       {/* ========================================================================= */}
       {/* 5. FEATURES / HOW IT WORKS (Stage 5: Simple 4-Step Process)               */}
       {/* ========================================================================= */}
-      <section className="section bg-surface-900/50 py-12 sm:py-16 border-b border-semantic-border-light">
+      <section className="section bg-white dark:bg-surface-900/50 py-12 sm:py-16 border-b border-slate-200 dark:border-semantic-border-light">
         <div className="container-app">
           <div className="text-center max-w-2xl mx-auto mb-10">
-            <h2 className="text-xl sm:text-3xl font-bold text-white tracking-tight">
+            <h2 className="text-xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
               {t('home.howTitle')}
             </h2>
-            <p className="text-xs sm:text-sm text-semantic-text-secondary mt-1.5 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-semantic-text-secondary mt-1.5 leading-relaxed">
               {t('home.howSubtitle')}
             </p>
           </div>
@@ -978,13 +978,13 @@ export default function Home() {
           {/* Timeline Grid with Connected Glowing Rail */}
           <div className="relative">
             {/* Connected Glowing Timeline Bar behind steps on desktop */}
-            <div className="hidden md:block absolute top-7 left-14 right-14 h-1 bg-surface-700/50 rounded-full z-0 pointer-events-none overflow-hidden">
+            <div className="hidden md:block absolute top-7 left-14 right-14 h-1 bg-slate-200 dark:bg-surface-700/50 rounded-full z-0 pointer-events-none overflow-hidden">
               <motion.div
                 initial={{ width: '0%' }}
                 whileInView={{ width: '100%' }}
                 viewport={{ once: true, amount: 0.3 }}
                 transition={{ duration: 1.2, ease: 'easeOut' }}
-                className="h-full bg-gradient-to-r from-brand-500 via-amber-400 to-emerald-400 rounded-full shadow-lg shadow-brand-500/50"
+                className="h-full bg-gradient-to-r from-amber-500 via-amber-400 to-emerald-400 rounded-full shadow-lg shadow-amber-500/30 dark:shadow-brand-500/50"
               />
             </div>
 
@@ -1022,20 +1022,20 @@ export default function Home() {
                   viewport={{ once: true, amount: 0.2 }}
                   transition={{ type: 'spring', stiffness: 350, damping: 24, delay: idx * 0.1 }}
                   whileHover={{ y: -6, scale: 1.02 }}
-                  className="relative p-5 rounded-2xl bg-surface-100/95 border border-semantic-border-light hover:border-brand-500/50 transition-all shadow-md group"
+                  className="relative p-5 rounded-2xl bg-slate-50/70 dark:bg-surface-100/95 border border-slate-200/90 dark:border-semantic-border-light hover:border-amber-500/60 dark:hover:border-brand-500/50 transition-all shadow-sm hover:shadow-md group"
                 >
                   <div className="flex items-center justify-between mb-3.5">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500/20 to-surface-200 border border-brand-500/30 flex items-center justify-center text-brand-400 font-mono font-black text-base shadow-sm group-hover:bg-brand-500 group-hover:text-surface-950 transition-all">
+                    <div className="w-10 h-10 rounded-xl bg-white dark:bg-surface-200 border border-slate-200 dark:border-brand-500/30 flex items-center justify-center text-amber-600 dark:text-brand-400 font-mono font-black text-base shadow-xs group-hover:bg-amber-500 group-hover:text-white transition-all">
                       {item.step}
                     </div>
-                    <span className="text-[10px] font-semibold text-brand-400 bg-brand-500/10 px-2 py-0.5 rounded-full border border-brand-500/20">
+                    <span className="text-[10px] font-semibold text-amber-700 dark:text-brand-400 bg-amber-50 dark:bg-brand-500/10 px-2 py-0.5 rounded-full border border-amber-200/80 dark:border-brand-500/20">
                       {item.badge}
                     </span>
                   </div>
-                  <h3 className="font-bold text-sm text-white mb-1.5 group-hover:text-brand-400 transition-colors">
+                  <h3 className="font-bold text-sm text-slate-900 dark:text-white mb-1.5 group-hover:text-amber-600 dark:group-hover:text-brand-400 transition-colors">
                     {item.title}
                   </h3>
-                  <p className="text-xs text-semantic-text-secondary leading-relaxed">
+                  <p className="text-xs text-slate-600 dark:text-semantic-text-secondary leading-relaxed">
                     {item.desc}
                   </p>
                 </motion.div>
@@ -1050,17 +1050,17 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-              className="mt-8 max-w-2xl mx-auto p-4 rounded-2xl bg-gradient-to-r from-brand-500/10 via-purple-500/10 to-brand-500/10 border border-brand-500/25 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-lg"
+              className="mt-8 max-w-2xl mx-auto p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-amber-500/10 border border-amber-500/25 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-md"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-brand-500/20 border border-brand-500/30 flex items-center justify-center text-brand-400 shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/15 dark:bg-brand-500/20 border border-amber-500/25 dark:border-brand-500/30 flex items-center justify-center text-amber-600 dark:text-brand-400 shrink-0">
                   <Bot className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-xs sm:text-sm font-bold text-white">
+                  <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                     {i18n.language === 'hi' ? 'मरम्मत समझ नहीं आ रही? AI से पूछें' : 'Not sure what repair you need?'}
                   </h4>
-                  <p className="text-[11px] text-semantic-text-secondary">
+                  <p className="text-[11px] text-slate-600 dark:text-semantic-text-secondary">
                     {i18n.language === 'hi' ? 'हमारा AI सहायक 10 सेकंड में सही मिस्त्री और रेट बताएगा' : 'Our AI Assistant diagnoses the issue & matches the right artisan in 10s.'}
                   </p>
                 </div>
@@ -1069,7 +1069,7 @@ export default function Home() {
                 variant="primary"
                 size="sm"
                 onClick={() => aiAssistant.openAssistant('customer_booking')}
-                className="text-xs font-bold px-4 py-1.5 shrink-0 shadow-md shadow-brand-500/20 active:scale-95 cursor-pointer"
+                className="text-xs font-bold px-4 py-1.5 shrink-0 shadow-md shadow-amber-500/20 active:scale-95 cursor-pointer"
               >
                 <span>{i18n.language === 'hi' ? 'AI से पूछें →' : 'Ask AI →'}</span>
               </Button>
@@ -1081,7 +1081,7 @@ export default function Home() {
       {/* ========================================================================= */}
       {/* 6. VERIFIED BOOKING REVIEW GUARANTEE (Stage 6: Zero Fake Reviews Policy)  */}
       {/* ========================================================================= */}
-      <section className="py-12 sm:py-16 bg-surface-950 border-b border-semantic-border-light relative overflow-hidden">
+      <section className="py-12 sm:py-16 bg-slate-50/60 dark:bg-surface-950 border-b border-slate-200 dark:border-semantic-border-light relative overflow-hidden">
         <div className="container-app relative z-10">
           <div className="max-w-3xl mx-auto text-center mb-10">
             <motion.div
@@ -1089,9 +1089,9 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-              className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-semibold tracking-wide mb-3 shadow-sm"
+              className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/25 text-emerald-700 dark:text-emerald-400 text-xs font-semibold tracking-wide mb-3 shadow-sm"
             >
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <span>{t('home.reviewGuaranteeBadge')}</span>
             </motion.div>
 
@@ -1100,7 +1100,7 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ type: 'spring', stiffness: 350, damping: 24, delay: 0.05 }}
-              className="text-xl sm:text-3xl font-extrabold text-white tracking-tight"
+              className="text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight"
             >
               {t('home.reviewGuaranteeTitle')}
             </motion.h2>
@@ -1109,7 +1109,7 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ type: 'spring', stiffness: 350, damping: 24, delay: 0.1 }}
-              className="text-xs sm:text-sm text-semantic-text-secondary mt-2 max-w-2xl mx-auto leading-relaxed"
+              className="text-xs sm:text-sm text-slate-600 dark:text-semantic-text-secondary mt-2 max-w-2xl mx-auto leading-relaxed"
             >
               {t('home.reviewGuaranteeSubtitle')}
             </motion.p>
@@ -1119,15 +1119,15 @@ export default function Home() {
             <motion.div
               whileHover={{ y: -3, scale: 1.02 }}
               transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-              className="p-5 rounded-2xl bg-surface-100/90 border border-semantic-border-light hover:border-emerald-500/40 transition-all shadow-md flex flex-col items-center text-center"
+              className="p-5 rounded-2xl bg-white dark:bg-surface-100/90 border border-slate-200/90 dark:border-semantic-border-light hover:border-emerald-500/40 transition-all shadow-sm hover:shadow-md flex flex-col items-center text-center"
             >
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/25 dark:border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-3">
                 <CheckCircle2 className="w-5 h-5" />
               </div>
-              <h3 className="font-bold text-sm text-white mb-1.5">
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white mb-1.5">
                 {t('home.reviewPillar1Title')}
               </h3>
-              <p className="text-xs text-semantic-text-secondary leading-relaxed">
+              <p className="text-xs text-slate-600 dark:text-semantic-text-secondary leading-relaxed">
                 {t('home.reviewPillar1Desc')}
               </p>
             </motion.div>
@@ -1135,15 +1135,15 @@ export default function Home() {
             <motion.div
               whileHover={{ y: -3, scale: 1.02 }}
               transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-              className="p-5 rounded-2xl bg-surface-100/90 border border-semantic-border-light hover:border-brand-500/40 transition-all shadow-md flex flex-col items-center text-center"
+              className="p-5 rounded-2xl bg-white dark:bg-surface-100/90 border border-slate-200/90 dark:border-semantic-border-light hover:border-amber-500/40 transition-all shadow-sm hover:shadow-md flex flex-col items-center text-center"
             >
-              <div className="w-10 h-10 rounded-xl bg-brand-500/15 border border-brand-500/30 flex items-center justify-center text-brand-400 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 dark:bg-brand-500/15 border border-amber-500/25 dark:border-brand-500/30 flex items-center justify-center text-amber-600 dark:text-brand-400 mb-3">
                 <Star className="w-5 h-5" />
               </div>
-              <h3 className="font-bold text-sm text-white mb-1.5">
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white mb-1.5">
                 {t('home.reviewPillar2Title')}
               </h3>
-              <p className="text-xs text-semantic-text-secondary leading-relaxed">
+              <p className="text-xs text-slate-600 dark:text-semantic-text-secondary leading-relaxed">
                 {t('home.reviewPillar2Desc')}
               </p>
             </motion.div>
@@ -1151,15 +1151,15 @@ export default function Home() {
             <motion.div
               whileHover={{ y: -3, scale: 1.02 }}
               transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-              className="p-5 rounded-2xl bg-surface-100/90 border border-semantic-border-light hover:border-blue-500/40 transition-all shadow-md flex flex-col items-center text-center"
+              className="p-5 rounded-2xl bg-white dark:bg-surface-100/90 border border-slate-200/90 dark:border-semantic-border-light hover:border-blue-500/40 transition-all shadow-sm hover:shadow-md flex flex-col items-center text-center"
             >
-              <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/25 dark:border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-3">
                 <ShieldCheck className="w-5 h-5" />
               </div>
-              <h3 className="font-bold text-sm text-white mb-1.5">
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white mb-1.5">
                 {t('home.reviewPillar3Title')}
               </h3>
-              <p className="text-xs text-semantic-text-secondary leading-relaxed">
+              <p className="text-xs text-slate-600 dark:text-semantic-text-secondary leading-relaxed">
                 {t('home.reviewPillar3Desc')}
               </p>
             </motion.div>
@@ -1170,24 +1170,24 @@ export default function Home() {
       {/* ========================================================================= */}
       {/* 7. DUAL AUDIENCE CONVERSION BANNERS (Stage 7: Citizen & Worker CTAs)      */}
       {/* ========================================================================= */}
-      <section className="section bg-surface-900/60 border-t border-semantic-border-light py-14">
+      <section className="section bg-white dark:bg-surface-900/60 border-t border-slate-200 dark:border-semantic-border-light py-14">
         <div className="container-app">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Card 1: For Customers */}
             <motion.div
               whileHover={{ y: -3, scale: 1.01 }}
               transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-              className="p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-surface-900 to-surface-850 border border-semantic-border-light relative overflow-hidden flex flex-col justify-between shadow-xl"
+              className="p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-amber-50/60 via-white to-slate-50 dark:from-surface-900 dark:to-surface-850 border border-amber-200/70 dark:border-semantic-border-light relative overflow-hidden flex flex-col justify-between shadow-lg"
             >
-              <div className="absolute -top-12 -right-12 w-40 h-40 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -top-12 -right-12 w-40 h-40 bg-amber-500/10 dark:bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
               <div>
                 <Badge variant="brand" size="sm" className="mb-3">
                   {t('homeCta.badgeVerified')}
                 </Badge>
-                <h3 className="text-base sm:text-lg font-bold text-white mb-1.5">
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1.5">
                   {t('homeCta.customerCardTitle')}
                 </h3>
-                <p className="text-xs text-semantic-text-secondary leading-relaxed mb-5">
+                <p className="text-xs text-slate-600 dark:text-semantic-text-secondary leading-relaxed mb-5">
                   {t('homeCta.customerCardSubtitle')}
                 </p>
               </div>
@@ -1197,7 +1197,7 @@ export default function Home() {
                   variant="primary"
                   size="md"
                   onClick={() => navigate('/search')}
-                  className="w-full sm:w-auto font-semibold px-6 shadow-lg shadow-brand-500/20 text-xs sm:text-sm active:scale-95 cursor-pointer"
+                  className="w-full sm:w-auto font-semibold px-6 shadow-md shadow-amber-500/20 text-xs sm:text-sm active:scale-95 cursor-pointer"
                 >
                   <Search className="w-4 h-4 mr-2" />
                   <span>{t('homeCta.customerCardBtn')}</span>
@@ -1209,17 +1209,17 @@ export default function Home() {
             <motion.div
               whileHover={{ y: -3, scale: 1.01 }}
               transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-              className="p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-surface-900 to-surface-850 border border-emerald-500/30 relative overflow-hidden flex flex-col justify-between shadow-xl"
+              className="p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-emerald-50/60 via-white to-slate-50 dark:from-surface-900 dark:to-surface-850 border border-emerald-200/80 dark:border-emerald-500/30 relative overflow-hidden flex flex-col justify-between shadow-lg"
             >
               <div className="absolute -top-12 -right-12 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
               <div>
                 <Badge variant="success" size="sm" className="mb-3">
                   {t('homeCta.workerCardBadge', '0% Commission for Starting 3 Months')}
                 </Badge>
-                <h3 className="text-base sm:text-lg font-bold text-white mb-1.5">
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1.5">
                   {t('homeCta.workerCardTitle')}
                 </h3>
-                <p className="text-xs text-semantic-text-secondary leading-relaxed mb-5">
+                <p className="text-xs text-slate-600 dark:text-semantic-text-secondary leading-relaxed mb-5">
                   {t('homeCta.workerCardSubtitle')}
                 </p>
               </div>
@@ -1229,7 +1229,7 @@ export default function Home() {
                   variant="outline"
                   size="md"
                   onClick={() => navigate('/register/worker')}
-                  className="w-full sm:w-auto font-semibold px-6 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 text-xs sm:text-sm active:scale-95 cursor-pointer"
+                  className="w-full sm:w-auto font-semibold px-6 border-emerald-600 dark:border-emerald-500/50 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-xs sm:text-sm active:scale-95 cursor-pointer"
                 >
                   <Briefcase className="w-4 h-4 mr-2" />
                   <span>{t('homeCta.workerCardBtn')}</span>

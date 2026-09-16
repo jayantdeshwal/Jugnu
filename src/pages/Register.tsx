@@ -330,35 +330,35 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-semantic-bg-primary flex items-center justify-center py-10 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 flex items-center justify-center py-10 px-4 sm:px-6 lg:px-8 transition-colors">
       <div className="max-w-xl w-full">
         {/* Back Link */}
         <div className="mb-4">
           <Link
             to="/auth"
-            className="inline-flex items-center gap-1.5 text-xs text-semantic-text-tertiary hover:text-brand-400 transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-zinc-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>{t('registerPage.backToOptions', 'Back to Login / Sign Up options')}</span>
           </Link>
         </div>
 
-        <Card className="p-6 sm:p-8 bg-surface-100 border border-semantic-border-light shadow-2xl relative">
+        <Card className="p-6 sm:p-8 bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-xl relative">
           {/* Header */}
           <div className="text-center mb-6">
             <div className="w-14 h-14 mx-auto mb-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center">
-              <Sparkles className="w-7 h-7 text-emerald-400" />
+              <Sparkles className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
             </div>
-            <h1 className="text-2xl font-bold text-semantic-text-primary">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
               {t('registerPage.title', 'New to Kaamgar? Create Account')}
             </h1>
-            <p className="mt-1 text-xs text-semantic-text-secondary">
+            <p className="mt-1 text-xs text-slate-600 dark:text-zinc-400">
               {t('registerPage.subtitle', 'Select your role to register with mobile OTP verification & password')}
             </p>
           </div>
 
           {/* Role Tabs */}
-          <div className="flex bg-surface-200/90 p-1.5 rounded-xl mb-6 border border-semantic-border-light text-xs font-semibold">
+          <div className="flex bg-slate-100 dark:bg-zinc-800/90 p-1.5 rounded-xl mb-6 border border-slate-200 dark:border-zinc-700 text-xs font-semibold">
             <button
               type="button"
               onClick={() => {
@@ -367,10 +367,10 @@ export default function Register() {
                 setAlreadyRegisteredNotice(null)
                 setCustomerError('')
               }}
-              className={`flex-1 py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 ${
+              className={`flex-1 py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 activeTab === 'customer'
-                  ? 'bg-brand-500 text-white shadow-md'
-                  : 'text-semantic-text-secondary hover:text-semantic-text-primary'
+                  ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
+                  : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <User className="w-4 h-4" />
@@ -384,10 +384,10 @@ export default function Register() {
                 setAlreadyRegisteredNotice(null)
                 setWorkerError('')
               }}
-              className={`flex-1 py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 ${
+              className={`flex-1 py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 activeTab === 'worker'
-                  ? 'bg-emerald-600 text-white shadow-md'
-                  : 'text-semantic-text-secondary hover:text-semantic-text-primary'
+                  ? 'bg-emerald-600 text-white font-bold shadow-xs'
+                  : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <Truck className="w-4 h-4" />
@@ -618,14 +618,14 @@ export default function Register() {
 
                 {/* Category Selection */}
                 <div>
-                  <label className="block text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider mb-1">
                     {t('registerPage.tradeCategory', 'Trade / Service Category *')}
                   </label>
                   <select
                     required
                     value={workerCategory}
                     onChange={e => setWorkerCategory(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-surface-200/80 border border-semantic-border-light rounded-xl text-semantic-text-primary text-sm focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors"
                   >
                     <option value="">{t('registerPage.selectCategory', '-- Select Your Trade / Category --')}</option>
                     {CATEGORIES.map(cat => (
@@ -638,7 +638,7 @@ export default function Register() {
 
                 {/* Experience */}
                 <div>
-                  <label className="block text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider mb-1">
                     {t('registerPage.experience', 'Years of Experience *')}
                   </label>
                   <input
@@ -649,16 +649,16 @@ export default function Register() {
                     value={workerExperience}
                     onChange={e => setWorkerExperience(e.target.value)}
                     placeholder="e.g. 5"
-                    className="w-full px-3.5 py-2.5 bg-surface-200/80 border border-semantic-border-light rounded-xl text-semantic-text-primary text-sm focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
 
                 {/* Service Areas */}
                 <div>
-                  <label className="block text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider mb-1.5">
                     {t('registerPage.serviceAreas', 'Service Areas in Muzaffarnagar *')}
                   </label>
-                  <div className="flex flex-wrap gap-2 p-2 bg-surface-200/50 border border-semantic-border-light rounded-xl">
+                  <div className="flex flex-wrap gap-2 p-2 bg-slate-50 dark:bg-zinc-850 border border-slate-200 dark:border-zinc-750 rounded-xl">
                     {MUZAFFARNAGAR_PINCODES.map(pincode => {
                       const selected = workerAreas.includes(pincode)
                       return (
@@ -666,10 +666,10 @@ export default function Register() {
                           key={pincode}
                           type="button"
                           onClick={() => toggleArea(pincode)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                             selected
-                              ? 'bg-emerald-600 text-white font-semibold shadow-sm'
-                              : 'bg-surface-200 text-semantic-text-secondary hover:text-semantic-text-primary hover:bg-surface-300'
+                              ? 'bg-emerald-600 text-white font-semibold shadow-xs'
+                              : 'bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-700'
                           }`}
                         >
                           Pincode {pincode}
@@ -677,17 +677,17 @@ export default function Register() {
                       )
                     })}
                   </div>
-                  <p className="mt-1 text-[11px] text-semantic-text-tertiary">
+                  <p className="mt-1 text-[11px] text-slate-500 dark:text-zinc-400">
                     {t('registerPage.selectedAreas', { count: workerAreas.length })}
                   </p>
                 </div>
 
                 {/* ID Proof Upload */}
                 <div>
-                  <label className="block text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider mb-1">
                     {t('registerPage.idProof', 'Government ID Proof (Aadhaar / Voter ID / Driving License) *')}
                   </label>
-                  <div className="mt-1 border-2 border-dashed border-semantic-border-medium hover:border-emerald-500/50 rounded-xl p-4 text-center transition-colors bg-surface-200/40 relative">
+                  <div className="mt-1 border-2 border-dashed border-slate-300 dark:border-zinc-700 hover:border-emerald-500/50 rounded-xl p-4 text-center transition-colors bg-slate-50 dark:bg-zinc-800/40 relative">
                     <input
                       type="file"
                       accept="image/jpeg,image/png,image/webp,application/pdf"
@@ -695,11 +695,11 @@ export default function Register() {
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     />
                     <div className="flex flex-col items-center justify-center gap-1.5 pointer-events-none">
-                      <UploadCloud className="w-8 h-8 text-emerald-400" />
-                      <p className="text-xs font-medium text-semantic-text-primary">
+                      <UploadCloud className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+                      <p className="text-xs font-medium text-slate-800 dark:text-zinc-200">
                         {workerIdProof ? workerIdProof.name : t('registerPage.idProofPlaceholder', 'Tap to upload ID proof photo or PDF')}
                       </p>
-                      <p className="text-[10px] text-semantic-text-tertiary">
+                      <p className="text-[10px] text-slate-500 dark:text-zinc-400">
                         {t('registerPage.idProofHint', 'JPG, PNG, or PDF up to 10MB • Stored in private encrypted storage')}
                       </p>
                     </div>

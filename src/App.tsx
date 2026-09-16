@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { LanguageProvider } from './context/LanguageContext'
+import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './context/AuthContext'
 import { NotificationProvider } from './context/NotificationContext'
 import { AiAssistantProvider } from './context/AiAssistantContext'
@@ -26,7 +27,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth()
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-surface-950 flex items-center justify-center">
+      <div className="min-h-screen bg-semantic-bg-primary flex items-center justify-center">
         <div className="w-8 h-8 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" />
       </div>
     )
@@ -43,7 +44,7 @@ function GuestOrAuthRoute({ children }: { children: React.ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-surface-950 flex items-center justify-center">
+      <div className="min-h-screen bg-semantic-bg-primary flex items-center justify-center">
         <div className="w-8 h-8 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" />
       </div>
     )
@@ -62,7 +63,7 @@ function RootRoute() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-surface-950 flex items-center justify-center">
+      <div className="min-h-screen bg-semantic-bg-primary flex items-center justify-center">
         <div className="w-8 h-8 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" />
       </div>
     )
@@ -102,15 +103,17 @@ function AppRoutes() {
 
 function App() {
   return (
-    <LanguageProvider>
-      <AuthProvider>
-        <NotificationProvider>
-          <AiAssistantProvider>
-            <AppRoutes />
-          </AiAssistantProvider>
-        </NotificationProvider>
-      </AuthProvider>
-    </LanguageProvider>
+    <ThemeProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <NotificationProvider>
+            <AiAssistantProvider>
+              <AppRoutes />
+            </AiAssistantProvider>
+          </NotificationProvider>
+        </AuthProvider>
+      </LanguageProvider>
+    </ThemeProvider>
   )
 }
 

@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { openOtpWidget } from '@/services/otp'
 import { getSupabaseClient } from '@/lib/supabase'
 import { useLanguage } from '../context/LanguageContext'
+import { useTheme } from '../context/ThemeContext'
 import { triggerPWAInstall } from '@/components/PWAInstallPrompt'
 import {
   Phone,
@@ -27,12 +28,15 @@ import {
   UserPlus,
   Eye,
   EyeOff,
+  Sun,
+  Moon,
 } from 'lucide-react'
 import { checkPhoneRegistration } from '@/services/authCheck'
 
 export default function Login() {
   const { t } = useTranslation()
   const { language, toggleLanguage } = useLanguage()
+  const { theme, toggleTheme, isDark } = useTheme()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -561,44 +565,55 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-surface-950 text-semantic-text-primary flex flex-col justify-between relative overflow-hidden px-4 py-4 sm:py-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 flex flex-col justify-between relative overflow-hidden px-4 py-4 sm:py-6 transition-colors">
       {/* Decent Ambient Theme Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute -top-32 left-1/4 w-96 h-96 bg-brand-500/8 rounded-full blur-3xl" />
+        <div className="absolute -top-32 left-1/4 w-96 h-96 bg-amber-500/8 dark:bg-brand-500/8 rounded-full blur-3xl" />
         <div className="absolute top-1/3 -right-24 w-80 h-80 bg-emerald-500/6 rounded-full blur-3xl" />
-        <div className="absolute -bottom-32 left-1/3 w-96 h-96 bg-brand-500/5 rounded-full blur-3xl" />
+        <div className="absolute -bottom-32 left-1/3 w-96 h-96 bg-amber-500/5 dark:bg-brand-500/5 rounded-full blur-3xl" />
       </div>
 
       {/* Top Minimalist Header */}
       <header className="relative z-10 w-full max-w-md mx-auto flex items-center justify-between py-2">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-brand-500 text-surface-950 rounded-lg flex items-center justify-center font-bold shadow-md shadow-brand-500/20">
-            <Truck className="w-4 h-4 text-surface-950" />
+          <div className="w-8 h-8 bg-amber-500 text-slate-950 rounded-lg flex items-center justify-center font-bold shadow-md shadow-amber-500/20">
+            <Truck className="w-4 h-4 text-slate-950" />
           </div>
-          <span className="font-extrabold text-sm sm:text-base text-white tracking-tight">
+          <span className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white tracking-tight">
             {t('app.name')}
           </span>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Install App Button (Exclusively on Login page before signing in!) */}
+          {/* Sun / Moon Theme Toggle */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="w-8 h-8 rounded-full border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 flex items-center justify-center hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-xs"
+            title={isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+            aria-label="Toggle Theme"
+          >
+            {isDark ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-slate-700" />}
+          </button>
+
+          {/* Install App Button */}
           <button
             type="button"
             onClick={() => triggerPWAInstall()}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 border border-brand-500/30 text-xs font-semibold shadow-sm transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-brand-400 border border-amber-500/30 text-xs font-semibold shadow-xs transition-all hover:scale-105 active:scale-95 cursor-pointer"
             title={t('pwa.installApp', 'Install App')}
           >
-            <Download className="w-3.5 h-3.5 text-brand-400" />
+            <Download className="w-3.5 h-3.5 text-amber-600 dark:text-brand-400" />
             <span>{t('pwa.installApp', 'Install App')}</span>
           </button>
 
           {/* Language Switcher */}
           <button
             onClick={toggleLanguage}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 border border-semantic-border-medium rounded-full text-xs font-semibold text-semantic-text-secondary hover:text-semantic-text-primary hover:bg-surface-800 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 border border-slate-200 dark:border-zinc-800 rounded-full text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 bg-white dark:bg-zinc-900 shadow-xs transition-colors cursor-pointer"
             aria-label={language === 'en' ? 'Switch to Hindi' : 'Switch to English'}
           >
-            <Globe className="w-3.5 h-3.5 text-brand-400" />
+            <Globe className="w-3.5 h-3.5 text-amber-600 dark:text-brand-400" />
             <span className="font-hindi tracking-wide">{language === 'en' ? 'EN' : 'हि'}</span>
           </button>
         </div>
@@ -606,20 +621,20 @@ export default function Login() {
 
       {/* Central Instagram-style Auth Card */}
       <div className="w-full max-w-md mx-auto my-auto relative z-10 py-3">
-        <Card className="p-6 sm:p-7 bg-surface-900/85 backdrop-blur-xl border border-semantic-border-light shadow-2xl rounded-3xl relative">
+        <Card className="p-6 sm:p-7 bg-white dark:bg-zinc-900/85 backdrop-blur-xl border border-slate-200/80 dark:border-zinc-800 shadow-xl rounded-3xl relative">
           {/* Header Title & Branding */}
           <div className="text-center mb-5">
-            <div className="w-12 h-12 mx-auto mb-2.5 bg-brand-500/10 border border-brand-500/25 rounded-2xl flex items-center justify-center text-brand-400 shadow-sm">
-              <Sparkles className="w-5 h-5 text-brand-400" />
+            <div className="w-12 h-12 mx-auto mb-2.5 bg-amber-500/10 border border-amber-500/25 rounded-2xl flex items-center justify-center text-amber-600 dark:text-brand-400 shadow-xs">
+              <Sparkles className="w-5 h-5 text-amber-600 dark:text-brand-400" />
             </div>
-            <h1 className="text-lg sm:text-xl font-black text-white tracking-tight">
+            <h1 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight">
               {loginRole === 'admin'
                 ? t('loginPage.adminTitle', 'Administrator Portal')
                 : loginRole === 'worker'
                 ? t('loginPage.workerTitle', 'Kaamgar Worker Login')
                 : t('loginPage.customerTitle', 'Customer Login')}
             </h1>
-            <p className="mt-1 text-[11px] sm:text-xs text-semantic-text-secondary">
+            <p className="mt-1 text-[11px] sm:text-xs text-slate-600 dark:text-zinc-400">
               {loginRole === 'admin'
                 ? t('loginPage.adminSubtitle', 'Sign in with administrator credentials & complete 2FA')
                 : loginRole === 'worker'
@@ -629,17 +644,17 @@ export default function Login() {
           </div>
 
           {/* Role Navigation: 3 Distinct Tabs */}
-          <div className="flex bg-surface-200/90 p-1 rounded-xl mb-6 border border-semantic-border-light text-xs font-semibold">
+          <div className="flex bg-slate-100 dark:bg-zinc-800/90 p-1 rounded-xl mb-6 border border-slate-200 dark:border-zinc-700 text-xs font-semibold">
             <button
               type="button"
               onClick={() => {
                 setLoginRole('customer')
                 setSearchParams({ role: 'customer' })
               }}
-              className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 loginRole === 'customer'
-                  ? 'bg-brand-500 text-white shadow-sm'
-                  : 'text-semantic-text-secondary hover:text-semantic-text-primary'
+                  ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
+                  : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <User className="w-3.5 h-3.5" />
@@ -651,10 +666,10 @@ export default function Login() {
                 setLoginRole('worker')
                 setSearchParams({ role: 'worker' })
               }}
-              className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 loginRole === 'worker'
-                  ? 'bg-emerald-600 text-white shadow-sm'
-                  : 'text-semantic-text-secondary hover:text-semantic-text-primary'
+                  ? 'bg-emerald-600 text-white font-bold shadow-xs'
+                  : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <Truck className="w-3.5 h-3.5" />
@@ -666,10 +681,10 @@ export default function Login() {
                 setLoginRole('admin')
                 setSearchParams({ role: 'admin' })
               }}
-              className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 loginRole === 'admin'
-                  ? 'bg-amber-600 text-white shadow-sm'
-                  : 'text-semantic-text-secondary hover:text-semantic-text-primary'
+                  ? 'bg-blue-600 text-white font-bold shadow-xs'
+                  : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <Shield className="w-3.5 h-3.5" />
@@ -1198,12 +1213,12 @@ export default function Login() {
                     onChange={(e) => setForgotPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                     placeholder="9876543210"
                     maxLength={10}
-                    className="w-full pl-11 pr-3 py-2.5 rounded-xl bg-surface-900 border border-semantic-border-light text-white placeholder:text-surface-500 text-sm focus:outline-none focus:border-brand-500 transition-colors"
+                    className="w-full pl-11 pr-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white placeholder:text-slate-400 text-sm focus:outline-none focus:border-amber-500 transition-colors"
                     required
                     autoFocus
                   />
                 </div>
-                <p className="text-[11px] text-semantic-text-tertiary mt-1.5">
+                <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-1.5">
                   {t('loginPage.otpInfo', 'We will send an OTP via MSG91 SMS to verify your identity.')}
                 </p>
               </div>
@@ -1231,13 +1246,13 @@ export default function Login() {
             </form>
           ) : (
             <form onSubmit={handleForgotResetPasswordSubmit} className="space-y-4">
-              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center gap-2 text-xs text-emerald-300">
-                <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-300">
+                <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <span>Mobile number +91 {verifiedUserInfo?.phone} verified successfully!</span>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-semantic-text-secondary mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
                   {t('loginPage.newPasswordLabel', 'Enter New Password')}
                 </label>
                 <div className="relative">
@@ -1246,7 +1261,7 @@ export default function Login() {
                     value={forgotNewPassword}
                     onChange={(e) => setForgotNewPassword(e.target.value)}
                     placeholder="At least 6 characters"
-                    className="w-full pl-3 pr-10 py-2.5 rounded-xl bg-surface-900 border border-semantic-border-light text-white placeholder:text-surface-500 text-sm focus:outline-none focus:border-brand-500 transition-colors"
+                    className="w-full pl-3 pr-10 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white placeholder:text-slate-400 text-sm focus:outline-none focus:border-amber-500 transition-colors"
                     required
                     minLength={6}
                     autoFocus
@@ -1254,7 +1269,7 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => setShowForgotNewPassword(prev => !prev)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-surface-400 hover:text-white"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-700 dark:hover:text-white"
                   >
                     {showForgotNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -1262,7 +1277,7 @@ export default function Login() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-semantic-text-secondary mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
                   {t('loginPage.confirmNewPasswordLabel', 'Confirm New Password')}
                 </label>
                 <input
@@ -1270,7 +1285,7 @@ export default function Login() {
                   value={forgotConfirmPassword}
                   onChange={(e) => setForgotConfirmPassword(e.target.value)}
                   placeholder="Re-enter new password"
-                  className="w-full px-3 py-2.5 rounded-xl bg-surface-900 border border-semantic-border-light text-white placeholder:text-surface-500 text-sm focus:outline-none focus:border-brand-500 transition-colors"
+                  className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white placeholder:text-slate-400 text-sm focus:outline-none focus:border-amber-500 transition-colors"
                   required
                   minLength={6}
                 />
