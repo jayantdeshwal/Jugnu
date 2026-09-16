@@ -43,7 +43,7 @@ import {
   Bot,
   ArrowLeft,
 } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useScroll } from 'framer-motion'
 import { useAiAssistant } from '@/context/AiAssistantContext'
 import { useAuth } from '@/context/AuthContext'
 
@@ -77,6 +77,9 @@ export default function Home() {
   const aiAssistant = useAiAssistant()
   const { isAuthenticated } = useAuth()
   const isGuestMode = !isAuthenticated || (typeof window !== 'undefined' && sessionStorage.getItem('kaamgar_guest_mode') === 'true')
+
+  // Top viewport scroll progress
+  const { scrollYProgress } = useScroll()
 
   const handleBackToLogin = () => {
     sessionStorage.removeItem('kaamgar_guest_mode')
@@ -194,7 +197,13 @@ export default function Home() {
     : []
 
   return (
-    <div className="min-h-screen bg-semantic-bg-primary text-semantic-text-primary">
+    <div className="min-h-screen bg-semantic-bg-primary text-semantic-text-primary relative">
+      {/* Ultra-Realistic Viewport Scroll Progress Bar */}
+      <motion.div
+        style={{ scaleX: scrollYProgress }}
+        className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-brand-500 to-emerald-400 origin-left z-50 shadow-sm shadow-brand-500/50 pointer-events-none"
+      />
+
       {/* Exploration Guest Mode Banner with 1-Tap Back Button */}
       {isGuestMode && (
         <div className="bg-gradient-to-r from-brand-500/15 via-surface-900 to-brand-500/15 border-b border-brand-500/30 py-2 px-3 sm:px-6">
@@ -704,8 +713,9 @@ export default function Home() {
               initial={{ opacity: 0, x: -24 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, amount: 0.2 }}
+              whileHover={{ y: -6, scale: 1.012 }}
               transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-              className="rounded-3xl p-5 sm:p-6 bg-surface-900/90 border border-rose-500/25 relative overflow-hidden shadow-xl"
+              className="rounded-3xl p-5 sm:p-6 bg-surface-900/90 border border-rose-500/25 relative overflow-hidden shadow-xl hover:border-rose-500/50 hover:shadow-2xl transition-all"
             >
               <div className="flex items-center justify-between pb-4 mb-4 border-b border-rose-500/20">
                 <div>
@@ -754,8 +764,9 @@ export default function Home() {
               initial={{ opacity: 0, x: 24 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, amount: 0.2 }}
+              whileHover={{ y: -6, scale: 1.012 }}
               transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-              className="rounded-3xl p-5 sm:p-6 bg-surface-900/90 border border-emerald-500/30 relative overflow-hidden shadow-xl"
+              className="rounded-3xl p-5 sm:p-6 bg-surface-900/90 border border-emerald-500/30 relative overflow-hidden shadow-xl hover:border-emerald-500/60 hover:shadow-2xl transition-all"
             >
               <div className="flex items-center justify-between pb-4 mb-4 border-b border-emerald-500/20">
                 <div>
@@ -964,58 +975,72 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 relative">
-            {[
-              {
-                step: '01',
-                title: t('home.howStep1Title'),
-                desc: t('home.howStep1Desc'),
-                badge: t('home.howStep1Badge'),
-              },
-              {
-                step: '02',
-                title: t('home.howStep2Title'),
-                desc: t('home.howStep2Desc'),
-                badge: t('home.howStep2Badge'),
-              },
-              {
-                step: '03',
-                title: t('home.howStep3Title'),
-                desc: t('home.howStep3Desc'),
-                badge: t('home.howStep3Badge'),
-              },
-              {
-                step: '04',
-                title: t('home.howStep4Title'),
-                desc: t('home.howStep4Desc'),
-                badge: t('home.howStep4Badge'),
-              },
-            ].map((item, idx) => (
+          {/* Timeline Grid with Connected Glowing Rail */}
+          <div className="relative">
+            {/* Connected Glowing Timeline Bar behind steps on desktop */}
+            <div className="hidden md:block absolute top-7 left-14 right-14 h-1 bg-surface-700/50 rounded-full z-0 pointer-events-none overflow-hidden">
               <motion.div
-                key={item.step}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={{ type: 'spring', stiffness: 350, damping: 24, delay: idx * 0.08 }}
-                whileHover={{ y: -3, scale: 1.01 }}
-                className="relative p-5 rounded-2xl bg-surface-100/95 border border-semantic-border-light hover:border-brand-500/40 transition-all shadow-md"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-2xl font-black text-brand-500/30 font-mono">
-                    {item.step}
-                  </span>
-                  <span className="text-[10px] font-semibold text-brand-400 bg-brand-500/10 px-2 py-0.5 rounded-full border border-brand-500/20">
-                    {item.badge}
-                  </span>
-                </div>
-                <h3 className="font-bold text-sm text-white mb-1.5">
-                  {item.title}
-                </h3>
-                <p className="text-xs text-semantic-text-secondary leading-relaxed">
-                  {item.desc}
-                </p>
-              </motion.div>
-            ))}
+                initial={{ width: '0%' }}
+                whileInView={{ width: '100%' }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 1.2, ease: 'easeOut' }}
+                className="h-full bg-gradient-to-r from-brand-500 via-amber-400 to-emerald-400 rounded-full shadow-lg shadow-brand-500/50"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 relative z-10">
+              {[
+                {
+                  step: '01',
+                  title: t('home.howStep1Title'),
+                  desc: t('home.howStep1Desc'),
+                  badge: t('home.howStep1Badge'),
+                },
+                {
+                  step: '02',
+                  title: t('home.howStep2Title'),
+                  desc: t('home.howStep2Desc'),
+                  badge: t('home.howStep2Badge'),
+                },
+                {
+                  step: '03',
+                  title: t('home.howStep3Title'),
+                  desc: t('home.howStep3Desc'),
+                  badge: t('home.howStep3Badge'),
+                },
+                {
+                  step: '04',
+                  title: t('home.howStep4Title'),
+                  desc: t('home.howStep4Desc'),
+                  badge: t('home.howStep4Badge'),
+                },
+              ].map((item, idx) => (
+                <motion.div
+                  key={item.step}
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ type: 'spring', stiffness: 350, damping: 24, delay: idx * 0.1 }}
+                  whileHover={{ y: -6, scale: 1.02 }}
+                  className="relative p-5 rounded-2xl bg-surface-100/95 border border-semantic-border-light hover:border-brand-500/50 transition-all shadow-md group"
+                >
+                  <div className="flex items-center justify-between mb-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500/20 to-surface-200 border border-brand-500/30 flex items-center justify-center text-brand-400 font-mono font-black text-base shadow-sm group-hover:bg-brand-500 group-hover:text-surface-950 transition-all">
+                      {item.step}
+                    </div>
+                    <span className="text-[10px] font-semibold text-brand-400 bg-brand-500/10 px-2 py-0.5 rounded-full border border-brand-500/20">
+                      {item.badge}
+                    </span>
+                  </div>
+                  <h3 className="font-bold text-sm text-white mb-1.5 group-hover:text-brand-400 transition-colors">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs text-semantic-text-secondary leading-relaxed">
+                    {item.desc}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
           </div>
 
           {/* AI Assistant Quick Help Launcher Banner */}

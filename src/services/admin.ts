@@ -207,19 +207,18 @@ export async function fetchAdminNotifications(): Promise<AdminNotificationItem[]
 
   // 1. Try get_admin_notifications RPC
   const { data: rpcData, error: rpcError } = await (supabase as any).rpc('get_admin_notifications', {
-    limit_count: 50,
+    limit_count: 100,
   })
 
   if (!rpcError && Array.isArray(rpcData)) {
     return rpcData as AdminNotificationItem[]
   }
 
-  // 2. Fallback to direct notifications query
+  // 2. Fallback to direct notifications query (fetches registrations, documents, bookings & system alerts)
   const { data, error } = await (supabase.from('notifications') as any)
     .select('id, user_id, booking_id, notification_type, title, body, read_at, created_at')
-    .in('notification_type', ['worker_registration_submitted', 'worker_document_uploaded'])
     .order('created_at', { ascending: false })
-    .limit(50)
+    .limit(100)
 
   if (error) {
     console.warn('Fallback fetchAdminNotifications error:', error.message)
