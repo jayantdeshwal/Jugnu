@@ -453,6 +453,9 @@
   },
   "admin": {
     "dashboard": "Admin Dashboard",
+    "overview": "Overview",
+    "approvals": "Approvals",
+    "alerts": "Alerts",
     "pendingWorkers": "Pending Approvals",
     "allWorkers": "All Workers",
     "allCustomers": "All Customers",

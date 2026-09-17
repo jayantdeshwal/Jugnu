@@ -118,6 +118,8 @@ export default function AdminDashboard() {
       ['overview', 'workers', 'customers', 'bookings', 'notifications', 'admins'].includes(tab)
     ) {
       setActiveTab(tab)
+    } else if (!tab || tab === 'overview') {
+      setActiveTab('overview')
     }
   }, [searchParams])
 

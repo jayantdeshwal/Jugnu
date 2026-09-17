@@ -126,12 +126,12 @@ export default function Layout() {
     { id: 'account', label: t('nav.account', 'Account'), path: '/profile', icon: User },
   ]
 
-  // 3. Admin: Overview, Approvals, Alerts, Bookings, Account
+  // 3. Admin: Overview, Approvals, Alerts, All Bookings, Account
   const adminBottomTabs: BottomTabItem[] = [
     { id: 'overview', label: t('admin.overview', 'Overview'), path: '/admin', icon: Shield },
     { id: 'approvals', label: t('admin.approvals', 'Approvals'), path: '/admin?tab=workers', icon: UserCheck },
     { id: 'alerts', label: t('admin.alerts', 'Alerts'), path: '/admin?tab=notifications', icon: Bell, badge: unreadCount },
-    { id: 'bookings', label: t('nav.bookings', 'Bookings'), path: '/admin?tab=bookings', icon: Calendar },
+    { id: 'bookings', label: t('admin.allBookings', 'All Bookings'), path: '/admin?tab=bookings', icon: Calendar },
     { id: 'account', label: t('nav.account', 'Account'), path: '/profile', icon: User },
   ]
 
@@ -573,300 +573,6 @@ export default function Layout() {
             </div>
           </div>
         </nav>
-
-        {/* ========================================================= */}
-        {/* MOBILE SLIDE-IN SIDEBAR DRAWER (Triggered by ☰ on Left)    */}
-        {/* Contains ALL header options of the web app                */}
-        {/* ========================================================= */}
-        {mobileMenuOpen && (
-          <div className="fixed inset-0 z-50 md:hidden animate-fade-in" role="dialog" aria-modal="true" aria-label="Mobile Navigation Sidebar">
-            {/* Backdrop Blur Overlay */}
-            <div
-              className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity cursor-pointer"
-              onClick={() => setMobileMenuOpen(false)}
-              aria-hidden="true"
-            />
-
-            {/* Slide-In Aside from Left */}
-            <aside className="fixed inset-y-0 left-0 w-[85vw] max-w-xs sm:max-w-sm bg-white dark:bg-zinc-950 shadow-2xl border-r border-slate-200 dark:border-zinc-800 flex flex-col z-50 animate-slide-right overflow-y-auto pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-              {/* Sidebar Header: Logo & Close X Button */}
-              <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-zinc-800/80">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 bg-amber-500 text-slate-950 rounded-xl flex items-center justify-center font-bold shadow-xs">
-                    <Truck className="w-4.5 h-4.5 text-slate-950" />
-                  </div>
-                  <div>
-                    <span className="font-extrabold text-base text-slate-900 dark:text-zinc-100 block leading-tight">
-                      {t('app.name')}
-                    </span>
-                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold tracking-wide">
-                      Muzaffarnagar Kaamgar
-                    </span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                  aria-label="Close sidebar"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* User Profile / Status Card */}
-              <div className="p-4 border-b border-slate-100 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-900/40">
-                {isAuthenticated ? (
-                  <div className="flex items-center gap-3">
-                    <Avatar name={user?.name} size="md" src={user?.avatar_url || undefined} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-slate-900 dark:text-zinc-100 truncate">{user?.name}</p>
-                      <p className="text-xs text-slate-500 dark:text-zinc-400 truncate mt-0.5">{user?.phone || 'Logged In'}</p>
-                      <div className="mt-1.5 flex items-center gap-1.5">
-                        {isAdmin && <Badge variant="danger" size="sm">{t('nav.roleAdmin', 'Admin')}</Badge>}
-                        {isWorker && !isAdmin && <Badge variant="success" size="sm">{t('nav.roleWorker', 'Worker')}</Badge>}
-                        {!isWorker && !isAdmin && <Badge variant="info" size="sm">{t('nav.roleCustomer', 'Customer')}</Badge>}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-2.5">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center text-amber-500">
-                        <User className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-900 dark:text-zinc-100">{t('common.welcome', 'Welcome!')}</p>
-                        <p className="text-xs text-slate-500 dark:text-zinc-400">{t('common.guestMode', 'Exploring as Guest')}</p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 pt-1">
-                      <button
-                        type="button"
-                        onClick={() => { setMobileMenuOpen(false); navigate('/login') }}
-                        className="w-full py-2 text-xs font-bold rounded-xl bg-amber-500 text-slate-950 shadow-xs hover:bg-amber-400 transition-colors cursor-pointer"
-                      >
-                        {t('nav.loginSignup', 'Login / Register')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { setMobileMenuOpen(false); navigate('/register/worker') }}
-                        className="w-full py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
-                      >
-                        {t('nav.becomeWorker', 'Earn as Worker')}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Kaamgar AI Assistant Quick Callout */}
-              <div className="p-3 mx-4 mt-3 rounded-2xl bg-gradient-to-r from-amber-500/15 to-amber-600/10 border border-amber-500/30 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold shadow-xs">
-                    <Bot className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-900 dark:text-white">Kaamgar AI Assistant</p>
-                    <p className="text-[10px] text-slate-600 dark:text-zinc-400">24/7 Smart Local Booking</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false)
-                    openAssistant('customer_booking')
-                  }}
-                  className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-amber-500 text-slate-950 shadow-xs hover:brightness-105 active:scale-95 transition-all cursor-pointer"
-                >
-                  Ask AI
-                </button>
-              </div>
-
-              {/* Sidebar Navigation Items (Web App Header Links) */}
-              <div className="flex-1 py-3 px-3 space-y-1">
-                <p className="px-3 pt-2 pb-1 text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
-                  {t('nav.menu', 'Main Menu')}
-                </p>
-
-                {/* Home */}
-                <NavLink
-                  to="/"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                      isActive
-                        ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
-                        : 'text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850'
-                    }`
-                  }
-                >
-                  <Home className="w-4.5 h-4.5" />
-                  <span>{t('nav.home', 'Home')}</span>
-                </NavLink>
-
-                {/* Role Header Links (currentNavItems) */}
-                {currentNavItems.map(({ path, label, icon: Icon, badge }) => (
-                  <NavLink
-                    key={path}
-                    to={path}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                        isActive
-                          ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
-                          : 'text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850'
-                      }`
-                    }
-                  >
-                    <Icon className="w-4.5 h-4.5" />
-                    <span className="flex-1">{label}</span>
-                    {Boolean(badge && badge > 0) && (
-                      <Badge variant="danger" size="sm">
-                        {badge}
-                      </Badge>
-                    )}
-                  </NavLink>
-                ))}
-
-                {/* Profile Link (if logged in) */}
-                {isAuthenticated && (
-                  <NavLink
-                    to="/profile"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                        isActive
-                          ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
-                          : 'text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850'
-                      }`
-                    }
-                  >
-                    <User className="w-4.5 h-4.5" />
-                    <span>{t('nav.profile', 'Profile & Settings')}</span>
-                  </NavLink>
-                )}
-
-                {/* Role Specific Actions */}
-                {isAuthenticated && !isWorker && !isAdmin && (
-                  <button
-                    type="button"
-                    onClick={() => { setMobileMenuOpen(false); navigate('/register/worker') }}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors text-left cursor-pointer"
-                  >
-                    <Briefcase className="w-4.5 h-4.5" />
-                    <span className="flex-1">{t('nav.becomeWorker', 'Become a Worker')}</span>
-                    <span className="text-[10px] bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded font-bold uppercase">Earn</span>
-                  </button>
-                )}
-
-                {isAuthenticated && isWorker && (
-                  <NavLink
-                    to="/worker/dashboard"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850 transition-colors"
-                  >
-                    <Briefcase className="w-4.5 h-4.5" />
-                    <span>{t('nav.workerDashboard', 'Worker Dashboard')}</span>
-                  </NavLink>
-                )}
-
-                {isAuthenticated && isAdmin && (
-                  <NavLink
-                    to="/admin"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850 transition-colors"
-                  >
-                    <Shield className="w-4.5 h-4.5" />
-                    <span>{t('nav.adminDashboard', 'Admin Dashboard')}</span>
-                  </NavLink>
-                )}
-
-                {/* Preferences & App Options */}
-                <p className="px-3 pt-4 pb-1 text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
-                  {t('nav.preferences', 'Preferences & App')}
-                </p>
-
-                {/* Theme Toggle Button */}
-                <button
-                  type="button"
-                  onClick={toggleTheme}
-                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850 transition-colors cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    {isDark ? <Sun className="w-4.5 h-4.5 text-amber-400" /> : <Moon className="w-4.5 h-4.5 text-slate-700" />}
-                    <span>{isDark ? 'Light Theme (सफेद)' : 'Dark Theme (नाइट)'}</span>
-                  </div>
-                  <Badge variant={isDark ? 'primary' : 'default'} size="sm">
-                    {isDark ? 'Dark' : 'Light'}
-                  </Badge>
-                </button>
-
-                {/* Language Toggle Button */}
-                <button
-                  type="button"
-                  onClick={toggleLanguage}
-                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850 transition-colors cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <Globe className="w-4.5 h-4.5 text-amber-500" />
-                    <span>{t('common.language', 'Language')}</span>
-                  </div>
-                  <Badge variant="outline" size="sm" className="font-semibold text-amber-600 dark:text-amber-400 border-slate-200 dark:border-zinc-700">
-                    {language === 'en' ? 'EN (English)' : 'हि (हिंदी)'}
-                  </Badge>
-                </button>
-
-                {/* Install Mobile App (PWA) Button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false)
-                    triggerPWAInstall()
-                  }}
-                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850 transition-colors cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <Smartphone className="w-4.5 h-4.5 text-emerald-500" />
-                    <span>{t('pwa.installApp', 'Install Mobile App')}</span>
-                  </div>
-                  <Badge variant="success" size="sm">
-                    App
-                  </Badge>
-                </button>
-              </div>
-
-              {/* Sidebar Footer: Sign Out / Back to Login */}
-              <div className="p-3 border-t border-slate-100 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-900/40">
-                {isAuthenticated ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMobileMenuOpen(false)
-                      void logout()
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/25 transition-colors cursor-pointer"
-                  >
-                    <LogOut className="w-4.5 h-4.5" />
-                    <span>{t('nav.logout', 'Sign Out')}</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMobileMenuOpen(false)
-                      handleBackToLogin()
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                  >
-                    <ArrowLeft className="w-4.5 h-4.5 text-amber-500" />
-                    <span>{t('common.backToLogin', 'Back to Login')}</span>
-                  </button>
-                )}
-              </div>
-            </aside>
-          </div>
-        )}
       </header>
       
       <main className="min-h-[calc(100vh-64px)] pb-[max(5rem,calc(4.5rem+env(safe-area-inset-bottom)))] md:pb-0">
@@ -1054,12 +760,14 @@ export default function Layout() {
         <div className="grid grid-cols-5 items-center justify-around max-w-md mx-auto">
           {currentBottomTabs.map((tab) => {
             const Icon = tab.icon
+            const currentTabParam = new URLSearchParams(location.search).get('tab')
+            const targetTabParam = tab.path && tab.path.includes('?') ? new URLSearchParams(tab.path.split('?')[1]).get('tab') : null
             const isTabActive = tab.path
               ? tab.path === '/'
                 ? location.pathname === '/' && !location.search
-                : tab.path.includes('?')
-                ? `${location.pathname}${location.search}` === tab.path
-                : location.pathname === tab.path.split('?')[0] && !location.search
+                : targetTabParam
+                ? location.pathname === tab.path.split('?')[0] && currentTabParam === targetTabParam
+                : location.pathname === tab.path && (!currentTabParam || currentTabParam === 'overview')
               : false
 
             if (tab.action) {
@@ -1090,6 +798,9 @@ export default function Layout() {
               <NavLink
                 key={tab.id}
                 to={tab.path || '/'}
+                onClick={() => {
+                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                }}
                 className={() => {
                   return `flex flex-col items-center justify-center py-1 px-0.5 transition-all relative ${
                     isTabActive
@@ -1124,6 +835,366 @@ export default function Layout() {
           })}
         </div>
       </nav>
+
+      {/* ========================================================= */}
+      {/* MOBILE SLIDE-IN SIDEBAR DRAWER (Triggered by ☰ on Left)    */}
+      {/* Rendered at ROOT LEVEL with z-[9999] so it is NEVER       */}
+      {/* clipped or overridden by header or homepage elements.     */}
+      {/* ========================================================= */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-[9999] md:hidden" role="dialog" aria-modal="true" aria-label="Mobile Navigation Sidebar">
+          {/* Fullscreen Backdrop Blur Overlay */}
+          <div
+            className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity cursor-pointer animate-fade-in"
+            onClick={() => setMobileMenuOpen(false)}
+            aria-hidden="true"
+          />
+
+          {/* Slide-In Aside from Left */}
+          <aside className="fixed inset-y-0 left-0 w-[85vw] max-w-xs sm:max-w-sm bg-white dark:bg-zinc-950 shadow-2xl border-r border-slate-200 dark:border-zinc-800 flex flex-col z-[10000] animate-slide-right overflow-y-auto pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+            
+            {/* 1. Sidebar Header: Logo & Close X Button */}
+            <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-zinc-800/80 sticky top-0 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md z-10">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 bg-amber-500 text-slate-950 rounded-xl flex items-center justify-center font-bold shadow-xs">
+                  <Truck className="w-4.5 h-4.5 text-slate-950" />
+                </div>
+                <div>
+                  <span className="font-extrabold text-base text-slate-900 dark:text-zinc-100 block leading-tight">
+                    {t('app.name')}
+                  </span>
+                  <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold tracking-wide">
+                    Muzaffarnagar Kaamgar
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100 bg-slate-100 dark:bg-zinc-800/80 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+                aria-label="Close sidebar"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* 2. User Profile / Guest Card */}
+            <div className="p-4 border-b border-slate-100 dark:border-zinc-800/80 bg-slate-50/70 dark:bg-zinc-900/50">
+              {isAuthenticated ? (
+                <div className="flex items-center gap-3">
+                  <Avatar name={user?.name} size="md" src={user?.avatar_url || undefined} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-slate-900 dark:text-zinc-100 truncate">{user?.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-zinc-400 truncate mt-0.5">{user?.phone || 'Logged In'}</p>
+                    <div className="mt-1.5 flex items-center gap-1.5">
+                      {isAdmin && <Badge variant="danger" size="sm">{t('nav.roleAdmin', 'Admin')}</Badge>}
+                      {isWorker && !isAdmin && <Badge variant="success" size="sm">{t('nav.roleWorker', 'Worker')}</Badge>}
+                      {!isWorker && !isAdmin && <Badge variant="info" size="sm">{t('nav.roleCustomer', 'Customer')}</Badge>}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center text-amber-500">
+                      <User className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-900 dark:text-zinc-100">{t('common.welcome', 'Welcome!')}</p>
+                      <p className="text-xs text-slate-500 dark:text-zinc-400">{t('common.guestMode', 'Exploring as Guest')}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => { setMobileMenuOpen(false); navigate('/login') }}
+                      className="w-full py-2 text-xs font-bold rounded-xl bg-amber-500 text-slate-950 shadow-xs hover:bg-amber-400 transition-colors cursor-pointer text-center"
+                    >
+                      {t('nav.loginSignup', 'Login / Register')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setMobileMenuOpen(false); navigate('/register/worker') }}
+                      className="w-full py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors cursor-pointer text-center"
+                    >
+                      {t('nav.becomeWorker', 'Earn as Worker')}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 3. Main Navigation Links */}
+            <div className="p-3 space-y-1">
+              <p className="px-3 pt-1 pb-1 text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+                {t('nav.menu', 'Main Menu')}
+              </p>
+
+              {/* Home */}
+              <NavLink
+                to="/"
+                onClick={() => setMobileMenuOpen(false)}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                    isActive
+                      ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold'
+                      : 'text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850'
+                  }`
+                }
+              >
+                <Home className="w-4.5 h-4.5" />
+                <span>{t('nav.home', 'Home')}</span>
+              </NavLink>
+
+              {/* Role Header Links (currentNavItems) */}
+              {currentNavItems.map(({ path, label, icon: Icon, badge }) => (
+                <NavLink
+                  key={path}
+                  to={path}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                      isActive
+                        ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold'
+                        : 'text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850'
+                    }`
+                  }
+                >
+                  <Icon className="w-4.5 h-4.5" />
+                  <span className="flex-1">{label}</span>
+                  {Boolean(badge && badge > 0) && (
+                    <Badge variant="danger" size="sm">
+                      {badge}
+                    </Badge>
+                  )}
+                </NavLink>
+              ))}
+
+              {/* Profile Link (if logged in) */}
+              {isAuthenticated && (
+                <NavLink
+                  to="/profile"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                      isActive
+                        ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold'
+                        : 'text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850'
+                    }`
+                  }
+                >
+                  <User className="w-4.5 h-4.5" />
+                  <span>{t('nav.profile', 'Profile & Settings')}</span>
+                </NavLink>
+              )}
+
+              {/* Role Specific Actions */}
+              {isAuthenticated && !isWorker && !isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => { setMobileMenuOpen(false); navigate('/register/worker') }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors text-left cursor-pointer"
+                >
+                  <Briefcase className="w-4.5 h-4.5" />
+                  <span className="flex-1">{t('nav.becomeWorker', 'Become a Worker')}</span>
+                  <span className="text-[10px] bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded font-bold uppercase">Earn</span>
+                </button>
+              )}
+
+              {isAuthenticated && isWorker && (
+                <NavLink
+                  to="/worker/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850 transition-colors"
+                >
+                  <Briefcase className="w-4.5 h-4.5" />
+                  <span>{t('nav.workerDashboard', 'Worker Dashboard')}</span>
+                </NavLink>
+              )}
+
+              {isAuthenticated && isAdmin && (
+                <>
+                  <NavLink
+                    to="/admin"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850 transition-colors"
+                  >
+                    <Shield className="w-4.5 h-4.5" />
+                    <span>{t('admin.overview', 'Overview')}</span>
+                  </NavLink>
+                  <NavLink
+                    to="/admin?tab=bookings"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850 transition-colors"
+                  >
+                    <Calendar className="w-4.5 h-4.5" />
+                    <span>{t('admin.allBookings', 'All Bookings')}</span>
+                  </NavLink>
+                  <NavLink
+                    to="/admin?tab=workers"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850 transition-colors"
+                  >
+                    <UserCheck className="w-4.5 h-4.5" />
+                    <span>{t('admin.approvals', 'Approvals')}</span>
+                  </NavLink>
+                </>
+              )}
+            </div>
+
+            {/* 4. PROMINENT APP OPTIONS & PREFERENCES (Requested by User) */}
+            <div className="p-3 border-t border-slate-100 dark:border-zinc-800/80 space-y-2.5">
+              <p className="px-1 text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+                {t('nav.preferences', 'Options & Preferences')}
+              </p>
+
+              {/* Option 1: Light & Dark Theme Toggle Button */}
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="w-full flex items-center justify-between p-3 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/80 dark:bg-zinc-900/60 hover:bg-slate-100 dark:hover:bg-zinc-850 active:scale-[0.98] transition-all cursor-pointer"
+                aria-label="Toggle Light and Dark Theme"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center text-amber-500">
+                    {isDark ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-slate-700" />}
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold text-slate-900 dark:text-zinc-100">
+                      {isDark ? 'Light Theme (सफेद थीम)' : 'Dark Theme (नाइट थीम)'}
+                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-zinc-400">
+                      {isDark ? 'सफेद मोड पर स्विच करें' : 'नाइट मोड पर स्विच करें'}
+                    </p>
+                  </div>
+                </div>
+                <Badge variant={isDark ? 'primary' : 'default'} size="sm" className="font-bold">
+                  {isDark ? 'Dark' : 'Light'}
+                </Badge>
+              </button>
+
+              {/* Option 2: Language Switcher Button (English / Hindi) */}
+              <button
+                type="button"
+                onClick={toggleLanguage}
+                className="w-full flex items-center justify-between p-3 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/80 dark:bg-zinc-900/60 hover:bg-slate-100 dark:hover:bg-zinc-850 active:scale-[0.98] transition-all cursor-pointer"
+                aria-label="Toggle Language"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-blue-500/15 flex items-center justify-center text-blue-500">
+                    <Globe className="w-5 h-5" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold text-slate-900 dark:text-zinc-100">
+                      {language === 'en' ? 'हिन्दी में बदलें' : 'Switch to English'}
+                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-zinc-400">
+                      {language === 'en' ? 'English Language Active' : 'हिंदी भाषा सक्रिय है'}
+                    </p>
+                  </div>
+                </div>
+                <Badge variant="outline" size="sm" className="font-bold text-amber-600 dark:text-amber-400 border-slate-200 dark:border-zinc-700">
+                  {language === 'en' ? 'EN' : 'हिन्दी'}
+                </Badge>
+              </button>
+
+              {/* Option 3: Help & Support Card (AI Assistant + Helpline) */}
+              <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold shadow-xs">
+                      <Bot className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-900 dark:text-white">Help & Support (24/7)</p>
+                      <p className="text-[10px] text-slate-600 dark:text-zinc-400">सहायता और कस्टमर केयर</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false)
+                      openAssistant('customer_booking')
+                    }}
+                    className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs shadow-xs hover:bg-amber-400 active:scale-95 transition-all cursor-pointer text-center"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>AI Support</span>
+                  </button>
+
+                  <a
+                    href="tel:+919876543210"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 font-bold text-xs hover:bg-slate-50 dark:hover:bg-zinc-700 active:scale-95 transition-all text-center"
+                  >
+                    <Phone className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>कॉल हेल्पलाइन</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Option 4: Install Mobile App (PWA) */}
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false)
+                  triggerPWAInstall()
+                }}
+                className="w-full flex items-center justify-between p-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/15 active:scale-[0.98] transition-all cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center font-bold shadow-xs">
+                    <Smartphone className="w-5 h-5" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">
+                      {t('pwa.installApp', 'Install Mobile App')}
+                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-zinc-400">
+                      फ़ोन में ऐप डाउनलोड करें
+                    </p>
+                  </div>
+                </div>
+                <Badge variant="success" size="sm" className="font-bold">
+                  Install
+                </Badge>
+              </button>
+            </div>
+
+            {/* 5. Prominent Logout / Back to Login Button */}
+            <div className="p-4 border-t border-slate-100 dark:border-zinc-800/80 bg-slate-50/70 dark:bg-zinc-900/60 mt-auto">
+              {isAuthenticated ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    void logout()
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-bold text-sm border border-rose-500/20 active:scale-[0.98] transition-all cursor-pointer shadow-xs"
+                >
+                  <LogOut className="w-4.5 h-4.5" />
+                  <span>{t('nav.logout', 'Sign Out')} (लॉग आउट)</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    handleBackToLogin()
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold text-sm border border-amber-500/20 active:scale-[0.98] transition-all cursor-pointer shadow-xs"
+                >
+                  <ArrowLeft className="w-4.5 h-4.5" />
+                  <span>{t('common.backToLogin', 'Back to Login')} (लॉगिन पर जाएं)</span>
+                </button>
+              )}
+            </div>
+          </aside>
+        </div>
+      )}
 
       <NotificationToast
         notifications={notifications}

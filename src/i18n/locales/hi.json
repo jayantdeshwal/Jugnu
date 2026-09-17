@@ -453,6 +453,9 @@
   },
   "admin": {
     "dashboard": "एडमिन डैशबोर्ड",
+    "overview": "ओवरव्यू",
+    "approvals": "मंजूरी",
+    "alerts": "अलर्ट",
     "pendingWorkers": "लंबित मंजूरी",
     "allWorkers": "सभी कारीगर",
     "allCustomers": "सभी ग्राहक",
