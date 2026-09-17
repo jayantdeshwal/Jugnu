@@ -100,18 +100,18 @@ export function Modal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className={cn('w-full bg-semantic-bg-elevated rounded-xl shadow-xl', sizes[size], className)}
+            className={cn('w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl shadow-2xl text-slate-900 dark:text-zinc-100', sizes[size], className)}
           >
             {(title || showCloseButton) && (
-              <div className="flex items-start justify-between p-5 border-b border-semantic-border-light">
+              <div className="flex items-start justify-between p-5 border-b border-slate-200 dark:border-zinc-800">
                 <div>
                   {title && (
-                    <h2 id="modal-title" className="text-lg font-semibold text-semantic-text-primary">
+                    <h2 id="modal-title" className="text-lg font-bold text-slate-900 dark:text-white">
                       {title}
                     </h2>
                   )}
                   {description && (
-                    <p id="modal-description" className="mt-1 text-sm text-semantic-text-secondary">
+                    <p id="modal-description" className="mt-1 text-xs text-slate-500 dark:text-zinc-400">
                       {description}
                     </p>
                   )}
@@ -120,7 +120,7 @@ export function Modal({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="text-semantic-text-tertiary hover:text-semantic-text-primary transition-colors p-1 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800"
+                    className="text-slate-400 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-zinc-100 transition-colors p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 cursor-pointer"
                     aria-label="Close modal"
                   >
                     <X className="w-5 h-5" />
@@ -165,7 +165,7 @@ export function ConfirmModal({
 }: ConfirmModalProps) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
-      <p className="text-semantic-text-secondary mb-6">{message}</p>
+      <p className="text-sm text-slate-600 dark:text-zinc-400 mb-6">{message}</p>
       <div className="flex justify-end gap-3">
         <Button variant="secondary" onClick={onClose} disabled={loading}>
           {cancelText}

@@ -484,13 +484,13 @@ export default function Profile() {
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="w-10 h-10 rounded-full bg-surface-100/90 hover:bg-surface-200 border border-semantic-border-light flex items-center justify-center text-semantic-text-primary transition-colors active:scale-95 shadow-sm"
+            className="w-10 h-10 rounded-full bg-white dark:bg-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700 flex items-center justify-center text-slate-700 dark:text-zinc-200 transition-colors active:scale-95 shadow-xs"
             aria-label="Go Back"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
 
-          <span className="text-sm font-bold text-semantic-text-primary uppercase tracking-wider">
+          <span className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
             {t('profile.title', 'My Account')}
           </span>
 
@@ -543,12 +543,12 @@ export default function Profile() {
             </div>
 
             {/* Bold User Name */}
-            <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight truncate">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight truncate">
               {userDisplayName}
             </h1>
 
             {/* User Phone */}
-            <p className="text-xs sm:text-sm text-semantic-text-secondary mt-0.5">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 mt-0.5">
               {userDisplayPhone}
             </p>
           </div>
@@ -557,7 +557,7 @@ export default function Profile() {
           <button
             type="button"
             onClick={() => setEditMode(true)}
-            className="shrink-0 px-4 py-1.5 rounded-full border border-semantic-border-medium hover:border-brand-500 text-xs font-semibold text-semantic-text-primary hover:text-brand-400 transition-colors shadow-sm active:scale-95"
+            className="shrink-0 px-4 py-1.5 rounded-full border border-slate-300 dark:border-zinc-700 hover:border-amber-500 bg-white dark:bg-zinc-800 text-xs font-semibold text-slate-800 dark:text-zinc-200 hover:text-amber-600 dark:hover:text-amber-400 transition-colors shadow-xs active:scale-95"
           >
             {!isProfileComplete ? t('profile.completeProfile', 'Complete') : t('profile.editProfile', 'Edit')}
           </button>
@@ -573,12 +573,12 @@ export default function Profile() {
               <button
                 type="button"
                 onClick={() => navigate('/admin')}
-                className="p-3 sm:p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-rose-500/40 hover:bg-surface-200/80 transition-all flex flex-col items-center justify-center text-center group shadow-sm active:scale-95"
+                className="p-3 sm:p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 hover:border-rose-500/40 hover:bg-slate-50 dark:hover:bg-zinc-800/80 transition-all flex flex-col items-center justify-center text-center group shadow-xs active:scale-95"
               >
-                <div className="w-10 h-10 rounded-xl bg-rose-500/15 flex items-center justify-center text-rose-400 mb-2 group-hover:scale-105 transition-transform">
+                <div className="w-10 h-10 rounded-xl bg-rose-500/15 flex items-center justify-center text-rose-500 dark:text-rose-400 mb-2 group-hover:scale-105 transition-transform">
                   <Shield className="w-5 h-5" />
                 </div>
-                <span className="text-xs font-bold text-semantic-text-primary group-hover:text-rose-400 leading-tight">
+                <span className="text-xs font-bold text-slate-900 dark:text-zinc-100 group-hover:text-rose-600 dark:group-hover:text-rose-400 leading-tight">
                   Admin Dashboard
                 </span>
               </button>
@@ -587,12 +587,12 @@ export default function Profile() {
               <button
                 type="button"
                 onClick={() => navigate('/admin?tab=workers')}
-                className="p-3 sm:p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-amber-500/40 hover:bg-surface-200/80 transition-all flex flex-col items-center justify-center text-center group shadow-sm active:scale-95"
+                className="p-3 sm:p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 hover:border-amber-500/40 hover:bg-slate-50 dark:hover:bg-zinc-800/80 transition-all flex flex-col items-center justify-center text-center group shadow-xs active:scale-95"
               >
-                <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center text-amber-400 mb-2 group-hover:scale-105 transition-transform">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-2 group-hover:scale-105 transition-transform">
                   <UserCheck className="w-5 h-5" />
                 </div>
-                <span className="text-xs font-bold text-semantic-text-primary group-hover:text-amber-400 leading-tight">
+                <span className="text-xs font-bold text-slate-900 dark:text-zinc-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 leading-tight">
                   Worker Approvals
                 </span>
               </button>
@@ -601,12 +601,12 @@ export default function Profile() {
               <button
                 type="button"
                 onClick={() => navigate('/admin?tab=notifications')}
-                className="p-3 sm:p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-brand-500/40 hover:bg-surface-200/80 transition-all flex flex-col items-center justify-center text-center group shadow-sm active:scale-95"
+                className="p-3 sm:p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 hover:border-amber-500/40 hover:bg-slate-50 dark:hover:bg-zinc-800/80 transition-all flex flex-col items-center justify-center text-center group shadow-xs active:scale-95"
               >
-                <div className="w-10 h-10 rounded-xl bg-brand-500/15 flex items-center justify-center text-brand-400 mb-2 group-hover:scale-105 transition-transform">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-2 group-hover:scale-105 transition-transform">
                   <Bell className="w-5 h-5" />
                 </div>
-                <span className="text-xs font-bold text-semantic-text-primary group-hover:text-brand-400 leading-tight">
+                <span className="text-xs font-bold text-slate-900 dark:text-zinc-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 leading-tight">
                   Platform Alerts
                 </span>
               </button>
@@ -617,12 +617,12 @@ export default function Profile() {
               <button
                 type="button"
                 onClick={() => navigate('/bookings')}
-                className="p-3 sm:p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-brand-500/40 hover:bg-surface-200/80 transition-all flex flex-col items-center justify-center text-center group shadow-sm active:scale-95"
+                className="p-3 sm:p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 hover:border-amber-500/40 hover:bg-slate-50 dark:hover:bg-zinc-800/80 transition-all flex flex-col items-center justify-center text-center group shadow-xs active:scale-95"
               >
-                <div className="w-10 h-10 rounded-xl bg-surface-200 group-hover:bg-brand-500/15 flex items-center justify-center text-brand-400 mb-2 transition-colors">
+                <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-zinc-800 group-hover:bg-amber-500/15 flex items-center justify-center text-amber-600 dark:text-brand-400 mb-2 transition-colors">
                   <ClipboardList className="w-5 h-5" />
                 </div>
-                <span className="text-xs font-bold text-semantic-text-primary group-hover:text-brand-400 leading-tight">
+                <span className="text-xs font-bold text-slate-900 dark:text-zinc-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 leading-tight">
                   {t('profile.myBookings', 'My bookings')}
                 </span>
               </button>
@@ -632,12 +632,12 @@ export default function Profile() {
                 <button
                   type="button"
                   onClick={handleToggleAvailability}
-                  className="p-3 sm:p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-emerald-500/40 hover:bg-surface-200/80 transition-all flex flex-col items-center justify-center text-center group shadow-sm active:scale-95"
+                  className="p-3 sm:p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 hover:border-emerald-500/40 hover:bg-slate-50 dark:hover:bg-zinc-800/80 transition-all flex flex-col items-center justify-center text-center group shadow-xs active:scale-95"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center text-emerald-400 mb-2">
-                    <Power className={`w-5 h-5 ${workerDetails?.is_available ? 'animate-pulse text-emerald-400' : 'text-amber-400'}`} />
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-2">
+                    <Power className={`w-5 h-5 ${workerDetails?.is_available ? 'animate-pulse text-emerald-600 dark:text-emerald-400' : 'text-amber-500'}`} />
                   </div>
-                  <span className="text-xs font-bold text-semantic-text-primary leading-tight">
+                  <span className="text-xs font-bold text-slate-900 dark:text-zinc-100 leading-tight">
                     {workerDetails?.is_available ? 'Online / Ready' : 'Offline'}
                   </span>
                 </button>
@@ -645,12 +645,12 @@ export default function Profile() {
                 <button
                   type="button"
                   onClick={() => navigate('/register/worker')}
-                  className="p-3 sm:p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-emerald-500/40 hover:bg-surface-200/80 transition-all flex flex-col items-center justify-center text-center group shadow-sm active:scale-95"
+                  className="p-3 sm:p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 hover:border-emerald-500/40 hover:bg-slate-50 dark:hover:bg-zinc-800/80 transition-all flex flex-col items-center justify-center text-center group shadow-xs active:scale-95"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center text-emerald-400 mb-2">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-2">
                     <Briefcase className="w-5 h-5" />
                   </div>
-                  <span className="text-xs font-bold text-semantic-text-primary group-hover:text-emerald-400 leading-tight">
+                  <span className="text-xs font-bold text-slate-900 dark:text-zinc-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 leading-tight">
                     {t('profile.becomeWorker', 'Earn with Kaamgar')}
                   </span>
                 </button>
@@ -660,12 +660,12 @@ export default function Profile() {
               <button
                 type="button"
                 onClick={() => openAssistant(isWorker ? 'worker_sarathi' : 'customer_care')}
-                className="p-3 sm:p-4 rounded-2xl bg-surface-100 border border-semantic-border-light hover:border-blue-500/40 hover:bg-surface-200/80 transition-all flex flex-col items-center justify-center text-center group shadow-sm active:scale-95"
+                className="p-3 sm:p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 hover:border-blue-500/40 hover:bg-slate-50 dark:hover:bg-zinc-800/80 transition-all flex flex-col items-center justify-center text-center group shadow-xs active:scale-95"
               >
-                <div className="w-10 h-10 rounded-xl bg-surface-200 group-hover:bg-blue-500/15 flex items-center justify-center text-blue-400 mb-2 transition-colors">
-                  <Bot className="w-5 h-5 text-brand-400" />
+                <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-zinc-800 group-hover:bg-blue-500/15 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-2 transition-colors">
+                  <Bot className="w-5 h-5 text-amber-600 dark:text-brand-400" />
                 </div>
-                <span className="text-xs font-bold text-semantic-text-primary group-hover:text-brand-400 leading-tight">
+                <span className="text-xs font-bold text-slate-900 dark:text-zinc-100 group-hover:text-amber-600 dark:group-hover:text-brand-400 leading-tight">
                   {isWorker ? 'सारथी AI' : t('profile.helpSupport', 'AI Support')}
                 </span>
               </button>
@@ -685,54 +685,54 @@ export default function Profile() {
             <>
               <div
                 onClick={() => navigate('/admin')}
-                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800/70 cursor-pointer transition-colors group"
               >
                 <div className="flex items-center gap-3.5">
-                  <Shield className="w-5 h-5 text-rose-400" />
-                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-rose-400">
+                  <Shield className="w-5 h-5 text-rose-500 dark:text-rose-400" />
+                  <span className="text-sm font-medium text-slate-900 dark:text-zinc-100 group-hover:text-rose-600 dark:group-hover:text-rose-400">
                     Admin Management Portal
                   </span>
                 </div>
-                <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-rose-400 group-hover:translate-x-0.5 transition-all" />
+                <ChevronRight className="w-4 h-4 text-slate-400 dark:text-zinc-500 group-hover:text-rose-500 group-hover:translate-x-0.5 transition-all" />
               </div>
 
               <div
                 onClick={() => navigate('/admin?tab=workers')}
-                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800/70 cursor-pointer transition-colors group"
               >
                 <div className="flex items-center gap-3.5">
-                  <UserCheck className="w-5 h-5 text-amber-400" />
-                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                  <UserCheck className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                  <span className="text-sm font-medium text-slate-900 dark:text-zinc-100 group-hover:text-amber-600 dark:group-hover:text-amber-400">
                     Pending Worker ID Approvals
                   </span>
                 </div>
-                <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+                <ChevronRight className="w-4 h-4 text-slate-400 dark:text-zinc-500 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all" />
               </div>
 
               <div
                 onClick={() => navigate('/admin?tab=notifications')}
-                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800/70 cursor-pointer transition-colors group"
               >
                 <div className="flex items-center gap-3.5">
-                  <Bell className="w-5 h-5 text-brand-400" />
-                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                  <Bell className="w-5 h-5 text-amber-600 dark:text-brand-400" />
+                  <span className="text-sm font-medium text-slate-900 dark:text-zinc-100 group-hover:text-amber-600 dark:group-hover:text-brand-400">
                     Platform Notifications & Alerts
                   </span>
                 </div>
-                <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+                <ChevronRight className="w-4 h-4 text-slate-400 dark:text-zinc-500 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all" />
               </div>
 
               <div
                 onClick={() => setShowAddressModal(true)}
-                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800/70 cursor-pointer transition-colors group"
               >
                 <div className="flex items-center gap-3.5">
-                  <MapPin className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
-                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                  <MapPin className="w-5 h-5 text-slate-500 dark:text-zinc-400 group-hover:text-amber-600 dark:group-hover:text-brand-400" />
+                  <span className="text-sm font-medium text-slate-900 dark:text-zinc-100 group-hover:text-amber-600 dark:group-hover:text-brand-400">
                     Service Localities (251001 & 251002)
                   </span>
                 </div>
-                <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+                <ChevronRight className="w-4 h-4 text-slate-400 dark:text-zinc-500 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all" />
               </div>
 
               <div
@@ -741,51 +741,51 @@ export default function Profile() {
                   setEmailModalError('')
                   setShowEmailModal(true)
                 }}
-                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800/70 cursor-pointer transition-colors group"
               >
                 <div className="flex items-center gap-3.5">
-                  <Mail className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
-                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                  <Mail className="w-5 h-5 text-slate-500 dark:text-zinc-400 group-hover:text-amber-600 dark:group-hover:text-brand-400" />
+                  <span className="text-sm font-medium text-slate-900 dark:text-zinc-100 group-hover:text-amber-600 dark:group-hover:text-brand-400">
                     Admin Email & Security
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-semantic-text-tertiary truncate max-w-[130px]">
+                  <span className="text-xs text-slate-500 dark:text-zinc-400 truncate max-w-[130px]">
                     {formData.email || 'Add Email'}
                   </span>
-                  <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+                  <ChevronRight className="w-4 h-4 text-slate-400 dark:text-zinc-500 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all" />
                 </div>
               </div>
 
               <div
                 onClick={toggleLanguage}
-                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800/70 cursor-pointer transition-colors group"
               >
                 <div className="flex items-center gap-3.5">
-                  <Globe className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
-                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                  <Globe className="w-5 h-5 text-slate-500 dark:text-zinc-400 group-hover:text-amber-600 dark:group-hover:text-brand-400" />
+                  <span className="text-sm font-medium text-slate-900 dark:text-zinc-100 group-hover:text-amber-600 dark:group-hover:text-brand-400">
                     {language === 'en' ? 'App Language' : 'ऐप की भाषा'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" size="sm" className="font-semibold text-brand-400 border-brand-500/30">
+                  <Badge variant="brand" size="sm" className="font-semibold">
                     {language === 'en' ? 'English' : 'हिंदी'}
                   </Badge>
-                  <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+                  <ChevronRight className="w-4 h-4 text-slate-400 dark:text-zinc-500 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all" />
                 </div>
               </div>
 
               <div
                 onClick={() => setShowLogoutModal(true)}
-                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-red-500/10 cursor-pointer transition-colors group"
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-rose-50 dark:hover:bg-red-500/10 cursor-pointer transition-colors group"
               >
                 <div className="flex items-center gap-3.5">
-                  <LogOut className="w-5 h-5 text-red-400" />
-                  <span className="text-sm font-medium text-red-400">
+                  <LogOut className="w-5 h-5 text-rose-500 dark:text-red-400" />
+                  <span className="text-sm font-medium text-rose-600 dark:text-red-400">
                     {t('nav.logout', 'Log out')}
                   </span>
                 </div>
-                <ChevronRight className="w-4 h-4 text-red-400/60 group-hover:translate-x-0.5 transition-all" />
+                <ChevronRight className="w-4 h-4 text-rose-400/60 group-hover:translate-x-0.5 transition-all" />
               </div>
             </>
           ) : (
@@ -794,68 +794,68 @@ export default function Profile() {
               {/* Row: My Bookings / Orders */}
               <div
                 onClick={() => navigate('/bookings')}
-                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800/70 cursor-pointer transition-colors group"
               >
                 <div className="flex items-center gap-3.5">
-                  <Calendar className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
-                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                  <Calendar className="w-5 h-5 text-slate-500 dark:text-zinc-400 group-hover:text-amber-600 dark:group-hover:text-brand-400" />
+                  <span className="text-sm font-medium text-slate-900 dark:text-zinc-100 group-hover:text-amber-600 dark:group-hover:text-brand-400">
                     {t('profile.myBookings', 'My bookings')}
                   </span>
                 </div>
-                <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+                <ChevronRight className="w-4 h-4 text-slate-400 dark:text-zinc-500 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all" />
               </div>
 
               {/* Row: Worker Dashboard (Worker only) */}
               {isWorker && (
                 <div
                   onClick={() => navigate('/worker/dashboard')}
-                  className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+                  className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800/70 cursor-pointer transition-colors group"
                 >
                   <div className="flex items-center gap-3.5">
-                    <Briefcase className="w-5 h-5 text-emerald-400" />
-                    <span className="text-sm font-medium text-semantic-text-primary group-hover:text-emerald-400">
+                    <Briefcase className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                    <span className="text-sm font-medium text-slate-900 dark:text-zinc-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400">
                       {t('nav.workerDashboard', 'Worker Dashboard')}
                     </span>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
+                  <ChevronRight className="w-4 h-4 text-slate-400 dark:text-zinc-500 group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all" />
                 </div>
               )}
 
               {/* Row: My Rating & Reviews */}
               <div
                 onClick={() => navigate('/bookings')}
-                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800/70 cursor-pointer transition-colors group"
               >
                 <div className="flex items-center gap-3.5">
-                  <Star className="w-5 h-5 text-amber-400" />
-                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                  <Star className="w-5 h-5 text-amber-500 dark:text-amber-400" />
+                  <span className="text-sm font-medium text-slate-900 dark:text-zinc-100 group-hover:text-amber-600 dark:group-hover:text-brand-400">
                     {t('profile.reviewsRatings', 'My rating & reviews')}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   {workerDetails && workerDetails.rating > 0 && (
-                    <span className="text-xs font-bold text-amber-400">
+                    <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
                       ★ {workerDetails.rating.toFixed(1)}
                     </span>
                   )}
-                  <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+                  <ChevronRight className="w-4 h-4 text-slate-400 dark:text-zinc-500 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all" />
                 </div>
               </div>
 
               {/* Row: Manage Addresses & Localities */}
               <div
                 onClick={() => setShowAddressModal(true)}
-                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800/70 cursor-pointer transition-colors group"
               >
                 <div className="flex items-center gap-3.5">
-                  <MapPin className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
-                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                  <MapPin className="w-5 h-5 text-slate-500 dark:text-zinc-400 group-hover:text-amber-600 dark:group-hover:text-brand-400" />
+                  <span className="text-sm font-medium text-slate-900 dark:text-zinc-100 group-hover:text-amber-600 dark:group-hover:text-brand-400">
                     {t('profile.manageAddresses', 'Manage addresses & localities')}
                   </span>
                 </div>
-                <div className="flex items-center gap-1 text-xs text-semantic-text-tertiary">
+                <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-zinc-400">
                   <span>Muzaffarnagar</span>
-                  <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+                  <ChevronRight className="w-4 h-4 text-slate-400 dark:text-zinc-500 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all" />
                 </div>
               </div>
 
@@ -866,100 +866,100 @@ export default function Profile() {
                   setEmailModalError('')
                   setShowEmailModal(true)
                 }}
-                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800/70 cursor-pointer transition-colors group"
               >
                 <div className="flex items-center gap-3.5">
-                  <Mail className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
-                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                  <Mail className="w-5 h-5 text-slate-500 dark:text-zinc-400 group-hover:text-amber-600 dark:group-hover:text-brand-400" />
+                  <span className="text-sm font-medium text-slate-900 dark:text-zinc-100 group-hover:text-amber-600 dark:group-hover:text-brand-400">
                     {t('profile.emailReceipts', 'Email & notifications')}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-semantic-text-tertiary truncate max-w-[130px]">
+                  <span className="text-xs text-slate-500 dark:text-zinc-400 truncate max-w-[130px]">
                     {formData.email || 'Add Email'}
                   </span>
-                  <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+                  <ChevronRight className="w-4 h-4 text-slate-400 dark:text-zinc-500 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all" />
                 </div>
               </div>
 
               {/* Row: App Language Toggle */}
               <div
                 onClick={toggleLanguage}
-                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800/70 cursor-pointer transition-colors group"
               >
                 <div className="flex items-center gap-3.5">
-                  <Globe className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
-                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                  <Globe className="w-5 h-5 text-slate-500 dark:text-zinc-400 group-hover:text-amber-600 dark:group-hover:text-brand-400" />
+                  <span className="text-sm font-medium text-slate-900 dark:text-zinc-100 group-hover:text-amber-600 dark:group-hover:text-brand-400">
                     {language === 'en' ? 'App Language' : 'ऐप की भाषा'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" size="sm" className="font-semibold text-brand-400 border-brand-500/30">
+                  <Badge variant="brand" size="sm" className="font-semibold">
                     {language === 'en' ? 'English' : 'हिंदी'}
                   </Badge>
-                  <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+                  <ChevronRight className="w-4 h-4 text-slate-400 dark:text-zinc-500 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all" />
                 </div>
               </div>
 
               {/* Row: Dedicated PWA Install Button (Strictly in Profile section as instructed) */}
               <div
                 onClick={() => triggerPWAInstall()}
-                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800/70 cursor-pointer transition-colors group"
               >
                 <div className="flex items-center gap-3.5">
-                  <Smartphone className="w-5 h-5 text-brand-400" />
-                  <span className="text-sm font-medium text-brand-400 font-semibold">
+                  <Smartphone className="w-5 h-5 text-amber-600 dark:text-brand-400" />
+                  <span className="text-sm font-semibold text-amber-700 dark:text-brand-400">
                     {t('pwa.installApp', 'Install Mobile App')}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] bg-brand-500/15 text-brand-300 font-bold px-2 py-0.5 rounded-full border border-brand-500/30">
+                  <span className="text-[10px] bg-amber-500/15 text-amber-800 dark:text-brand-300 font-bold px-2 py-0.5 rounded-full border border-amber-500/30">
                     Fast & Offline
                   </span>
-                  <ChevronRight className="w-4 h-4 text-brand-400 group-hover:translate-x-0.5 transition-all" />
+                  <ChevronRight className="w-4 h-4 text-amber-600 dark:text-brand-400 group-hover:translate-x-0.5 transition-all" />
                 </div>
               </div>
 
               {/* Row: Help Center & AI Assistant */}
               <div
                 onClick={() => openAssistant(isWorker ? 'worker_sarathi' : 'customer_care')}
-                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800/70 cursor-pointer transition-colors group"
               >
                 <div className="flex items-center gap-3.5">
-                  <HelpCircle className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
-                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                  <HelpCircle className="w-5 h-5 text-slate-500 dark:text-zinc-400 group-hover:text-amber-600 dark:group-hover:text-brand-400" />
+                  <span className="text-sm font-medium text-slate-900 dark:text-zinc-100 group-hover:text-amber-600 dark:group-hover:text-brand-400">
                     {t('profile.faqsHelp', 'Help Center & FAQs')}
                   </span>
                 </div>
-                <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+                <ChevronRight className="w-4 h-4 text-slate-400 dark:text-zinc-500 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all" />
               </div>
 
               {/* Row: About Kaamgar */}
               <div
                 onClick={() => navigate('/')}
-                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-surface-100 cursor-pointer transition-colors group"
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800/70 cursor-pointer transition-colors group"
               >
                 <div className="flex items-center gap-3.5">
-                  <Info className="w-5 h-5 text-semantic-text-secondary group-hover:text-brand-400" />
-                  <span className="text-sm font-medium text-semantic-text-primary group-hover:text-brand-400">
+                  <Info className="w-5 h-5 text-slate-500 dark:text-zinc-400 group-hover:text-amber-600 dark:group-hover:text-brand-400" />
+                  <span className="text-sm font-medium text-slate-900 dark:text-zinc-100 group-hover:text-amber-600 dark:group-hover:text-brand-400">
                     {t('profile.aboutApp', 'About Muzaffarnagar Kaamgar')}
                   </span>
                 </div>
-                <ChevronRight className="w-4 h-4 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
+                <ChevronRight className="w-4 h-4 text-slate-400 dark:text-zinc-500 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all" />
               </div>
 
               {/* Row: Log Out */}
               <div
                 onClick={() => setShowLogoutModal(true)}
-                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-red-500/10 cursor-pointer transition-colors group"
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-rose-50 dark:hover:bg-red-500/10 cursor-pointer transition-colors group"
               >
                 <div className="flex items-center gap-3.5">
-                  <LogOut className="w-5 h-5 text-red-400" />
-                  <span className="text-sm font-medium text-red-400">
+                  <LogOut className="w-5 h-5 text-rose-500 dark:text-red-400" />
+                  <span className="text-sm font-medium text-rose-600 dark:text-red-400">
                     {t('nav.logout', 'Log out')}
                   </span>
                 </div>
-                <ChevronRight className="w-4 h-4 text-red-400/60 group-hover:translate-x-0.5 transition-all" />
+                <ChevronRight className="w-4 h-4 text-rose-400/60 group-hover:translate-x-0.5 transition-all" />
               </div>
             </>
           )}
@@ -970,28 +970,28 @@ export default function Profile() {
         {/* ===================================================================== */}
         {!isAdmin && (
           <>
-            <div className="border-t border-semantic-border-light/60 my-6" />
-            <div className="p-5 rounded-3xl bg-gradient-to-r from-purple-950/40 via-surface-100 to-brand-500/10 border border-purple-500/30 flex items-center justify-between gap-4 shadow-xl">
+            <div className="border-t border-slate-200/80 dark:border-semantic-border-light/60 my-6" />
+            <div className="p-5 rounded-3xl bg-gradient-to-r from-purple-50 via-white to-amber-50 dark:from-purple-950/40 dark:via-zinc-900 dark:to-brand-500/10 border border-purple-200/80 dark:border-purple-500/30 flex items-center justify-between gap-4 shadow-sm dark:shadow-xl">
               <div className="flex-1 min-w-0">
-                <h3 className="text-sm sm:text-base font-extrabold text-white mb-1">
+                <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white mb-1">
                   {t('profile.referTitle', 'Share Kaamgar & Earn Goodwill')}
                 </h3>
-                <p className="text-xs text-semantic-text-secondary leading-relaxed mb-3">
+                <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed mb-3">
                   {t('profile.referDesc', 'Help your friends and family find verified local electricians, plumbers, and technicians without middlemen.')}
                 </p>
                 <Button
                   variant="primary"
                   size="sm"
                   onClick={handleShareApp}
-                  className="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-1.5 shadow-md shadow-purple-600/30 flex items-center gap-1.5"
+                  className="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-1.5 shadow-md shadow-purple-600/30 flex items-center gap-1.5 cursor-pointer"
                 >
                   <Share2 className="w-3.5 h-3.5" />
                   <span>{t('profile.referNow', 'Refer now')}</span>
                 </Button>
               </div>
 
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 shrink-0 shadow-inner">
-                <Gift className="w-8 h-8 sm:w-10 sm:h-10 text-purple-300" />
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-purple-100 dark:bg-purple-500/20 border border-purple-200 dark:border-purple-500/30 flex items-center justify-center text-purple-600 dark:text-purple-300 shrink-0 shadow-inner">
+                <Gift className="w-8 h-8 sm:w-10 sm:h-10 text-purple-600 dark:text-purple-300" />
               </div>
             </div>
           </>
@@ -1009,7 +1009,7 @@ export default function Profile() {
       >
         <div className="space-y-4 pt-2 max-h-[75vh] overflow-y-auto px-1">
           {/* Avatar Photo Upload */}
-          <div className="flex items-center gap-4 p-3 bg-surface-200/50 rounded-2xl border border-semantic-border-light">
+          <div className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-zinc-800 rounded-2xl border border-slate-200 dark:border-zinc-700">
             <div className="relative">
               <Avatar
                 name={formData.name}
@@ -1021,7 +1021,7 @@ export default function Profile() {
                 type="button"
                 onClick={() => avatarInputRef.current?.click()}
                 disabled={isUploadingAvatar}
-                className="absolute -bottom-1 -right-1 p-1.5 bg-brand-500 text-surface-950 rounded-full shadow hover:bg-brand-400"
+                className="absolute -bottom-1 -right-1 p-1.5 bg-amber-500 text-slate-950 rounded-full shadow hover:bg-amber-400 cursor-pointer"
                 title="Change photo"
               >
                 {isUploadingAvatar ? (
@@ -1039,18 +1039,18 @@ export default function Profile() {
               />
             </div>
             <div>
-              <p className="text-xs font-bold text-semantic-text-primary">Profile Photo</p>
-              <p className="text-[11px] text-semantic-text-tertiary">PNG, JPG or WebP (Max 5MB)</p>
+              <p className="text-xs font-bold text-slate-900 dark:text-zinc-100">Profile Photo</p>
+              <p className="text-[11px] text-slate-500 dark:text-zinc-400">PNG, JPG or WebP (Max 5MB)</p>
             </div>
           </div>
 
           {avatarUploadError && (
-            <p className="text-xs text-red-400">{avatarUploadError}</p>
+            <p className="text-xs text-rose-500">{avatarUploadError}</p>
           )}
 
           {/* Full Name */}
           <div>
-            <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 uppercase mb-1">
               Full Name
             </label>
             <Input
@@ -1063,20 +1063,20 @@ export default function Profile() {
 
           {/* Phone Number */}
           <div>
-            <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 uppercase mb-1">
               Phone Number
             </label>
             <Input
               value={formData.phone}
               onChange={e => setFormData(prev => ({ ...prev, phone: e.target.value }))}
               placeholder="+919876543210"
-              leftIcon={<Phone className="w-4 h-4 text-semantic-text-tertiary" />}
+              leftIcon={<Phone className="w-4 h-4 text-slate-400 dark:text-zinc-500" />}
             />
           </div>
 
           {/* Email / Gmail */}
           <div>
-            <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 uppercase mb-1">
               Email / Gmail Address
             </label>
             <Input
@@ -1084,19 +1084,19 @@ export default function Profile() {
               value={formData.email}
               onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))}
               placeholder="name@gmail.com"
-              leftIcon={<Mail className="w-4 h-4 text-semantic-text-tertiary" />}
+              leftIcon={<Mail className="w-4 h-4 text-slate-400 dark:text-zinc-500" />}
             />
           </div>
 
           {/* Language Selection */}
           <div>
-            <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 uppercase mb-1">
               Language Preference
             </label>
             <select
               value={formData.language}
               onChange={e => setFormData(prev => ({ ...prev, language: e.target.value as 'en' | 'hi' }))}
-              className="w-full bg-surface-200 border border-semantic-border-medium rounded-lg p-2.5 text-sm text-semantic-text-primary focus:outline-none focus:border-brand-500"
+              className="w-full bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl p-2.5 text-sm text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-amber-500"
             >
               <option value="en">English</option>
               <option value="hi">हिंदी (Hindi)</option>
@@ -1105,19 +1105,19 @@ export default function Profile() {
 
           {/* Worker Specific Fields */}
           {isWorker && (
-            <div className="pt-3 border-t border-semantic-border-light space-y-3">
-              <h4 className="font-bold text-xs text-brand-400 uppercase tracking-wider">
+            <div className="pt-3 border-t border-slate-200 dark:border-zinc-800 space-y-3">
+              <h4 className="font-bold text-xs text-amber-600 dark:text-brand-400 uppercase tracking-wider">
                 Worker Trade & Details
               </h4>
 
               <div>
-                <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 uppercase mb-1">
                   Primary Trade
                 </label>
                 <select
                   value={formData.category}
                   onChange={e => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                  className="w-full bg-surface-200 border border-semantic-border-medium rounded-lg p-2.5 text-sm text-semantic-text-primary focus:outline-none focus:border-brand-500 capitalize"
+                  className="w-full bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl p-2.5 text-sm text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-amber-500 capitalize"
                 >
                   <option value="">Select Primary Trade</option>
                   {CATEGORIES.map(cat => (
@@ -1129,7 +1129,7 @@ export default function Profile() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 uppercase mb-1">
                   Years of Experience
                 </label>
                 <Input
@@ -1143,21 +1143,21 @@ export default function Profile() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 uppercase mb-1">
                   About your work (Bio)
                 </label>
                 <textarea
                   value={formData.bio}
                   onChange={e => setFormData(prev => ({ ...prev, bio: e.target.value }))}
                   rows={3}
-                  className="w-full bg-surface-200 border border-semantic-border-medium rounded-lg p-2.5 text-sm text-semantic-text-primary focus:outline-none focus:border-brand-500"
+                  className="w-full bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl p-2.5 text-sm text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-amber-500"
                   placeholder="Describe your skills, tools, and specialty..."
                 />
               </div>
 
               {/* ID Proof upload */}
               <div>
-                <label className="block text-xs font-semibold text-semantic-text-secondary uppercase mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 uppercase mb-1">
                   ID Proof Document (Aadhaar / Voter ID)
                 </label>
                 <div className="flex items-center gap-2">
@@ -1169,7 +1169,7 @@ export default function Profile() {
                     disabled={isUploadingIdProof}
                     className="text-xs"
                   >
-                    <UploadCloud className="w-3.5 h-3.5 mr-1 text-brand-400" />
+                    <UploadCloud className="w-3.5 h-3.5 mr-1 text-amber-600 dark:text-brand-400" />
                     {formData.id_proof_url ? 'Replace Document' : 'Upload ID Proof'}
                   </Button>
                   <input
@@ -1180,7 +1180,7 @@ export default function Profile() {
                     onChange={handleIdProofFileSelect}
                   />
                   {formData.id_proof_url && (
-                    <span className="text-xs text-emerald-400 flex items-center gap-1 font-medium">
+                    <span className="text-xs text-emerald-700 dark:text-emerald-400 flex items-center gap-1 font-semibold">
                       <Check className="w-3 h-3" /> Attached
                     </span>
                   )}
@@ -1229,43 +1229,43 @@ export default function Profile() {
             className="flex items-center justify-between p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 transition-colors group"
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                 <MessageCircle className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-xs font-bold text-white group-hover:text-emerald-300">
+                <p className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-300">
                   WhatsApp Support Chat
                 </p>
-                <p className="text-[11px] text-semantic-text-secondary">
+                <p className="text-[11px] text-slate-500 dark:text-zinc-400">
                   Instant replies (8:00 AM - 9:00 PM)
                 </p>
               </div>
             </div>
-            <ChevronRight className="w-4 h-4 text-emerald-400" />
+            <ChevronRight className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
           </a>
 
           {/* Emergency Phone Helpline */}
           <a
             href="tel:+918077362606"
-            className="flex items-center justify-between p-3.5 rounded-2xl bg-surface-200 border border-semantic-border-light hover:bg-surface-300 transition-colors group"
+            className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-750 transition-colors group"
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-brand-500/20 flex items-center justify-center text-brand-400">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-600 dark:text-brand-400">
                 <PhoneCall className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-xs font-bold text-white group-hover:text-brand-300">
+                <p className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-brand-300">
                   Call Support Line
                 </p>
-                <p className="text-[11px] text-semantic-text-secondary">
+                <p className="text-[11px] text-slate-500 dark:text-zinc-400">
                   +91 8077362606
                 </p>
               </div>
             </div>
-            <ChevronRight className="w-4 h-4 text-semantic-text-tertiary" />
+            <ChevronRight className="w-4 h-4 text-slate-400 dark:text-zinc-500" />
           </a>
 
-          <div className="pt-2 text-center text-xs text-semantic-text-tertiary">
+          <div className="pt-2 text-center text-xs text-slate-500 dark:text-zinc-400">
             <p>Official City Initiative for Muzaffarnagar, Uttar Pradesh</p>
           </div>
         </div>
@@ -1284,22 +1284,22 @@ export default function Profile() {
           {MUZAFFARNAGAR_PINCODES.map(pincode => (
             <div
               key={pincode}
-              className="p-3.5 rounded-2xl bg-surface-200/70 border border-semantic-border-light flex items-center justify-between"
+              className="p-3.5 rounded-2xl bg-slate-50 dark:bg-zinc-800/70 border border-slate-200 dark:border-zinc-700 flex items-center justify-between"
             >
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                   <MapPin className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-white">
+                  <p className="text-xs font-bold text-slate-900 dark:text-white">
                     {pincode === '251001' ? 'City / New Mandi' : 'Cantt / Civil Lines'}
                   </p>
-                  <p className="text-[11px] text-semantic-text-tertiary">
+                  <p className="text-[11px] text-slate-500 dark:text-zinc-400">
                     Pincode: {pincode} • Active Coverage
                   </p>
                 </div>
               </div>
-              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full">
+              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/30">
                 Active
               </span>
             </div>

@@ -46,7 +46,7 @@ export function Avatar({ src, name, alt, size = 'md', className = '' }: { src?: 
 }
 export function AvatarGroup({ children, className = '' }: { children: ReactNode; className?: string }) { return <div className={`flex -space-x-2 ${className}`}>{children}</div> }
 
-export function Badge({ variant = 'default', size = 'md', dot, className = '', children, ...props }: HTMLAttributes<HTMLSpanElement> & { variant?: 'default' | 'success' | 'warning' | 'danger' | 'info' | 'primary' | 'outline'; size?: 'sm' | 'md' | 'lg'; dot?: boolean }) {
+export function Badge({ variant = 'default', size = 'md', dot, className = '', children, ...props }: HTMLAttributes<HTMLSpanElement> & { variant?: 'default' | 'success' | 'warning' | 'danger' | 'info' | 'primary' | 'brand' | 'outline'; size?: 'sm' | 'md' | 'lg'; dot?: boolean }) {
   const colors = {
     default: 'bg-slate-100 text-slate-700 border border-slate-200/80 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700',
     success: 'bg-emerald-50 text-emerald-700 border border-emerald-200/80 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800/50',
@@ -54,6 +54,7 @@ export function Badge({ variant = 'default', size = 'md', dot, className = '', c
     danger: 'bg-rose-50 text-rose-700 border border-rose-200/80 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800/50',
     info: 'bg-sky-50 text-sky-700 border border-sky-200/80 dark:bg-sky-950/60 dark:text-sky-300 dark:border-sky-800/50',
     primary: 'bg-amber-50 text-amber-800 border border-amber-200/80 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800/50',
+    brand: 'bg-amber-50 text-amber-800 border border-amber-200/80 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800/50',
     outline: 'border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 bg-transparent',
   }
   const sizeClasses = {
@@ -98,7 +99,7 @@ export function Modal({ isOpen, onClose, title, description, children, size = 'm
 export function ConfirmModal({ isOpen, onClose, onConfirm, title, message, confirmText = 'Confirm', cancelText = 'Cancel', loading }: { isOpen: boolean; onClose: () => void; onConfirm: () => void; title: string; message: string; confirmText?: string; cancelText?: string; loading?: boolean }) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
-      <p className="mb-6 text-semantic-text-secondary text-sm">{message}</p>
+      <p className="mb-6 text-slate-600 dark:text-zinc-400 text-sm">{message}</p>
       <div className="flex justify-end gap-3">
         <Button variant="secondary" onClick={onClose}>{cancelText}</Button>
         <Button onClick={onConfirm} loading={loading}>{confirmText}</Button>

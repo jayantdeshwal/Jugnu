@@ -271,11 +271,11 @@ export default function Home() {
               relative rounded-2xl border transition-all duration-200 flex items-center px-3 sm:px-4 py-2 sm:py-2.5 shadow-sm
               ${isSearchOpen
                 ? 'bg-white dark:bg-zinc-900 border-amber-500/80 ring-2 ring-amber-500/20'
-                : 'bg-slate-50 dark:bg-zinc-850 hover:bg-white dark:hover:bg-zinc-800 border-slate-200 dark:border-zinc-700 hover:border-amber-500/50'
+                : 'bg-slate-50 dark:bg-zinc-800 hover:bg-white dark:hover:bg-zinc-700 border-slate-200 dark:border-zinc-700 hover:border-amber-500/50'
               }
             `}
           >
-            <Search className="w-4 h-4 sm:w-5 sm:h-5 text-brand-400 shrink-0 mr-2.5" />
+            <Search className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 dark:text-brand-400 shrink-0 mr-2.5" />
             <input
               ref={searchInputRef}
               type="text"
@@ -284,7 +284,7 @@ export default function Home() {
               onClick={() => setIsSearchOpen(true)}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder={`${t('common.search', 'Search for')} '${placeholders[placeholderIndex]}' ...`}
-              className="w-full bg-transparent text-xs sm:text-sm text-semantic-text-primary placeholder:text-semantic-text-tertiary focus:outline-none"
+              className="w-full bg-transparent text-xs sm:text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:outline-none"
               aria-label="Search services or artisans"
             />
 
@@ -293,7 +293,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="p-1 text-semantic-text-tertiary hover:text-semantic-text-primary mr-1 cursor-pointer"
+                className="p-1 text-slate-400 hover:text-slate-700 dark:text-zinc-500 dark:hover:text-zinc-200 mr-1 cursor-pointer"
                 aria-label="Clear search text"
               >
                 <X className="w-4 h-4" />
@@ -302,7 +302,7 @@ export default function Home() {
 
             {/* Active filters indicator badge */}
             {(selectedCategory || selectedArea) && (
-              <span className="mr-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-500/20 text-brand-300 border border-brand-500/40 hidden sm:inline-block">
+              <span className="mr-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-brand-500/20 text-amber-800 dark:text-brand-300 border border-amber-300 dark:border-brand-500/40 hidden sm:inline-block">
                 Active Filter
               </span>
             )}
@@ -455,7 +455,7 @@ export default function Home() {
                               <Icon className="w-4 h-4" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="text-xs font-semibold truncate">
+                              <p className="text-xs font-semibold truncate text-slate-900 dark:text-zinc-100">
                                 {getCategoryName(cat, i18n.language === 'hi' ? 'hi' : 'en')}
                               </p>
                               <p className="text-[10px] text-slate-500 dark:text-zinc-400 truncate">
@@ -1177,7 +1177,7 @@ export default function Home() {
             <motion.div
               whileHover={{ y: -3, scale: 1.01 }}
               transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-              className="p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-amber-50/60 via-white to-slate-50 dark:from-surface-900 dark:to-surface-850 border border-amber-200/70 dark:border-semantic-border-light relative overflow-hidden flex flex-col justify-between shadow-lg"
+              className="p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-amber-50/70 via-white to-slate-50 dark:from-zinc-900 dark:to-zinc-800 border border-amber-200/80 dark:border-zinc-800 relative overflow-hidden flex flex-col justify-between shadow-md dark:shadow-lg"
             >
               <div className="absolute -top-12 -right-12 w-40 h-40 bg-amber-500/10 dark:bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
               <div>
@@ -1187,7 +1187,7 @@ export default function Home() {
                 <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1.5">
                   {t('homeCta.customerCardTitle')}
                 </h3>
-                <p className="text-xs text-slate-600 dark:text-semantic-text-secondary leading-relaxed mb-5">
+                <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed mb-5">
                   {t('homeCta.customerCardSubtitle')}
                 </p>
               </div>
@@ -1209,7 +1209,7 @@ export default function Home() {
             <motion.div
               whileHover={{ y: -3, scale: 1.01 }}
               transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-              className="p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-emerald-50/60 via-white to-slate-50 dark:from-surface-900 dark:to-surface-850 border border-emerald-200/80 dark:border-emerald-500/30 relative overflow-hidden flex flex-col justify-between shadow-lg"
+              className="p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-emerald-50/70 via-white to-slate-50 dark:from-zinc-900 dark:to-zinc-800 border border-emerald-200/80 dark:border-emerald-500/30 relative overflow-hidden flex flex-col justify-between shadow-md dark:shadow-lg"
             >
               <div className="absolute -top-12 -right-12 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
               <div>
@@ -1219,7 +1219,7 @@ export default function Home() {
                 <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1.5">
                   {t('homeCta.workerCardTitle')}
                 </h3>
-                <p className="text-xs text-slate-600 dark:text-semantic-text-secondary leading-relaxed mb-5">
+                <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed mb-5">
                   {t('homeCta.workerCardSubtitle')}
                 </p>
               </div>

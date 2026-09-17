@@ -658,7 +658,7 @@ export default function Register() {
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider mb-1.5">
                     {t('registerPage.serviceAreas', 'Service Areas in Muzaffarnagar *')}
                   </label>
-                  <div className="flex flex-wrap gap-2 p-2 bg-slate-50 dark:bg-zinc-850 border border-slate-200 dark:border-zinc-750 rounded-xl">
+                  <div className="flex flex-wrap gap-2 p-2 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl">
                     {MUZAFFARNAGAR_PINCODES.map(pincode => {
                       const selected = workerAreas.includes(pincode)
                       return (

@@ -143,15 +143,15 @@
   }
 
   .btn-secondary {
-    @apply btn bg-surface-100 text-semantic-text-primary border border-semantic-border-light hover:bg-surface-200 active:bg-surface-300 focus-visible:ring-surface-400;
+    @apply btn bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-700 active:bg-slate-200 shadow-xs focus-visible:ring-amber-500;
   }
 
   .btn-outline {
-    @apply btn border-2 border-brand-600 text-brand-600 hover:bg-brand-50 active:bg-brand-100 focus-visible:ring-brand-500;
+    @apply btn border-2 border-amber-600 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 active:bg-amber-100 focus-visible:ring-amber-500;
   }
 
   .btn-ghost {
-    @apply btn text-semantic-text-secondary hover:bg-surface-100 active:bg-surface-200 focus-visible:ring-surface-400;
+    @apply btn text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-800/80 focus-visible:ring-amber-500;
   }
 
   .btn-danger {
@@ -169,7 +169,7 @@
   .input {
     @apply w-full px-4 py-3 bg-semantic-bg-primary text-semantic-text-primary border border-semantic-border-medium rounded-lg placeholder:text-semantic-text-tertiary transition-all duration-fast;
     @apply focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500;
-    @apply disabled:bg-surface-100 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply disabled:bg-slate-100 dark:disabled:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50;
     &[aria-invalid='true'] {
       @apply border-danger-500;
     }
@@ -207,7 +207,7 @@
   }
 
   .card-filled {
-    @apply bg-surface-50 border border-semantic-border-light rounded-xl;
+    @apply bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-800 rounded-xl;
   }
 
   .glass {
@@ -235,13 +235,13 @@
   .badge-md { @apply px-2.5 py-0.5 text-xs; }
   .badge-lg { @apply px-3 py-1 text-sm; }
 
-  .badge-default { @apply badge bg-surface-100 text-semantic-text-secondary; }
+  .badge-default { @apply badge bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700; }
   .badge-success { @apply badge bg-success-50 text-success-700 dark:bg-success-900/30 dark:text-success-400; }
   .badge-warning { @apply badge bg-warning-50 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400; }
   .badge-danger { @apply badge bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400; }
   .badge-info { @apply badge bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400; }
   .badge-brand { @apply badge bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-400; }
-  .badge-outline { @apply badge border border-semantic-border-medium bg-transparent text-semantic-text-secondary; }
+  .badge-outline { @apply badge border border-slate-300 dark:border-zinc-700 bg-transparent text-slate-700 dark:text-zinc-300; }
 
   .avatar {
     @apply inline-flex items-center justify-center rounded-full bg-brand-100 font-medium text-brand-700 overflow-hidden;
@@ -255,7 +255,7 @@
   .avatar-2xl { @apply h-20 w-20 text-2xl; }
 
   .skeleton {
-    @apply animate-pulse-soft bg-surface-200 dark:bg-surface-700 rounded;
+    @apply animate-pulse-soft bg-slate-200 dark:bg-zinc-800 rounded;
   }
 
   .skeleton-text {

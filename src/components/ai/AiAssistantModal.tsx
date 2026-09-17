@@ -124,26 +124,26 @@ export default function AiAssistantModal() {
       aria-modal="true"
       aria-label="Kaamgar AI Assistant"
     >
-      <div className="w-full sm:max-w-lg h-[92vh] sm:h-[650px] max-h-[92vh] bg-surface-100 border border-semantic-border-medium rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden text-semantic-text-primary">
+      <div className="w-full sm:max-w-lg h-[92vh] sm:h-[650px] max-h-[92vh] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden text-slate-900 dark:text-zinc-100">
         {/* Top Handle for mobile drag visual */}
-        <div className="w-12 h-1.5 bg-surface-300 rounded-full mx-auto mt-2.5 sm:hidden" />
+        <div className="w-12 h-1.5 bg-slate-300 dark:bg-zinc-700 rounded-full mx-auto mt-2.5 sm:hidden" />
 
         {/* Header Bar */}
-        <div className="px-4 py-3.5 border-b border-semantic-border-light/80 bg-surface-200/60 flex items-center justify-between">
+        <div className="px-4 py-3.5 border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/80 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-500/20 to-emerald-500/20 border border-brand-500/30 flex items-center justify-center text-xl shadow-inner">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500/20 to-emerald-500/20 border border-amber-500/30 flex items-center justify-center text-xl shadow-inner">
               {currentConfig.avatar}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-white tracking-tight">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
                   {isHindi ? currentConfig.nameHi : currentConfig.nameEn}
                 </h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">
                   {isHindi ? currentConfig.badgeHi : currentConfig.badgeEn}
                 </span>
               </div>
-              <p className="text-[11px] text-semantic-text-secondary">
+              <p className="text-[11px] text-slate-500 dark:text-zinc-400">
                 {isHindi ? currentConfig.roleTitleHi : currentConfig.roleTitleEn}
               </p>
             </div>
@@ -152,7 +152,7 @@ export default function AiAssistantModal() {
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => clearHistory(activePersona)}
-              className="p-1.5 rounded-xl text-semantic-text-tertiary hover:text-white hover:bg-surface-300 transition-colors"
+              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-200 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-700 transition-colors cursor-pointer"
               title={isHindi ? 'बातचीत रीसेट करें' : 'Reset Conversation'}
               aria-label="Reset Chat"
             >
@@ -160,7 +160,7 @@ export default function AiAssistantModal() {
             </button>
             <button
               onClick={closeAssistant}
-              className="p-1.5 rounded-xl text-semantic-text-tertiary hover:text-white hover:bg-surface-300 transition-colors"
+              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-200 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-700 transition-colors cursor-pointer"
               aria-label="Close Assistant"
             >
               <X className="w-5 h-5" />
@@ -169,14 +169,14 @@ export default function AiAssistantModal() {
         </div>
 
         {/* Persona Switcher Tabs */}
-        <div className="px-3 py-2 bg-surface-200/30 border-b border-semantic-border-light/40 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+        <div className="px-3 py-2 bg-slate-50/80 dark:bg-zinc-850/80 border-b border-slate-200 dark:border-zinc-800 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
           {/* Persona 1: Customer Booking Mitra */}
           <button
             onClick={() => switchPersona('customer_booking')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               activePersona === 'customer_booking'
-                ? 'bg-brand-500 text-white shadow-sm'
-                : 'bg-surface-200/60 text-semantic-text-secondary hover:text-white hover:bg-surface-300'
+                ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
+                : 'bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-zinc-700'
             }`}
           >
             <span>🛠️</span>
@@ -186,10 +186,10 @@ export default function AiAssistantModal() {
           {/* Persona 2: Customer Support & Resolution */}
           <button
             onClick={() => switchPersona('customer_care')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               activePersona === 'customer_care'
-                ? 'bg-emerald-600 text-white shadow-sm'
-                : 'bg-surface-200/60 text-semantic-text-secondary hover:text-white hover:bg-surface-300'
+                ? 'bg-emerald-600 text-white font-bold shadow-xs'
+                : 'bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-zinc-750'
             }`}
           >
             <Shield className="w-3.5 h-3.5" />
@@ -199,10 +199,10 @@ export default function AiAssistantModal() {
           {/* Persona 3: Worker Sarathi Coach */}
           <button
             onClick={() => switchPersona('worker_sarathi')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               activePersona === 'worker_sarathi'
-                ? 'bg-amber-600 text-white shadow-sm'
-                : 'bg-surface-200/60 text-semantic-text-secondary hover:text-white hover:bg-surface-300'
+                ? 'bg-amber-600 text-white font-bold shadow-xs'
+                : 'bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-zinc-750'
             }`}
           >
             <Briefcase className="w-3.5 h-3.5" />
@@ -211,14 +211,14 @@ export default function AiAssistantModal() {
         </div>
 
         {/* Quick Suggestion Chips Carousel */}
-        <div className="px-3 py-2 bg-surface-200/20 border-b border-semantic-border-light/30 overflow-x-auto no-scrollbar">
+        <div className="px-3 py-2 bg-slate-50/50 dark:bg-zinc-900/50 border-b border-slate-200 dark:border-zinc-800 overflow-x-auto no-scrollbar">
           <div className="flex items-center gap-1.5 w-max">
             {currentConfig.chips.map(chip => (
               <button
                 key={chip.id}
                 onClick={() => handleChipClick(chip.query)}
                 disabled={isTyping}
-                className="px-2.5 py-1 rounded-xl text-[11px] font-medium bg-surface-200 hover:bg-surface-300 text-semantic-text-secondary hover:text-white border border-semantic-border-light/60 transition-colors whitespace-nowrap"
+                className="px-2.5 py-1 rounded-xl text-[11px] font-medium bg-white dark:bg-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-750 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-zinc-700 transition-colors whitespace-nowrap shadow-2xs cursor-pointer"
               >
                 {isHindi ? chip.labelHi : chip.labelEn}
               </button>
@@ -238,7 +238,7 @@ export default function AiAssistantModal() {
                 className={`flex gap-2.5 ${isUser ? 'justify-end' : 'justify-start'}`}
               >
                 {!isUser && (
-                  <div className="w-7 h-7 rounded-xl bg-surface-300 border border-semantic-border-light flex items-center justify-center text-sm shrink-0 mt-0.5">
+                  <div className="w-7 h-7 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center text-sm shrink-0 mt-0.5">
                     {ASSISTANT_CONFIGS[msg.persona]?.avatar || '🤖'}
                   </div>
                 )}
@@ -246,8 +246,8 @@ export default function AiAssistantModal() {
                 <div
                   className={`max-w-[85%] rounded-2xl p-3.5 text-xs leading-relaxed ${
                     isUser
-                      ? 'bg-brand-600 text-white rounded-tr-none'
-                      : 'bg-surface-200/90 text-semantic-text-primary rounded-tl-none border border-semantic-border-light/60 shadow-sm'
+                      ? 'bg-amber-500 text-slate-950 font-medium rounded-tr-none shadow-xs'
+                      : 'bg-slate-100 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 rounded-tl-none border border-slate-200 dark:border-zinc-700 shadow-xs'
                   }`}
                 >
                   {/* Message body with basic markdown line formatting */}
@@ -261,12 +261,12 @@ export default function AiAssistantModal() {
 
                   {/* Actions / Deep-Links */}
                   {msg.actions && msg.actions.length > 0 && (
-                    <div className="mt-3 pt-2.5 border-t border-semantic-border-light/60 flex flex-col gap-1.5">
+                    <div className="mt-3 pt-2.5 border-t border-slate-200 dark:border-zinc-700 flex flex-col gap-1.5">
                       {msg.actions.map(action => (
                         <button
                           key={action.id}
                           onClick={() => handleActionClick(action)}
-                          className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-surface-300 hover:bg-surface-400/80 text-[11px] font-semibold text-semantic-text-primary hover:text-white border border-semantic-border-light transition-all text-left"
+                          className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-white dark:bg-zinc-700/80 hover:bg-slate-50 dark:hover:bg-zinc-700 text-[11px] font-semibold text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-600 transition-all text-left shadow-2xs cursor-pointer"
                         >
                           <div className="flex items-center gap-2 truncate">
                             {getActionIcon(action)}
@@ -274,7 +274,7 @@ export default function AiAssistantModal() {
                               {isHindi ? action.labelHi : action.labelEn}
                             </span>
                           </div>
-                          <span className="text-[10px] text-semantic-text-tertiary">
+                          <span className="text-[10px] text-slate-500 dark:text-zinc-400">
                             {action.type === 'copy_text'
                               ? copiedActionId === action.id
                                 ? 'Copied!'
@@ -289,7 +289,7 @@ export default function AiAssistantModal() {
                   {/* Timestamp */}
                   <div
                     className={`mt-1.5 text-[10px] text-right ${
-                      isUser ? 'text-white/70' : 'text-semantic-text-tertiary'
+                      isUser ? 'text-slate-800/70' : 'text-slate-400 dark:text-zinc-500'
                     }`}
                   >
                     {new Date(msg.timestamp).toLocaleTimeString([], {
@@ -305,14 +305,14 @@ export default function AiAssistantModal() {
           {/* Typing indicator */}
           {isTyping && (
             <div className="flex gap-2.5 items-center">
-              <div className="w-7 h-7 rounded-xl bg-surface-300 border border-semantic-border-light flex items-center justify-center text-sm shrink-0">
+              <div className="w-7 h-7 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center text-sm shrink-0">
                 {currentConfig.avatar}
               </div>
-              <div className="bg-surface-200/90 rounded-2xl rounded-tl-none p-3 border border-semantic-border-light/60 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-bounce" />
-                <span className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-bounce [animation-delay:0.2s]" />
-                <span className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-bounce [animation-delay:0.4s]" />
-                <span className="text-[11px] text-semantic-text-tertiary ml-1.5">
+              <div className="bg-slate-100 dark:bg-zinc-800 rounded-2xl rounded-tl-none p-3 border border-slate-200 dark:border-zinc-700 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-bounce" />
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-bounce [animation-delay:0.2s]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-bounce [animation-delay:0.4s]" />
+                <span className="text-[11px] text-slate-500 dark:text-zinc-400 ml-1.5">
                   {isHindi ? 'सोच रहे हैं...' : 'Thinking...'}
                 </span>
               </div>
@@ -325,7 +325,7 @@ export default function AiAssistantModal() {
         {/* Input Bar */}
         <form
           onSubmit={handleSend}
-          className="p-3 bg-surface-200/80 border-t border-semantic-border-light/80 flex items-center gap-2"
+          className="p-3 bg-slate-50 dark:bg-zinc-850 border-t border-slate-200 dark:border-zinc-800 flex items-center gap-2"
         >
           <input
             ref={inputRef}
@@ -337,12 +337,12 @@ export default function AiAssistantModal() {
                 ? `${currentConfig.nameHi} से पूछें (उदा. पंखा खराब है, लेट हुआ)...`
                 : `Ask ${currentConfig.nameEn} (e.g. MCB tripping, delayed artisan)...`
             }
-            className="flex-1 bg-surface-100 border border-semantic-border-medium rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-semantic-text-tertiary focus:outline-none focus:border-brand-500 transition-colors"
+            className="flex-1 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:outline-none focus:border-amber-500 transition-colors"
           />
           <button
             type="submit"
             disabled={!input.trim() || isTyping}
-            className="w-9 h-9 rounded-xl bg-brand-500 hover:bg-brand-400 disabled:opacity-40 disabled:hover:bg-brand-500 text-white flex items-center justify-center transition-colors shadow-sm shrink-0"
+            className="w-9 h-9 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-40 disabled:hover:bg-amber-500 text-slate-950 flex items-center justify-center transition-colors shadow-xs shrink-0 cursor-pointer"
             aria-label="Send Message"
           >
             <Send className="w-4 h-4" />

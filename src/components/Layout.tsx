@@ -118,21 +118,21 @@ export default function Layout() {
           <div
             key={notification.id}
             className={`
-              flex items-start gap-3 w-80 bg-surface-100 rounded-xl shadow-2xl border border-semantic-border-medium p-4 animate-slide-in text-semantic-text-primary
-              ${notification.type === 'success' ? 'border-l-4 border-green-500' : ''}
-              ${notification.type === 'error' ? 'border-l-4 border-red-500' : ''}
+              flex items-start gap-3 w-80 bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-zinc-800 p-4 animate-slide-in text-slate-900 dark:text-zinc-100
+              ${notification.type === 'success' ? 'border-l-4 border-emerald-500' : ''}
+              ${notification.type === 'error' ? 'border-l-4 border-rose-500' : ''}
               ${notification.type === 'warning' ? 'border-l-4 border-amber-500' : ''}
               ${notification.type === 'info' ? 'border-l-4 border-blue-500' : ''}
             `}
             role="alert"
           >
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-semantic-text-primary">{notification.title}</p>
-              {notification.message && <p className="mt-1 text-sm text-semantic-text-secondary">{notification.message}</p>}
+              <p className="text-sm font-bold text-slate-900 dark:text-white">{notification.title}</p>
+              {notification.message && <p className="mt-1 text-xs text-slate-600 dark:text-zinc-400">{notification.message}</p>}
             </div>
             <button
               onClick={() => onClose(notification.id)}
-              className="flex-shrink-0 text-semantic-text-tertiary hover:text-semantic-text-primary p-1"
+              className="flex-shrink-0 text-slate-400 hover:text-slate-700 dark:text-zinc-500 dark:hover:text-zinc-200 p-1 transition-colors cursor-pointer"
               aria-label="Dismiss"
             >
               <X className="w-4 h-4" />
