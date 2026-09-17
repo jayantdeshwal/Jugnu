@@ -29,6 +29,7 @@ import {
   Sparkles,
   Shield,
   Edit,
+  Zap,
 } from 'lucide-react'
 import { Badge, Button, Card, Skeleton, Avatar, Modal } from '@/ui'
 import { useAuth } from '@/context/AuthContext'
@@ -321,6 +322,7 @@ export default function WorkerDashboard() {
 
   const approvalStatus = profile?.approval_status ?? 'pending'
   const isOnline = Boolean(profile?.is_available)
+  const isLeadsTab = searchParams.get('tab') === 'leads'
   const pendingCount = bookings.filter(b => b.status === 'pending').length
   const activeCount = bookings.filter(b => b.status === 'accepted' || b.status === 'in_progress').length
   const completedCount = bookings.filter(b => b.status === 'completed').length
@@ -353,8 +355,8 @@ export default function WorkerDashboard() {
             <ArrowLeft className="w-5 h-5" />
           </button>
 
-          <span className="text-sm font-bold text-semantic-text-primary uppercase tracking-wider">
-            {t('nav.workerDashboard', 'Worker Workspace')}
+          <span className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+            {isLeadsTab ? t('worker.newLeads', 'Incoming Leads') : t('nav.workerDashboard', 'Worker Workspace')}
           </span>
 
           {/* Quick Online / Offline Pill */}
@@ -383,7 +385,7 @@ export default function WorkerDashboard() {
         {/* ===================================================================== */}
         {/* 2. WORKER IDENTITY HEADER (Exact layout of uc2.jpeg / Profile.tsx)    */}
         {/* ===================================================================== */}
-        <div className="mb-6 px-1 flex items-start justify-between gap-3">
+        <div className={`mb-6 px-1 items-start justify-between gap-3 ${isLeadsTab ? 'hidden md:flex' : 'flex'}`}>
           <div className="flex-1 min-w-0">
             {/* Status indicator tag */}
             <div className="flex items-center gap-1.5 mb-1.5">
@@ -410,7 +412,7 @@ export default function WorkerDashboard() {
             </div>
 
             {/* Bold Worker Full Name */}
-            <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight truncate">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight truncate">
               {user?.name || 'Verified Professional'}
             </h1>
 
@@ -433,7 +435,7 @@ export default function WorkerDashboard() {
         {/* ===================================================================== */}
         {/* 3. THREE QUICK ACTION TILES (Matching Profile.tsx & UC2)              */}
         {/* ===================================================================== */}
-        <div className="grid grid-cols-3 gap-2.5 sm:gap-3 mb-6">
+        <div className={`grid-cols-3 gap-2.5 sm:gap-3 mb-6 ${isLeadsTab ? 'hidden md:grid' : 'grid'}`}>
           {/* Tile 1: Availability Toggle */}
           <button
             type="button"
@@ -452,7 +454,7 @@ export default function WorkerDashboard() {
             }`}>
               <Power className={`w-5 h-5 ${isOnline ? 'animate-pulse text-emerald-400' : 'text-amber-400'}`} />
             </div>
-            <span className={`text-xs font-bold leading-tight ${isOnline ? 'text-emerald-400' : 'text-semantic-text-primary'}`}>
+            <span className={`text-xs font-bold leading-tight ${isOnline ? 'text-emerald-400' : 'text-slate-900 dark:text-zinc-200'}`}>
               {isOnline ? 'Online (Ready)' : 'Off-Duty'}
             </span>
           </button>
@@ -471,7 +473,7 @@ export default function WorkerDashboard() {
                 </span>
               )}
             </div>
-            <span className="text-xs font-bold text-semantic-text-primary group-hover:text-brand-400 leading-tight">
+            <span className="text-xs font-bold text-slate-900 dark:text-zinc-200 group-hover:text-amber-600 dark:group-hover:text-brand-400 leading-tight">
               {pendingCount > 0 ? `${pendingCount} New Requests` : 'Job Requests'}
             </span>
           </button>
@@ -485,7 +487,7 @@ export default function WorkerDashboard() {
             <div className="w-10 h-10 rounded-xl bg-surface-200 group-hover:bg-blue-500/15 flex items-center justify-center text-blue-400 mb-2 transition-colors">
               <Headphones className="w-5 h-5" />
             </div>
-            <span className="text-xs font-bold text-semantic-text-primary group-hover:text-blue-400 leading-tight">
+            <span className="text-xs font-bold text-slate-900 dark:text-zinc-200 group-hover:text-blue-500 dark:group-hover:text-blue-400 leading-tight">
               Artisan Helpline
             </span>
           </button>
@@ -494,14 +496,14 @@ export default function WorkerDashboard() {
         {/* ===================================================================== */}
         {/* 3.5 KAAMGAR SARATHI AI ASSISTANT CARD                                 */}
         {/* ===================================================================== */}
-        <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-surface-100 to-surface-100 border border-amber-500/30 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className={`mb-6 p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-surface-100 to-surface-100 border border-amber-500/30 shadow-md flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${isLeadsTab ? 'hidden md:flex' : 'flex'}`}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-xl shadow-inner shrink-0">
               💼
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-xs font-bold text-white tracking-tight">
+                <h3 className="text-xs font-bold text-slate-900 dark:text-white tracking-tight">
                   {i18n.language === 'hi' ? 'कामगार सारथी AI (कारीगर साथी)' : 'Kaamgar Sarathi AI (Artisan Coach)'}
                 </h3>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">
@@ -529,7 +531,7 @@ export default function WorkerDashboard() {
         {/* ===================================================================== */}
         {/* 4. WORKER METRICS STRIP                                               */}
         {/* ===================================================================== */}
-        <div className="grid grid-cols-4 gap-2 mb-6 p-3 rounded-2xl bg-surface-100 border border-semantic-border-light text-center">
+        <div className={`grid-cols-4 gap-2 mb-6 p-3 rounded-2xl bg-surface-100 border border-semantic-border-light text-center ${isLeadsTab ? 'hidden md:grid' : 'grid'}`}>
           <div>
             <p className="text-base font-extrabold text-emerald-400">{completedCount}</p>
             <p className="text-[10px] text-semantic-text-secondary mt-0.5">Completed</p>
@@ -537,7 +539,7 @@ export default function WorkerDashboard() {
           <div>
             <div className="flex items-center justify-center gap-0.5">
               <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-              <span className="text-base font-extrabold text-white">
+              <span className="text-base font-extrabold text-slate-900 dark:text-white">
                 {profile?.rating && profile.rating > 0 ? profile.rating.toFixed(1) : '5.0'}
               </span>
             </div>
@@ -548,20 +550,51 @@ export default function WorkerDashboard() {
             <p className="text-[10px] text-semantic-text-secondary mt-0.5">Reviews</p>
           </div>
           <div>
-            <p className="text-xs font-bold text-white truncate mt-1">251001/02</p>
+            <p className="text-xs font-bold text-slate-900 dark:text-white truncate mt-1">251001/02</p>
             <p className="text-[10px] text-semantic-text-secondary mt-0.5">Coverage</p>
           </div>
         </div>
 
         {/* Divider line */}
-        <div className="border-t border-semantic-border-light/60 my-4" />
+        <div className={`border-t border-semantic-border-light/60 my-4 ${isLeadsTab ? 'hidden md:block' : 'block'}`} />
+
+        {/* Dedicated Mobile Leads Header */}
+        {isLeadsTab && (
+          <div className="md:hidden mb-4 p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 shadow-sm flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-500">
+                  <Zap className="w-4 h-4" />
+                </div>
+                <h2 className="text-base font-black text-slate-900 dark:text-white">
+                  {t('worker.newLeads', 'New Job Leads')}
+                </h2>
+                {pendingCount > 0 && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500 text-slate-950">
+                    {pendingCount} New
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-1">
+                Incoming customer service requests across Muzaffarnagar
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void loadDashboardData()}
+              className="p-2 rounded-xl border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-200"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-amber-500' : ''}`} />
+            </button>
+          </div>
+        )}
 
         {/* ===================================================================== */}
         {/* 5. JOB REQUESTS FEED WITH CLEAN TABS                                  */}
         {/* ===================================================================== */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-3 px-1">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <ClipboardList className="w-4 h-4 text-brand-400" />
               <span>Customer Job Requests</span>
             </h3>
@@ -582,8 +615,8 @@ export default function WorkerDashboard() {
               onClick={() => setActiveTab('all')}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
                 activeTab === 'all'
-                  ? 'bg-brand-500 text-surface-950'
-                  : 'bg-surface-100 text-semantic-text-secondary hover:text-white border border-semantic-border-light'
+                  ? 'bg-amber-500 text-slate-950 font-bold'
+                  : 'bg-surface-100 text-semantic-text-secondary hover:text-slate-900 dark:hover:text-white border border-semantic-border-light'
               }`}
             >
               All ({bookings.length})
@@ -593,13 +626,13 @@ export default function WorkerDashboard() {
               onClick={() => setActiveTab('pending')}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 ${
                 activeTab === 'pending'
-                  ? 'bg-amber-500 text-surface-950 font-bold'
-                  : 'bg-surface-100 text-semantic-text-secondary hover:text-white border border-semantic-border-light'
+                  ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
+                  : 'bg-surface-100 text-semantic-text-secondary hover:text-slate-900 dark:hover:text-white border border-semantic-border-light'
               }`}
             >
               <span>Pending</span>
               {pendingCount > 0 && (
-                <span className="w-4 h-4 rounded-full bg-amber-400/20 text-amber-300 text-[10px] flex items-center justify-center">
+                <span className="w-4 h-4 rounded-full bg-amber-400/20 text-amber-600 dark:text-amber-300 text-[10px] flex items-center justify-center font-bold">
                   {pendingCount}
                 </span>
               )}
@@ -610,7 +643,7 @@ export default function WorkerDashboard() {
               className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
                 activeTab === 'active'
                   ? 'bg-blue-500 text-white font-bold'
-                  : 'bg-surface-100 text-semantic-text-secondary hover:text-white border border-semantic-border-light'
+                  : 'bg-surface-100 text-semantic-text-secondary hover:text-slate-900 dark:hover:text-white border border-semantic-border-light'
               }`}
             >
               Active / In Progress ({activeCount})
@@ -620,8 +653,8 @@ export default function WorkerDashboard() {
               onClick={() => setActiveTab('completed')}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
                 activeTab === 'completed'
-                  ? 'bg-emerald-500 text-surface-950 font-bold'
-                  : 'bg-surface-100 text-semantic-text-secondary hover:text-white border border-semantic-border-light'
+                  ? 'bg-emerald-500 text-white font-bold'
+                  : 'bg-surface-100 text-semantic-text-secondary hover:text-slate-900 dark:hover:text-white border border-semantic-border-light'
               }`}
             >
               Completed ({completedCount})
@@ -668,11 +701,11 @@ export default function WorkerDashboard() {
                   {/* Top line: Customer name + status badge */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-full bg-brand-500/15 border border-brand-500/30 flex items-center justify-center text-brand-300 font-bold text-xs">
+                      <div className="w-9 h-9 rounded-full bg-brand-500/15 border border-brand-500/30 flex items-center justify-center text-brand-400 font-bold text-xs">
                         {booking.customer?.name ? booking.customer.name.charAt(0) : 'C'}
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-white">
+                        <p className="text-xs font-bold text-slate-900 dark:text-white">
                           {booking.customer?.name || 'Customer'}
                         </p>
                         <p className="text-[10px] text-semantic-text-tertiary capitalize">
@@ -832,7 +865,7 @@ export default function WorkerDashboard() {
                 <MessageCircle className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-xs font-bold text-white group-hover:text-emerald-300">
+                <p className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-emerald-500 dark:group-hover:text-emerald-300">
                   WhatsApp Artisan Desk
                 </p>
                 <p className="text-[11px] text-semantic-text-secondary">
@@ -852,7 +885,7 @@ export default function WorkerDashboard() {
                 <PhoneCall className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-xs font-bold text-white group-hover:text-brand-300">
+                <p className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-amber-500 dark:group-hover:text-brand-300">
                   Call Helpline
                 </p>
                 <p className="text-[11px] text-semantic-text-secondary">

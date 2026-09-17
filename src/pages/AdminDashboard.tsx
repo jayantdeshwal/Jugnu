@@ -93,33 +93,26 @@ export default function AdminDashboard() {
   const { user, isAdmin } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const tabParam = searchParams.get('tab') as
-    | 'overview'
-    | 'workers'
-    | 'customers'
-    | 'bookings'
-    | 'notifications'
-    | 'admins'
-    | null
+  type AdminTabType = 'dashboard' | 'overview' | 'workers' | 'customers' | 'bookings' | 'notifications' | 'admins'
 
-  const [activeTab, setActiveTab] = useState<
-    'overview' | 'workers' | 'customers' | 'bookings' | 'notifications' | 'admins'
-  >(
-    tabParam &&
-      ['overview', 'workers', 'customers', 'bookings', 'notifications', 'admins'].includes(tabParam)
-      ? tabParam
-      : 'overview'
+  const tabParam = searchParams.get('tab') as AdminTabType | null
+
+  const [activeTab, setActiveTab] = useState<AdminTabType>(
+    tabParam && ['dashboard', 'overview', 'workers', 'customers', 'bookings', 'notifications', 'admins'].includes(tabParam)
+      ? (tabParam === 'overview' ? 'dashboard' : tabParam)
+      : 'dashboard'
   )
 
   useEffect(() => {
-    const tab = searchParams.get('tab') as any
+    const raw = searchParams.get('tab') as AdminTabType | null
+    const tab = raw === 'overview' ? 'dashboard' : raw
     if (
       tab &&
-      ['overview', 'workers', 'customers', 'bookings', 'notifications', 'admins'].includes(tab)
+      ['dashboard', 'workers', 'customers', 'bookings', 'notifications', 'admins'].includes(tab)
     ) {
       setActiveTab(tab)
-    } else if (!tab || tab === 'overview') {
-      setActiveTab('overview')
+    } else if (!tab || tab === 'dashboard') {
+      setActiveTab('dashboard')
     }
   }, [searchParams])
 
@@ -813,47 +806,47 @@ export default function AdminDashboard() {
         {/* ===================================================================== */}
         {/* 1. EXECUTIVE IDENTITY BANNER (Profile-Aligned Glassmorphic Design)     */}
         {/* ===================================================================== */}
-        <div className="relative overflow-hidden rounded-3xl bg-surface-100/90 border border-semantic-border-light backdrop-blur-xl p-6 sm:p-8 shadow-2xl mb-8">
+        <div className={`relative overflow-hidden rounded-3xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 backdrop-blur-xl p-6 sm:p-8 shadow-xl mb-8 ${activeTab !== 'dashboard' && activeTab !== 'overview' ? 'hidden md:block' : ''}`}>
           {/* Ambient Glows */}
-          <div className="absolute -right-24 -top-24 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -right-24 -top-24 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -left-24 -bottom-24 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
           <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             {/* Identity & Status */}
             <div className="flex items-start sm:items-center gap-4 sm:gap-5">
               <div className="relative flex-shrink-0">
-                <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-gradient-to-br from-amber-500/20 via-brand-500/20 to-surface-200 border border-brand-500/30 flex items-center justify-center text-brand-400 shadow-inner">
+                <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-gradient-to-br from-amber-500/20 via-amber-500/10 to-slate-100 dark:to-zinc-800 border border-amber-500/30 flex items-center justify-center text-amber-500 shadow-inner">
                   <ShieldCheck className="w-8 h-8 sm:w-9 sm:h-9" />
                 </div>
                 <span className="absolute -bottom-1 -right-1 flex h-4 w-4">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-surface-950" />
+                  <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-white dark:border-zinc-900" />
                 </span>
               </div>
 
               <div>
                 <div className="flex items-center gap-2.5 flex-wrap">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-500/15 border border-brand-500/30 text-brand-400">
-                    <Sparkles className="w-3 h-3 text-brand-400" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400">
+                    <Sparkles className="w-3 h-3 text-amber-500" />
                     Super Admin Console
                   </span>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                     2FA Verified Active
                   </span>
                 </div>
 
-                <h1 className="text-xl sm:text-2xl font-black text-semantic-text-primary tracking-tight mt-1.5">
+                <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight mt-1.5">
                   Muzaffarnagar Kaamgar Administration
                 </h1>
 
-                <p className="text-xs sm:text-sm text-semantic-text-secondary mt-0.5 flex items-center gap-2 flex-wrap">
-                  <span className="font-semibold text-semantic-text-primary">
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 mt-0.5 flex items-center gap-2 flex-wrap">
+                  <span className="font-semibold text-slate-800 dark:text-zinc-200">
                     {user?.name || user?.email || 'Console Master'}
                   </span>
-                  <span className="text-semantic-text-tertiary">•</span>
-                  <span className="text-semantic-text-tertiary flex items-center gap-1">
-                    <MapPin className="w-3 h-3 text-brand-400" />
+                  <span className="text-slate-300 dark:text-zinc-600">•</span>
+                  <span className="text-slate-500 dark:text-zinc-400 flex items-center gap-1">
+                    <MapPin className="w-3 h-3 text-amber-500" />
                     Muzaffarnagar HQ (Pincodes 251001 – 251318)
                   </span>
                 </p>
@@ -867,11 +860,11 @@ export default function AdminDashboard() {
                 size="sm"
                 onClick={refreshAll}
                 disabled={isLoadingWorkers || isLoadingBookings || isLoadingNotifications}
-                className="flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-xl border-semantic-border-medium hover:border-brand-500/50 hover:bg-surface-200 transition-all shadow-sm"
+                className="flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-xl border-slate-200 dark:border-zinc-700 hover:border-amber-500/50 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 transition-all shadow-xs"
               >
                 <RefreshCw
                   className={`w-3.5 h-3.5 ${
-                    isLoadingWorkers || isLoadingBookings || isLoadingNotifications ? 'animate-spin text-brand-400' : ''
+                    isLoadingWorkers || isLoadingBookings || isLoadingNotifications ? 'animate-spin text-amber-500' : ''
                   }`}
                 />
                 Refresh Live Data
@@ -881,7 +874,7 @@ export default function AdminDashboard() {
                 variant="primary"
                 size="sm"
                 onClick={() => navigate('/search')}
-                className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-surface-950 shadow-lg shadow-brand-500/20 transition-all"
+                className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20 transition-all"
               >
                 <Compass className="w-3.5 h-3.5" />
                 Live Public Portal
@@ -944,9 +937,10 @@ export default function AdminDashboard() {
         )}
 
         {/* ===================================================================== */}
+        {/* ===================================================================== */}
         {/* 2. FOUR CLICKABLE EXECUTIVE ACTION STAT CARDS                          */}
         {/* ===================================================================== */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8 ${activeTab !== 'dashboard' && activeTab !== 'overview' ? 'hidden md:grid' : ''}`}>
           {/* Card 1: Total Workers */}
           <motion.div
             whileHover={{ y: -3, scale: 1.01 }}
@@ -955,29 +949,29 @@ export default function AdminDashboard() {
               setActiveTab('workers')
               setSearchParams({ tab: 'workers' })
             }}
-            className={`p-5 rounded-2xl border transition-all cursor-pointer bg-surface-100/90 hover:border-brand-500/50 hover:shadow-xl group relative overflow-hidden ${
-              activeTab === 'workers' ? 'border-brand-500 ring-1 ring-brand-500/30 shadow-lg' : 'border-semantic-border-light'
+            className={`p-5 rounded-2xl border transition-all cursor-pointer bg-white dark:bg-zinc-900 hover:border-amber-500/50 hover:shadow-xl group relative overflow-hidden ${
+              activeTab === 'workers' ? 'border-amber-500 ring-1 ring-amber-500/30 shadow-lg' : 'border-slate-200/90 dark:border-zinc-800'
             }`}
           >
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider">
+                <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
                   {t('admin.stats.totalWorkers')}
                 </span>
-                <p className="text-3xl font-extrabold text-semantic-text-primary mt-1.5 font-mono">
+                <p className="text-3xl font-extrabold text-slate-900 dark:text-white mt-1.5 font-mono">
                   {isLoadingStats ? '...' : stats?.workers ?? allWorkers.length}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-brand-500/10 border border-brand-500/20 rounded-2xl flex items-center justify-center text-brand-400 group-hover:scale-110 group-hover:bg-brand-500 group-hover:text-surface-950 transition-all shadow-sm">
+              <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-center text-amber-500 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-slate-950 transition-all shadow-xs">
                 <Truck className="w-6 h-6" />
               </div>
             </div>
-            <div className="mt-4 pt-3 border-t border-semantic-border-light/60 flex items-center justify-between text-xs">
-              <span className="text-amber-400 font-medium flex items-center gap-1">
+            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between text-xs">
+              <span className="text-amber-500 dark:text-amber-400 font-medium flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5" />
                 {pendingWorkers.length} pending review
               </span>
-              <span className="text-brand-400 font-semibold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+              <span className="text-amber-600 dark:text-amber-400 font-semibold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
                 Manage <ChevronRight className="w-3.5 h-3.5" />
               </span>
             </div>
@@ -991,29 +985,29 @@ export default function AdminDashboard() {
               setActiveTab('customers')
               setSearchParams({ tab: 'customers' })
             }}
-            className={`p-5 rounded-2xl border transition-all cursor-pointer bg-surface-100/90 hover:border-emerald-500/50 hover:shadow-xl group relative overflow-hidden ${
-              activeTab === 'customers' ? 'border-emerald-500 ring-1 ring-emerald-500/30 shadow-lg' : 'border-semantic-border-light'
+            className={`p-5 rounded-2xl border transition-all cursor-pointer bg-white dark:bg-zinc-900 hover:border-emerald-500/50 hover:shadow-xl group relative overflow-hidden ${
+              activeTab === 'customers' ? 'border-emerald-500 ring-1 ring-emerald-500/30 shadow-lg' : 'border-slate-200/90 dark:border-zinc-800'
             }`}
           >
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider">
+                <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
                   {t('admin.stats.totalCustomers')}
                 </span>
-                <p className="text-3xl font-extrabold text-semantic-text-primary mt-1.5 font-mono">
+                <p className="text-3xl font-extrabold text-slate-900 dark:text-white mt-1.5 font-mono">
                   {isLoadingStats ? '...' : stats?.customers ?? customers.length}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-400 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-surface-950 transition-all shadow-sm">
+              <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-500 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-slate-950 transition-all shadow-xs">
                 <Users className="w-6 h-6" />
               </div>
             </div>
-            <div className="mt-4 pt-3 border-t border-semantic-border-light/60 flex items-center justify-between text-xs">
-              <span className="text-emerald-400 font-medium flex items-center gap-1">
+            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between text-xs">
+              <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
                 <CheckCircle className="w-3.5 h-3.5" />
                 Registered Clients
               </span>
-              <span className="text-emerald-400 font-semibold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+              <span className="text-emerald-600 dark:text-emerald-400 font-semibold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
                 View All <ChevronRight className="w-3.5 h-3.5" />
               </span>
             </div>
@@ -1027,29 +1021,29 @@ export default function AdminDashboard() {
               setActiveTab('bookings')
               setSearchParams({ tab: 'bookings' })
             }}
-            className={`p-5 rounded-2xl border transition-all cursor-pointer bg-surface-100/90 hover:border-blue-500/50 hover:shadow-xl group relative overflow-hidden ${
-              activeTab === 'bookings' ? 'border-blue-500 ring-1 ring-blue-500/30 shadow-lg' : 'border-semantic-border-light'
+            className={`p-5 rounded-2xl border transition-all cursor-pointer bg-white dark:bg-zinc-900 hover:border-blue-500/50 hover:shadow-xl group relative overflow-hidden ${
+              activeTab === 'bookings' ? 'border-blue-500 ring-1 ring-blue-500/30 shadow-lg' : 'border-slate-200/90 dark:border-zinc-800'
             }`}
           >
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider">
+                <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
                   {t('admin.stats.totalBookings')}
                 </span>
-                <p className="text-3xl font-extrabold text-semantic-text-primary mt-1.5 font-mono">
+                <p className="text-3xl font-extrabold text-slate-900 dark:text-white mt-1.5 font-mono">
                   {isLoadingStats ? '...' : stats?.bookings ?? bookings.length}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-center text-blue-400 group-hover:scale-110 group-hover:bg-blue-500 group-hover:text-surface-950 transition-all shadow-sm">
+              <div className="w-12 h-12 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-center text-blue-500 group-hover:scale-110 group-hover:bg-blue-500 group-hover:text-slate-950 transition-all shadow-xs">
                 <Calendar className="w-6 h-6" />
               </div>
             </div>
-            <div className="mt-4 pt-3 border-t border-semantic-border-light/60 flex items-center justify-between text-xs">
-              <span className="text-blue-400 font-medium flex items-center gap-1">
+            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between text-xs">
+              <span className="text-blue-500 dark:text-blue-400 font-medium flex items-center gap-1">
                 <Activity className="w-3.5 h-3.5" />
                 {bookings.filter(b => b.status === 'completed').length} completed
               </span>
-              <span className="text-blue-400 font-semibold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+              <span className="text-blue-600 dark:text-blue-400 font-semibold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
                 Inspect <ChevronRight className="w-3.5 h-3.5" />
               </span>
             </div>
@@ -1064,24 +1058,24 @@ export default function AdminDashboard() {
               setWorkerStatusFilter('pending')
               setSearchParams({ tab: 'workers' })
             }}
-            className="p-5 rounded-2xl border border-amber-500/30 bg-amber-500/5 hover:border-amber-500/60 hover:shadow-xl group relative overflow-hidden transition-all cursor-pointer"
+            className="p-5 rounded-2xl border border-amber-500/30 bg-amber-500/5 dark:bg-amber-500/10 hover:border-amber-500/60 hover:shadow-xl group relative overflow-hidden transition-all cursor-pointer"
           >
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-xs font-semibold text-amber-300 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-amber-600 dark:text-amber-300 uppercase tracking-wider">
                   {t('admin.stats.pendingApprovals')}
                 </span>
-                <p className="text-3xl font-extrabold text-amber-400 mt-1.5 font-mono">
+                <p className="text-3xl font-extrabold text-amber-600 dark:text-amber-400 mt-1.5 font-mono">
                   {isLoadingStats ? '...' : stats?.pendingApprovals ?? pendingWorkers.length}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-amber-500/15 border border-amber-500/30 rounded-2xl flex items-center justify-center text-amber-400 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-surface-950 transition-all shadow-sm">
+              <div className="w-12 h-12 bg-amber-500/15 border border-amber-500/30 rounded-2xl flex items-center justify-center text-amber-500 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-slate-950 transition-all shadow-xs">
                 <Clock className="w-6 h-6" />
               </div>
             </div>
             <div className="mt-4 pt-3 border-t border-amber-500/20 flex items-center justify-between text-xs">
-              <span className="text-amber-400 font-medium">Action required</span>
-              <span className="text-amber-400 font-bold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+              <span className="text-amber-600 dark:text-amber-400 font-medium">Action required</span>
+              <span className="text-amber-600 dark:text-amber-400 font-bold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
                 Review Queue <ChevronRight className="w-3.5 h-3.5" />
               </span>
             </div>
@@ -1091,21 +1085,21 @@ export default function AdminDashboard() {
         {/* ===================================================================== */}
         {/* 3. SPRING-ANIMATED TAB NAVIGATION BAR                                 */}
         {/* ===================================================================== */}
-        <div className="flex items-center gap-1.5 p-1.5 bg-surface-100/90 border border-semantic-border-light rounded-2xl mb-8 overflow-x-auto no-scrollbar shadow-sm">
+        <div className={`items-center gap-1.5 p-1.5 bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 rounded-2xl mb-8 overflow-x-auto no-scrollbar shadow-xs ${activeTab !== 'dashboard' && activeTab !== 'overview' ? 'hidden md:flex' : 'flex'}`}>
           {[
-            { key: 'overview', label: 'Overview', icon: LayoutDashboard },
+            { key: 'dashboard', label: t('admin.dashboard', 'Dashboard'), icon: LayoutDashboard },
             {
               key: 'workers',
-              label: t('admin.allWorkers', 'Workers'),
+              label: t('admin.approvals', 'Approvals'),
               icon: Truck,
               badge: pendingWorkers.length,
               badgeVariant: 'warning',
             },
-            { key: 'customers', label: t('admin.allCustomers'), icon: Users },
-            { key: 'bookings', label: t('admin.allBookings'), icon: Calendar },
+            { key: 'customers', label: t('admin.allCustomers', 'Customers'), icon: Users },
+            { key: 'bookings', label: t('admin.allBookings', 'All Bookings'), icon: Calendar },
             {
               key: 'notifications',
-              label: t('admin.notifications', 'Notifications'),
+              label: t('admin.alerts', 'Alerts'),
               icon: Bell,
               badge: unreadNotifsCount > 0 ? unreadNotifsCount : undefined,
               badgeVariant: 'danger',
@@ -1117,7 +1111,7 @@ export default function AdminDashboard() {
               badge: adminTeam.length > 0 ? adminTeam.length : undefined,
             },
           ].map(tab => {
-            const isActive = activeTab === tab.key
+            const isActive = activeTab === tab.key || (tab.key === 'dashboard' && (activeTab === 'dashboard' || activeTab === 'overview'))
             return (
               <button
                 key={tab.key}
@@ -1125,16 +1119,16 @@ export default function AdminDashboard() {
                   setActiveTab(tab.key as any)
                   setSearchParams({ tab: tab.key })
                 }}
-                className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all shrink-0 ${
+                className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all shrink-0 cursor-pointer ${
                   isActive
-                    ? 'text-surface-950 font-bold'
-                    : 'text-semantic-text-secondary hover:text-semantic-text-primary hover:bg-surface-200/50'
+                    ? 'text-slate-950 font-bold'
+                    : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-800/50'
                 }`}
               >
                 {isActive && (
                   <motion.div
                     layoutId="activeAdminTabHighlight"
-                    className="absolute inset-0 bg-brand-500 rounded-xl shadow-md"
+                    className="absolute inset-0 bg-amber-500 rounded-xl shadow-md"
                     transition={{ type: 'spring', stiffness: 350, damping: 30 }}
                   />
                 )}
@@ -1145,10 +1139,10 @@ export default function AdminDashboard() {
                     <span
                       className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ${
                         isActive
-                          ? 'bg-surface-950/20 text-surface-950'
+                          ? 'bg-slate-950/20 text-slate-950'
                           : tab.badgeVariant === 'warning'
-                          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                          : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                          ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30'
+                          : 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30'
                       }`}
                     >
                       {tab.badge}
@@ -1161,19 +1155,19 @@ export default function AdminDashboard() {
         </div>
 
         {/* ===================================================================== */}
-        {/* 4. OVERVIEW TAB (Enhanced with Interactive SVG Analytics)             */}
+        {/* 4. DASHBOARD OVERVIEW TAB (Enhanced with Interactive SVG Analytics)    */}
         {/* ===================================================================== */}
-        {activeTab === 'overview' && (
+        {(activeTab === 'dashboard' || activeTab === 'overview') && (
           <div className="space-y-8">
             {/* Row 1: Interactive SVG Analytics */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Chart 1: 14-Day Demand Trend Area Chart (Col-span 7) */}
-              <div className="lg:col-span-7 bg-surface-100/90 border border-semantic-border-light rounded-3xl p-6 shadow-sm">
+              <div className="lg:col-span-7 bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 rounded-3xl p-6 shadow-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
                   <div>
                     <div className="flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-brand-400" />
-                      <h3 className="font-bold text-base text-semantic-text-primary">
+                      <TrendingUp className="w-4 h-4 text-amber-500" />
+                      <h3 className="font-bold text-base text-slate-900 dark:text-white">
                         14-Day Booking Demand Trends
                       </h3>
                       {bookingTrendsData.isSimulated && (
@@ -1310,16 +1304,16 @@ export default function AdminDashboard() {
               </div>
 
               {/* Chart 2: Category Breakdown & Locality Density (Col-span 5) */}
-              <div className="lg:col-span-5 bg-surface-100/90 border border-semantic-border-light rounded-3xl p-6 shadow-sm flex flex-col justify-between">
+              <div className="lg:col-span-5 bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                      <PieChart className="w-4 h-4 text-emerald-400" />
-                      <h3 className="font-bold text-base text-semantic-text-primary">
+                      <PieChart className="w-4 h-4 text-emerald-500" />
+                      <h3 className="font-bold text-base text-slate-900 dark:text-white">
                         Top Demand Categories
                       </h3>
                     </div>
-                    <span className="text-xs text-semantic-text-tertiary">Live Breakdown</span>
+                    <span className="text-xs text-slate-500 dark:text-zinc-400">Live Breakdown</span>
                   </div>
 
                   {/* Category Pills & Progress Bars */}
@@ -1379,14 +1373,14 @@ export default function AdminDashboard() {
             {/* Row 2: Live Operational Queues */}
             <div className="grid lg:grid-cols-2 gap-6">
               {/* Pending Worker Approvals Card */}
-              <Card className="p-6 bg-surface-100/90 border border-semantic-border-light rounded-3xl shadow-sm">
+              <Card className="p-6 bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 rounded-3xl shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="font-bold text-base text-semantic-text-primary flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-amber-400" />
+                    <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-amber-500" />
                       Pending Worker Approvals
                     </h3>
-                    <p className="text-xs text-semantic-text-secondary mt-0.5">
+                    <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
                       Verify government ID and approve skilled kaamgars
                     </p>
                   </div>
@@ -1398,7 +1392,7 @@ export default function AdminDashboard() {
                       setWorkerStatusFilter('pending')
                       setSearchParams({ tab: 'workers' })
                     }}
-                    className="text-xs font-semibold text-brand-400 border-brand-500/30 hover:bg-brand-500/10"
+                    className="text-xs font-semibold text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10"
                   >
                     View All ({pendingWorkers.length})
                   </Button>
@@ -1406,15 +1400,15 @@ export default function AdminDashboard() {
 
                 <div className="space-y-3">
                   {isLoadingWorkers ? (
-                    <div className="py-8 text-center text-sm text-semantic-text-secondary flex items-center justify-center gap-2">
-                      <RefreshCw className="w-4 h-4 animate-spin text-brand-400" />
+                    <div className="py-8 text-center text-sm text-slate-500 dark:text-zinc-400 flex items-center justify-center gap-2">
+                      <RefreshCw className="w-4 h-4 animate-spin text-amber-500" />
                       Loading pending registrations...
                     </div>
                   ) : pendingWorkers.length === 0 ? (
-                    <div className="py-8 text-center bg-surface-200/40 rounded-2xl border border-semantic-border-light/60">
-                      <CheckCircle className="w-8 h-8 text-emerald-400 mx-auto mb-2 opacity-80" />
-                      <p className="text-sm font-semibold text-semantic-text-primary">All caught up!</p>
-                      <p className="text-xs text-semantic-text-secondary mt-0.5">
+                    <div className="py-8 text-center bg-slate-50 dark:bg-zinc-800/40 rounded-2xl border border-slate-200/90 dark:border-zinc-700/60">
+                      <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-2 opacity-80" />
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">All caught up!</p>
+                      <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
                         No pending worker registrations in the queue.
                       </p>
                     </div>
@@ -1422,15 +1416,15 @@ export default function AdminDashboard() {
                     pendingWorkers.slice(0, 5).map(worker => (
                       <div
                         key={worker.id}
-                        className="flex items-center justify-between p-3.5 bg-surface-200/60 border border-semantic-border-light rounded-2xl hover:bg-surface-200 transition-colors"
+                        className="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-zinc-800/60 border border-slate-200/90 dark:border-zinc-700 rounded-2xl hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <Avatar name={worker.name} src={worker.avatar_url || undefined} size="sm" />
                           <div className="min-w-0">
-                            <p className="font-semibold text-sm text-semantic-text-primary truncate">
+                            <p className="font-semibold text-sm text-slate-900 dark:text-white truncate">
                               {worker.name}
                             </p>
-                            <p className="text-xs text-semantic-text-secondary truncate">
+                            <p className="text-xs text-slate-500 dark:text-zinc-400 truncate">
                               {worker.categories.join(', ') || 'General Kaamgar'} • {worker.experience_years} yrs exp
                             </p>
                           </div>
@@ -1442,7 +1436,7 @@ export default function AdminDashboard() {
                             size="sm"
                             onClick={() => setInspectWorker(worker)}
                             title="View Worker Dossier"
-                            className="p-2 text-semantic-text-secondary hover:text-semantic-text-primary"
+                            className="p-2 text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
@@ -1472,14 +1466,14 @@ export default function AdminDashboard() {
               </Card>
 
               {/* Recent Bookings Queue Card */}
-              <Card className="p-6 bg-surface-100/90 border border-semantic-border-light rounded-3xl shadow-sm">
+              <Card className="p-6 bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 rounded-3xl shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="font-bold text-base text-semantic-text-primary flex items-center gap-2">
-                      <Truck className="w-4 h-4 text-blue-400" />
+                    <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                      <Truck className="w-4 h-4 text-blue-500" />
                       Live Bookings Dispatch
                     </h3>
-                    <p className="text-xs text-semantic-text-secondary mt-0.5">
+                    <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
                       Real-time customer booking requests across town
                     </p>
                   </div>
@@ -1490,7 +1484,7 @@ export default function AdminDashboard() {
                       setActiveTab('bookings')
                       setSearchParams({ tab: 'bookings' })
                     }}
-                    className="text-xs font-semibold text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
+                    className="text-xs font-semibold text-blue-600 dark:text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
                   >
                     View All ({bookings.length})
                   </Button>
@@ -1498,30 +1492,30 @@ export default function AdminDashboard() {
 
                 <div className="space-y-3">
                   {isLoadingBookings ? (
-                    <div className="py-8 text-center text-sm text-semantic-text-secondary flex items-center justify-center gap-2">
-                      <RefreshCw className="w-4 h-4 animate-spin text-blue-400" />
+                    <div className="py-8 text-center text-sm text-slate-500 dark:text-zinc-400 flex items-center justify-center gap-2">
+                      <RefreshCw className="w-4 h-4 animate-spin text-blue-500" />
                       Loading bookings...
                     </div>
                   ) : bookings.length === 0 ? (
-                    <div className="py-8 text-center bg-surface-200/40 rounded-2xl border border-semantic-border-light/60">
-                      <Calendar className="w-8 h-8 text-blue-400 mx-auto mb-2 opacity-80" />
-                      <p className="text-sm font-semibold text-semantic-text-primary">No bookings registered yet</p>
+                    <div className="py-8 text-center bg-slate-50 dark:bg-zinc-800/40 rounded-2xl border border-slate-200/90 dark:border-zinc-700/60">
+                      <Calendar className="w-8 h-8 text-blue-500 mx-auto mb-2 opacity-80" />
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">No bookings registered yet</p>
                     </div>
                   ) : (
                     bookings.slice(0, 5).map(booking => (
                       <div
                         key={booking.id}
-                        className="flex items-center justify-between p-3.5 bg-surface-200/60 border border-semantic-border-light rounded-2xl hover:bg-surface-200 transition-colors"
+                        className="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-zinc-800/60 border border-slate-200/90 dark:border-zinc-700 rounded-2xl hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-9 h-9 bg-brand-500/10 rounded-xl flex items-center justify-center text-brand-400 shrink-0">
+                          <div className="w-9 h-9 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500 shrink-0">
                             <Truck className="w-4 h-4" />
                           </div>
                           <div className="min-w-0">
-                            <p className="font-semibold text-sm text-semantic-text-primary truncate">
+                            <p className="font-semibold text-sm text-slate-900 dark:text-white truncate">
                               {booking.customerName} → {booking.workerName}
                             </p>
-                            <p className="text-xs text-semantic-text-secondary truncate">
+                            <p className="text-xs text-slate-500 dark:text-zinc-400 truncate">
                               <span className="capitalize">{booking.category_id}</span> •{' '}
                               {booking.scheduled_at
                                 ? new Date(booking.scheduled_at).toLocaleDateString('en-IN')
@@ -1555,56 +1549,88 @@ export default function AdminDashboard() {
 
         {/* 2. WORKERS TAB (100% Real Supabase Data) */}
         {activeTab === 'workers' && (
-          <Card className="p-0 overflow-hidden bg-surface-100 border border-semantic-border-light">
-            {/* Controls Bar */}
-            <div className="p-4 border-b border-semantic-border-light flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-200/50">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-semibold text-semantic-text-secondary uppercase">Filter:</span>
-                {(['all', 'pending', 'approved', 'rejected'] as const).map(status => (
-                  <button
-                    key={status}
-                    onClick={() => setWorkerStatusFilter(status)}
-                    className={`px-3 py-1 text-xs font-medium rounded-full capitalize transition-colors ${
-                      workerStatusFilter === status
-                        ? 'bg-brand-500 text-surface-950 font-bold'
-                        : 'bg-surface-200 text-semantic-text-secondary hover:text-semantic-text-primary'
-                    }`}
-                  >
-                    {status} (
-                    {status === 'all'
-                      ? allWorkers.length
-                      : allWorkers.filter(w => w.approval_status === status).length}
-                    )
-                  </button>
-                ))}
+          <div className="space-y-4">
+            {/* Dedicated Mobile Approvals Header */}
+            <div className="md:hidden p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 shadow-sm flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-500">
+                    <Truck className="w-4 h-4" />
+                  </div>
+                  <h2 className="text-base font-black text-slate-900 dark:text-white">
+                    {t('admin.approvals', 'Worker Approvals')}
+                  </h2>
+                  {pendingWorkers.length > 0 && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500 text-slate-950">
+                      {pendingWorkers.length} Pending
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-1">
+                  Verify documents and approve KYC for Muzaffarnagar workers
+                </p>
               </div>
-
-              <div className="relative min-w-[240px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-semantic-text-tertiary" />
-                <input
-                  type="text"
-                  placeholder="Search worker by name or phone..."
-                  value={workerSearch}
-                  onChange={e => setWorkerSearch(e.target.value)}
-                  className="w-full bg-surface-200 border border-semantic-border-light text-semantic-text-primary rounded-lg pl-9 pr-3 py-1.5 text-xs placeholder:text-semantic-text-tertiary focus:outline-none focus:border-brand-500"
-                />
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={loadWorkersData}
+                disabled={isLoadingWorkers}
+                className="p-2 rounded-xl border border-slate-200 dark:border-zinc-700"
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoadingWorkers ? 'animate-spin text-amber-500' : ''}`} />
+              </Button>
             </div>
 
-            {/* Workers Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-surface-200/90 border-b border-semantic-border-light">
-                  <tr>
-                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider">
-                      Worker
-                    </th>
-                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider">
-                      Category
-                    </th>
-                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider">
-                      Experience
-                    </th>
+            <Card className="p-0 overflow-hidden bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 shadow-sm">
+              {/* Controls Bar */}
+              <div className="p-4 border-b border-slate-200/90 dark:border-zinc-800 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50/80 dark:bg-zinc-850/60">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase">Filter:</span>
+                  {(['all', 'pending', 'approved', 'rejected'] as const).map(status => (
+                    <button
+                      key={status}
+                      onClick={() => setWorkerStatusFilter(status)}
+                      className={`px-3 py-1 text-xs font-medium rounded-full capitalize transition-colors ${
+                        workerStatusFilter === status
+                          ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
+                          : 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100'
+                      }`}
+                    >
+                      {status} (
+                      {status === 'all'
+                        ? allWorkers.length
+                        : allWorkers.filter(w => w.approval_status === status).length}
+                      )
+                    </button>
+                  ))}
+                </div>
+
+                <div className="relative min-w-[240px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-zinc-500" />
+                  <input
+                    type="text"
+                    placeholder="Search worker by name or phone..."
+                    value={workerSearch}
+                    onChange={e => setWorkerSearch(e.target.value)}
+                    className="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white rounded-xl pl-9 pr-3 py-1.5 text-xs placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
+
+              {/* Workers Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-100/90 dark:bg-zinc-800/90 border-b border-slate-200/90 dark:border-zinc-800">
+                    <tr>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">
+                        Worker
+                      </th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">
+                        Category
+                      </th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">
+                        Experience
+                      </th>
                     <th className="px-6 py-3.5 text-left text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider">
                       Rating
                     </th>
@@ -1750,53 +1776,84 @@ export default function AdminDashboard() {
               </table>
             </div>
           </Card>
+        </div>
         )}
 
         {/* 3. CUSTOMERS TAB (100% Real Supabase Data) */}
         {activeTab === 'customers' && (
-          <Card className="p-0 overflow-hidden bg-surface-100 border border-semantic-border-light">
-            {/* Search Bar */}
-            <div className="p-4 border-b border-semantic-border-light flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface-200/50">
-              <span className="text-xs font-semibold text-semantic-text-secondary uppercase">
-                All Registered Customers ({customers.length})
-              </span>
-              <div className="relative min-w-[260px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-semantic-text-tertiary" />
-                <input
-                  type="text"
-                  placeholder="Search customer by name or phone..."
-                  value={customerSearch}
-                  onChange={e => setCustomerSearch(e.target.value)}
-                  className="w-full bg-surface-200 border border-semantic-border-light text-semantic-text-primary rounded-lg pl-9 pr-3 py-1.5 text-xs placeholder:text-semantic-text-tertiary focus:outline-none focus:border-brand-500"
-                />
+          <div className="space-y-4">
+            {/* Dedicated Mobile Customers Header */}
+            <div className="md:hidden p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 shadow-sm flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-500">
+                    <Users className="w-4 h-4" />
+                  </div>
+                  <h2 className="text-base font-black text-slate-900 dark:text-white">
+                    {t('admin.allCustomers', 'Customers Directory')}
+                  </h2>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500 text-white">
+                    {customers.length}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-1">
+                  Manage registered customers across Muzaffarnagar
+                </p>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={loadCustomersData}
+                disabled={isLoadingCustomers}
+                className="p-2 rounded-xl border border-slate-200 dark:border-zinc-700"
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoadingCustomers ? 'animate-spin text-amber-500' : ''}`} />
+              </Button>
             </div>
 
-            {/* Customers Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-surface-200/90 border-b border-semantic-border-light">
-                  <tr>
-                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider">
-                      Customer
-                    </th>
-                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider">
-                      Phone
-                    </th>
-                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider">
-                      Total Bookings
-                    </th>
-                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider">
-                      Completed
-                    </th>
-                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider">
-                      Joined
-                    </th>
-                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
+            <Card className="p-0 overflow-hidden bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 shadow-sm">
+              {/* Search Bar */}
+              <div className="p-4 border-b border-slate-200/90 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/80 dark:bg-zinc-850/60">
+                <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase">
+                  All Registered Customers ({customers.length})
+                </span>
+                <div className="relative min-w-[260px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-zinc-500" />
+                  <input
+                    type="text"
+                    placeholder="Search customer by name or phone..."
+                    value={customerSearch}
+                    onChange={e => setCustomerSearch(e.target.value)}
+                    className="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white rounded-xl pl-9 pr-3 py-1.5 text-xs placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
+
+              {/* Customers Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-100/90 dark:bg-zinc-800/90 border-b border-slate-200/90 dark:border-zinc-800">
+                    <tr>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">
+                        Customer
+                      </th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">
+                        Phone
+                      </th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">
+                        Total Bookings
+                      </th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">
+                        Completed
+                      </th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">
+                        Joined
+                      </th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
                 <tbody className="divide-y divide-semantic-border-light">
                   {isLoadingCustomers ? (
                     <tr>
@@ -1869,102 +1926,133 @@ export default function AdminDashboard() {
               </table>
             </div>
           </Card>
+        </div>
         )}
 
         {/* 4. BOOKINGS TAB (100% Real Supabase Data) */}
         {activeTab === 'bookings' && (
-          <Card className="p-0 overflow-hidden bg-surface-100 border border-semantic-border-light rounded-2xl shadow-sm">
-            {/* Controls Bar */}
-            <div className="p-4 border-b border-semantic-border-light flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-surface-200/50">
-              {/* Status Filter Pills */}
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-xs font-semibold text-semantic-text-secondary uppercase mr-1">Status:</span>
-                {(
-                  [
-                    { key: 'all', label: 'All' },
-                    { key: 'pending', label: 'Pending' },
-                    { key: 'accepted', label: 'Accepted' },
-                    { key: 'in_progress', label: 'In Progress' },
-                    { key: 'completed', label: 'Completed' },
-                    { key: 'cancelled', label: 'Cancelled' },
-                  ] as const
-                ).map(st => {
-                  const isSelected = bookingStatusFilter === st.key
-                  const count =
-                    st.key === 'all'
-                      ? bookings.length
-                      : bookings.filter(b => b.status === st.key).length
-
-                  return (
-                    <button
-                      key={st.key}
-                      onClick={() => setBookingStatusFilter(st.key)}
-                      className={`px-3 py-1 text-xs font-medium rounded-full transition-colors flex items-center gap-1.5 ${
-                        isSelected
-                          ? 'bg-brand-500 text-surface-950 font-bold shadow-sm'
-                          : 'bg-surface-200 text-semantic-text-secondary hover:text-semantic-text-primary hover:bg-surface-300'
-                      }`}
-                    >
-                      <span>{st.label}</span>
-                      <span
-                        className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                          isSelected ? 'bg-surface-950/20 text-surface-950 font-bold' : 'bg-surface-300 text-semantic-text-tertiary'
-                        }`}
-                      >
-                        {count}
-                      </span>
-                    </button>
-                  )
-                })}
+          <div className="space-y-4">
+            {/* Dedicated Mobile Bookings Header */}
+            <div className="md:hidden p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 shadow-sm flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-500">
+                    <Calendar className="w-4 h-4" />
+                  </div>
+                  <h2 className="text-base font-black text-slate-900 dark:text-white">
+                    {t('admin.allBookings', 'All Bookings')}
+                  </h2>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-500 text-white">
+                    {bookings.length} Total
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-1">
+                  Live booking dispatches and service orders in Muzaffarnagar
+                </p>
               </div>
-
-              {/* Search Bar */}
-              <div className="relative min-w-[280px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-semantic-text-tertiary" />
-                <input
-                  type="text"
-                  placeholder="Search by customer, worker, or service..."
-                  value={bookingSearch}
-                  onChange={e => setBookingSearch(e.target.value)}
-                  className="w-full bg-surface-200 border border-semantic-border-light text-semantic-text-primary rounded-xl pl-9 pr-8 py-2 text-xs placeholder:text-semantic-text-tertiary focus:outline-none focus:border-brand-500 transition-colors"
-                />
-                {bookingSearch && (
-                  <button
-                    onClick={() => setBookingSearch('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-semantic-text-tertiary hover:text-semantic-text-primary text-xs p-1"
-                    title="Clear search"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={loadBookings}
+                disabled={isLoadingBookings}
+                className="p-2 rounded-xl border border-slate-200 dark:border-zinc-700"
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoadingBookings ? 'animate-spin text-amber-500' : ''}`} />
+              </Button>
             </div>
 
-            {/* Bookings Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-surface-200/90 border-b border-semantic-border-light">
-                  <tr>
-                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider">
-                      Booking ID
-                    </th>
-                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider">
-                      Customer
-                    </th>
-                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider">
-                      Worker
-                    </th>
-                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider">
-                      Service
-                    </th>
-                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider">
-                      Scheduled Date
-                    </th>
-                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
+            <Card className="p-0 overflow-hidden bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 rounded-2xl shadow-sm">
+              {/* Controls Bar */}
+              <div className="p-4 border-b border-slate-200/90 dark:border-zinc-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-slate-50/80 dark:bg-zinc-850/60">
+                {/* Status Filter Pills */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase mr-1">Status:</span>
+                  {(
+                    [
+                      { key: 'all', label: 'All' },
+                      { key: 'pending', label: 'Pending' },
+                      { key: 'accepted', label: 'Accepted' },
+                      { key: 'in_progress', label: 'In Progress' },
+                      { key: 'completed', label: 'Completed' },
+                      { key: 'cancelled', label: 'Cancelled' },
+                    ] as const
+                  ).map(st => {
+                    const isSelected = bookingStatusFilter === st.key
+                    const count =
+                      st.key === 'all'
+                        ? bookings.length
+                        : bookings.filter(b => b.status === st.key).length
+
+                    return (
+                      <button
+                        key={st.key}
+                        onClick={() => setBookingStatusFilter(st.key)}
+                        className={`px-3 py-1 text-xs font-medium rounded-full transition-colors flex items-center gap-1.5 ${
+                          isSelected
+                            ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
+                            : 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100'
+                        }`}
+                      >
+                        <span>{st.label}</span>
+                        <span
+                          className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                            isSelected ? 'bg-slate-950/20 text-slate-950 font-bold' : 'bg-slate-200 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400'
+                          }`}
+                        >
+                          {count}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {/* Search Bar */}
+                <div className="relative min-w-[280px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-zinc-500" />
+                  <input
+                    type="text"
+                    placeholder="Search by customer, worker, or service..."
+                    value={bookingSearch}
+                    onChange={e => setBookingSearch(e.target.value)}
+                    className="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white rounded-xl pl-9 pr-8 py-2 text-xs placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:outline-none focus:border-amber-500 transition-colors"
+                  />
+                  {bookingSearch && (
+                    <button
+                      onClick={() => setBookingSearch('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:text-zinc-500 dark:hover:text-zinc-200 text-xs p-1"
+                      title="Clear search"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Bookings Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-100/90 dark:bg-zinc-800/90 border-b border-slate-200/90 dark:border-zinc-800">
+                    <tr>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">
+                        Booking ID
+                      </th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">
+                        Customer
+                      </th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">
+                        Assigned Worker
+                      </th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">
+                        Service
+                      </th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">
+                        Scheduled
+                      </th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
                 <tbody className="divide-y divide-semantic-border-light">
                   {isLoadingBookings ? (
                     <tr>
@@ -2025,17 +2113,49 @@ export default function AdminDashboard() {
               </table>
             </div>
           </Card>
+        </div>
         )}
 
         {/* 5. NOTIFICATIONS TAB (With Booking Notifications Filter & Spring Animations) */}
         {activeTab === 'notifications' && (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
+            {/* Dedicated Mobile Alerts Header */}
+            <div className="md:hidden p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 shadow-sm flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-500">
+                    <Bell className="w-4 h-4" />
+                  </div>
+                  <h2 className="text-base font-black text-slate-900 dark:text-white">
+                    {t('admin.alerts', 'Platform Alerts')}
+                  </h2>
+                  {unreadNotifsCount > 0 && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500 text-white">
+                      {unreadNotifsCount} Unread
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-1">
+                  Live notifications, worker registrations, and dispatch events
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={loadNotificationsData}
+                disabled={isLoadingNotifications}
+                className="p-2 rounded-xl border border-slate-200 dark:border-zinc-700"
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoadingNotifications ? 'animate-spin text-amber-500' : ''}`} />
+              </Button>
+            </div>
+
             {/* Header / Actions Card */}
-            <Card className="p-6 bg-surface-100 border border-semantic-border-light rounded-3xl shadow-sm">
+            <Card className="p-6 bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 rounded-3xl shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2.5">
-                    <h2 className="text-xl font-bold text-semantic-text-primary">
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                       {t('admin.notifications', 'Admin Notifications & Dispatch Alerts')}
                     </h2>
                     {unreadNotifsCount > 0 && (
@@ -2147,21 +2267,21 @@ export default function AdminDashboard() {
             </Card>
 
             {/* Notifications List Card */}
-            <Card className="p-6 bg-surface-100 border border-semantic-border-light rounded-3xl shadow-sm">
+            <Card className="p-4 sm:p-6 bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 rounded-3xl shadow-sm">
               {isLoadingNotifications ? (
-                <div className="py-12 text-center text-semantic-text-secondary">
-                  <RefreshCw className="w-8 h-8 mx-auto animate-spin text-brand-400 mb-3" />
+                <div className="py-12 text-center text-slate-500 dark:text-zinc-400">
+                  <RefreshCw className="w-8 h-8 mx-auto animate-spin text-amber-500 mb-3" />
                   <p className="text-sm">Loading admin notifications...</p>
                 </div>
               ) : filteredNotifications.length === 0 ? (
                 <div className="py-12 text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-surface-200 rounded-2xl flex items-center justify-center text-semantic-text-tertiary">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-slate-100 dark:bg-zinc-800 rounded-2xl flex items-center justify-center text-slate-400 dark:text-zinc-500">
                     <Bell className="w-8 h-8" />
                   </div>
-                  <h3 className="text-lg font-bold text-semantic-text-primary">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                     {t('admin.noNotifications', 'No notifications found')}
                   </h3>
-                  <p className="text-sm text-semantic-text-secondary max-w-sm mx-auto mt-1">
+                  <p className="text-sm text-slate-500 dark:text-zinc-400 max-w-sm mx-auto mt-1">
                     System alerts, worker registration requests, ID document uploads, and booking dispatches will appear here.
                   </p>
                 </div>
@@ -2184,8 +2304,8 @@ export default function AdminDashboard() {
                         animate={{ opacity: 1, y: 0 }}
                         className={`p-4 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-start justify-between gap-4 ${
                           isUnread
-                            ? 'bg-surface-200/90 border-brand-500/40 shadow-sm'
-                            : 'bg-surface-200/40 border-semantic-border-light hover:bg-surface-200/70'
+                            ? 'bg-amber-500/5 dark:bg-amber-500/10 border-amber-500/40 shadow-xs'
+                            : 'bg-slate-50 dark:bg-zinc-800/50 border-slate-200/90 dark:border-zinc-700/60 hover:bg-slate-100 dark:hover:bg-zinc-800'
                         }`}
                       >
                         <div className="flex items-start gap-3.5 min-w-0">
@@ -2305,14 +2425,43 @@ export default function AdminDashboard() {
 
         {/* 6. ADMINISTRATORS TAB */}
         {activeTab === 'admins' && (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
+            {/* Dedicated Mobile Administrators Header */}
+            <div className="md:hidden p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 shadow-sm flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-500">
+                    <Shield className="w-4 h-4" />
+                  </div>
+                  <h2 className="text-base font-black text-slate-900 dark:text-white">
+                    Administrators
+                  </h2>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500 text-slate-950">
+                    {adminTeam.length} Active
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-1">
+                  Manage administrator console privileges & security
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={loadAdminTeamData}
+                disabled={isLoadingAdminTeam}
+                className="p-2 rounded-xl border border-slate-200 dark:border-zinc-700"
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoadingAdminTeam ? 'animate-spin text-amber-500' : ''}`} />
+              </Button>
+            </div>
+
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h3 className="text-xl font-bold text-semantic-text-primary flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-amber-400" />
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-amber-500" />
                   Platform Administrator Directory
                 </h3>
-                <p className="text-sm text-semantic-text-secondary mt-0.5">
+                <p className="text-sm text-slate-500 dark:text-zinc-400 mt-0.5">
                   Only existing platform administrators can create and manage platform administrator privileges.
                 </p>
               </div>
@@ -2323,7 +2472,7 @@ export default function AdminDashboard() {
                   setAddAdminSuccess('')
                   setShowAddAdminModal(true)
                 }}
-                className="bg-brand-500 hover:bg-brand-600 text-surface-950 font-semibold flex items-center gap-2 self-start sm:self-auto shadow-lg shadow-brand-500/20"
+                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold flex items-center gap-2 self-start sm:self-auto shadow-md shadow-amber-500/20"
               >
                 <UserPlus className="w-4 h-4" />
                 Add Administrator
@@ -2331,12 +2480,12 @@ export default function AdminDashboard() {
             </div>
 
             {/* Security Notice Card */}
-            <div className="p-4 bg-surface-100 border border-amber-500/20 rounded-xl flex items-start gap-3 shadow-sm">
-              <div className="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0 text-amber-400">
+            <div className="p-4 bg-white dark:bg-zinc-900 border border-amber-500/30 rounded-2xl flex items-start gap-3 shadow-sm">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shrink-0 text-amber-500">
                 <Shield className="w-5 h-5" />
               </div>
-              <div className="text-xs text-semantic-text-secondary leading-relaxed">
-                <span className="font-semibold text-semantic-text-primary block mb-0.5">
+              <div className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
+                <span className="font-bold text-slate-900 dark:text-white block mb-0.5">
                   Administrative Access Control & Security
                 </span>
                 Public signup for administrator accounts is completely closed. New administrator accounts can only be provisioned by an existing administrator through this portal. Every administrator must complete MSG91 two-factor SMS OTP verification upon signing in.
@@ -2344,14 +2493,14 @@ export default function AdminDashboard() {
             </div>
 
             {adminTeamError && (
-              <div className="p-4 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 text-sm">
+              <div className="p-4 rounded-2xl border border-red-500/30 bg-red-500/10 text-red-400 text-sm">
                 {adminTeamError}
               </div>
             )}
 
-            <Card className="p-6 bg-surface-100 border border-semantic-border-light">
-              <div className="flex items-center justify-between mb-4 pb-3 border-b border-semantic-border-light">
-                <h4 className="font-semibold text-semantic-text-primary">
+            <Card className="p-6 bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 shadow-sm">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200/90 dark:border-zinc-800">
+                <h4 className="font-bold text-slate-900 dark:text-white">
                   Active Administrators ({adminTeam.length})
                 </h4>
                 <Button

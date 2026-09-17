@@ -452,8 +452,8 @@
     "thanks": "Thank you for your feedback!"
   },
   "admin": {
-    "dashboard": "Admin Dashboard",
-    "overview": "Overview",
+    "dashboard": "Dashboard",
+    "overview": "Dashboard",
     "approvals": "Approvals",
     "alerts": "Alerts",
     "pendingWorkers": "Pending Approvals",

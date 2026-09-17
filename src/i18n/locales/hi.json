@@ -452,8 +452,8 @@
     "thanks": "आपकी प्रतिक्रिया के लिए धन्यवाद!"
   },
   "admin": {
-    "dashboard": "एडमिन डैशबोर्ड",
-    "overview": "ओवरव्यू",
+    "dashboard": "डैशबोर्ड",
+    "overview": "डैशबोर्ड",
     "approvals": "मंजूरी",
     "alerts": "अलर्ट",
     "pendingWorkers": "लंबित मंजूरी",

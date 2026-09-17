@@ -329,21 +329,21 @@ export default function Bookings() {
         )}
         
         {/* 2 Customer AI Assistants Support Banner */}
-        <div className="mb-6 p-4 rounded-2xl bg-surface-100 border border-brand-500/30 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="mb-6 p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-amber-500/30 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-500/20 to-emerald-500/20 border border-brand-500/40 flex items-center justify-center text-xl shadow-inner shrink-0">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500/20 to-emerald-500/20 border border-amber-500/30 flex items-center justify-center text-xl shadow-inner shrink-0">
               🤖
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-xs font-bold text-white tracking-tight">
+                <h3 className="text-xs font-bold text-slate-900 dark:text-white tracking-tight">
                   {i18n.language === 'hi' ? 'कामगार AI सहायता (24x7)' : 'Kaamgar AI Assistants (24x7)'}
                 </h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                   {i18n.language === 'hi' ? 'त्वरित सहायता' : 'Fast Support'}
                 </span>
               </div>
-              <p className="text-[11px] text-semantic-text-secondary">
+              <p className="text-[11px] text-slate-500 dark:text-zinc-400">
                 {i18n.language === 'hi'
                   ? 'कारीगर खोजने के लिए "बुकिंग मित्र" या शिकायत/देरी के लिए "समाधान मित्र" चुनें'
                   : 'Select an assistant for service recommendations or post-booking resolution'}
@@ -354,16 +354,16 @@ export default function Bookings() {
           <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
             <button
               onClick={() => openAssistant('customer_booking')}
-              className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-brand-500 hover:bg-brand-400 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all"
+              className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all"
             >
               <span>🛠️</span>
               <span>{i18n.language === 'hi' ? 'बुकिंग मित्र' : 'Booking Mitra'}</span>
             </button>
             <button
               onClick={() => openAssistant('customer_care')}
-              className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-surface-200 hover:bg-surface-300 text-semantic-text-primary hover:text-white border border-semantic-border-light text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+              className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-900 dark:text-white border border-slate-200 dark:border-zinc-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
             >
-              <Shield className="w-3.5 h-3.5 text-emerald-400" />
+              <Shield className="w-3.5 h-3.5 text-emerald-500" />
               <span>{i18n.language === 'hi' ? 'समाधान मित्र' : 'Care & Support'}</span>
             </button>
           </div>

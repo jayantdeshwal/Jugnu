@@ -126,9 +126,9 @@ export default function Layout() {
     { id: 'account', label: t('nav.account', 'Account'), path: '/profile', icon: User },
   ]
 
-  // 3. Admin: Overview, Approvals, Alerts, All Bookings, Account
+  // 3. Admin: Dashboard, Approvals, Alerts, All Bookings, Account
   const adminBottomTabs: BottomTabItem[] = [
-    { id: 'overview', label: t('admin.overview', 'Overview'), path: '/admin', icon: Shield },
+    { id: 'dashboard', label: t('admin.dashboard', 'Dashboard'), path: '/admin', icon: Shield },
     { id: 'approvals', label: t('admin.approvals', 'Approvals'), path: '/admin?tab=workers', icon: UserCheck },
     { id: 'alerts', label: t('admin.alerts', 'Alerts'), path: '/admin?tab=notifications', icon: Bell, badge: unreadCount },
     { id: 'bookings', label: t('admin.allBookings', 'All Bookings'), path: '/admin?tab=bookings', icon: Calendar },
@@ -767,7 +767,7 @@ export default function Layout() {
                 ? location.pathname === '/' && !location.search
                 : targetTabParam
                 ? location.pathname === tab.path.split('?')[0] && currentTabParam === targetTabParam
-                : location.pathname === tab.path && (!currentTabParam || currentTabParam === 'overview')
+                : location.pathname === tab.path && (!currentTabParam || currentTabParam === 'dashboard' || currentTabParam === 'overview')
               : false
 
             if (tab.action) {
@@ -924,123 +924,7 @@ export default function Layout() {
               )}
             </div>
 
-            {/* 3. Main Navigation Links */}
-            <div className="p-3 space-y-1">
-              <p className="px-3 pt-1 pb-1 text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
-                {t('nav.menu', 'Main Menu')}
-              </p>
 
-              {/* Home */}
-              <NavLink
-                to="/"
-                onClick={() => setMobileMenuOpen(false)}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                    isActive
-                      ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold'
-                      : 'text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850'
-                  }`
-                }
-              >
-                <Home className="w-4.5 h-4.5" />
-                <span>{t('nav.home', 'Home')}</span>
-              </NavLink>
-
-              {/* Role Header Links (currentNavItems) */}
-              {currentNavItems.map(({ path, label, icon: Icon, badge }) => (
-                <NavLink
-                  key={path}
-                  to={path}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                      isActive
-                        ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold'
-                        : 'text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850'
-                    }`
-                  }
-                >
-                  <Icon className="w-4.5 h-4.5" />
-                  <span className="flex-1">{label}</span>
-                  {Boolean(badge && badge > 0) && (
-                    <Badge variant="danger" size="sm">
-                      {badge}
-                    </Badge>
-                  )}
-                </NavLink>
-              ))}
-
-              {/* Profile Link (if logged in) */}
-              {isAuthenticated && (
-                <NavLink
-                  to="/profile"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                      isActive
-                        ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold'
-                        : 'text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850'
-                    }`
-                  }
-                >
-                  <User className="w-4.5 h-4.5" />
-                  <span>{t('nav.profile', 'Profile & Settings')}</span>
-                </NavLink>
-              )}
-
-              {/* Role Specific Actions */}
-              {isAuthenticated && !isWorker && !isAdmin && (
-                <button
-                  type="button"
-                  onClick={() => { setMobileMenuOpen(false); navigate('/register/worker') }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors text-left cursor-pointer"
-                >
-                  <Briefcase className="w-4.5 h-4.5" />
-                  <span className="flex-1">{t('nav.becomeWorker', 'Become a Worker')}</span>
-                  <span className="text-[10px] bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded font-bold uppercase">Earn</span>
-                </button>
-              )}
-
-              {isAuthenticated && isWorker && (
-                <NavLink
-                  to="/worker/dashboard"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850 transition-colors"
-                >
-                  <Briefcase className="w-4.5 h-4.5" />
-                  <span>{t('nav.workerDashboard', 'Worker Dashboard')}</span>
-                </NavLink>
-              )}
-
-              {isAuthenticated && isAdmin && (
-                <>
-                  <NavLink
-                    to="/admin"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850 transition-colors"
-                  >
-                    <Shield className="w-4.5 h-4.5" />
-                    <span>{t('admin.overview', 'Overview')}</span>
-                  </NavLink>
-                  <NavLink
-                    to="/admin?tab=bookings"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850 transition-colors"
-                  >
-                    <Calendar className="w-4.5 h-4.5" />
-                    <span>{t('admin.allBookings', 'All Bookings')}</span>
-                  </NavLink>
-                  <NavLink
-                    to="/admin?tab=workers"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850 transition-colors"
-                  >
-                    <UserCheck className="w-4.5 h-4.5" />
-                    <span>{t('admin.approvals', 'Approvals')}</span>
-                  </NavLink>
-                </>
-              )}
-            </div>
 
             {/* 4. PROMINENT APP OPTIONS & PREFERENCES (Requested by User) */}
             <div className="p-3 border-t border-slate-100 dark:border-zinc-800/80 space-y-2.5">
