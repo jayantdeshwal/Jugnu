@@ -1,0 +1,89 @@
+{
+  "id": "/?source=pwa",
+  "name": "मुजफ्फरनगर का कामगार | Muzaffarnagar Kaamgar",
+  "short_name": "कामगार | Kaamgar",
+  "description": "मुजफ्फरनगर के अपने सत्यापित इलेक्ट्रीशियन, प्लंबर, कारपेंटर और तकनीशियन खोजें। 0% कमीशन।",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "lang": "hi-IN",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "categories": ["lifestyle", "utilities", "business"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Find Workers | कारीगर खोजें",
+      "short_name": "Search",
+      "description": "Search verified artisans in Muzaffarnagar",
+      "url": "/search?source=shortcut",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "My Bookings | मेरी बुकिंग्स",
+      "short_name": "Bookings",
+      "description": "View and manage your service requests",
+      "url": "/bookings?source=shortcut",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Join as Worker | कारीगर बनें",
+      "short_name": "Join Worker",
+      "description": "Register as an artisan with 0% commission",
+      "url": "/register/worker?source=shortcut",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}

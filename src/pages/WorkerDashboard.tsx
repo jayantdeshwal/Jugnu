@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { CATEGORIES, getCategoryName } from '@kaamgar/shared'
 import {
   ArrowLeft,
@@ -70,6 +70,7 @@ export default function WorkerDashboard() {
   const { user } = useAuth()
   const { openAssistant } = useAiAssistant()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
   const [profile, setProfile] = useState<WorkerProfileRow | null>(null)
   const [categoriesList, setCategoriesList] = useState<string[]>([])
@@ -79,7 +80,30 @@ export default function WorkerDashboard() {
   const [updatingBookingId, setUpdatingBookingId] = useState('')
   const [isUpdatingAvailability, setIsUpdatingAvailability] = useState(false)
   const [availabilitySuccessMsg, setAvailabilitySuccessMsg] = useState('')
-  const [activeTab, setActiveTab] = useState<TabFilter>('all')
+  
+  const tabParam = searchParams.get('tab')
+  const [activeTab, setActiveTab] = useState<TabFilter>(
+    tabParam === 'leads' || tabParam === 'pending'
+      ? 'pending'
+      : tabParam === 'active'
+      ? 'active'
+      : tabParam === 'completed'
+      ? 'completed'
+      : 'all'
+  )
+
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab === 'leads' || tab === 'pending') {
+      setActiveTab('pending')
+    } else if (tab === 'active') {
+      setActiveTab('active')
+    } else if (tab === 'completed') {
+      setActiveTab('completed')
+    } else if (tab === 'all') {
+      setActiveTab('all')
+    }
+  }, [searchParams])
   const [showSupportModal, setShowSupportModal] = useState(false)
 
   // Contact modal state

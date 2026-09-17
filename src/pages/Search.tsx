@@ -219,13 +219,21 @@ export default function Search() {
   const { t, i18n } = useTranslation()
   const { categories, serviceAreas } = usePublicCatalog()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [filtersOpen, setFiltersOpen] = useState(
+    Boolean(searchParams.get('filters') || searchParams.get('view') === 'services' || searchParams.get('category'))
+  )
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '')
   const [selectedArea, setSelectedArea] = useState(searchParams.get('area') || '')
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '')
   const [sortBy, setSortBy] = useState<'rating' | 'experience' | 'reviews'>('rating')
   const [workerData, setWorkerData] = useState<SearchWorker[]>([])
   const [isLoadingWorkers, setIsLoadingWorkers] = useState(true)
+
+  useEffect(() => {
+    if (searchParams.get('view') === 'services' || searchParams.get('filters') || searchParams.get('category')) {
+      setFiltersOpen(true)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     let isMounted = true

@@ -5,6 +5,7 @@ const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
+  '/manifest.json',
   '/favicon.svg',
   '/icon.svg',
   '/icon-maskable.svg',
