@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@kaamgar/ui'
@@ -125,8 +126,13 @@ export default function PWAInstallPrompt() {
     setIsExpanded(false)
   }
 
-  // If already installed, hide everything
-  if (isStandalone) return null
+  const isMobile =
+    typeof window !== 'undefined' &&
+    (/android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent) ||
+      window.matchMedia('(max-width: 768px)').matches)
+
+  // If already installed or viewing on a mobile device, hide install prompt completely
+  if (isStandalone || isMobile) return null
 
   return (
     <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-md z-50 pointer-events-none">

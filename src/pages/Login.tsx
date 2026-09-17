@@ -595,11 +595,11 @@ export default function Login() {
             {isDark ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-slate-700" />}
           </button>
 
-          {/* Install App Button */}
+          {/* Install App Button (Hidden on Mobile) */}
           <button
             type="button"
             onClick={() => triggerPWAInstall()}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-brand-400 border border-amber-500/30 text-xs font-semibold shadow-xs transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-brand-400 border border-amber-500/30 text-xs font-semibold shadow-xs transition-all hover:scale-105 active:scale-95 cursor-pointer"
             title={t('pwa.installApp', 'Install App')}
           >
             <Download className="w-3.5 h-3.5 text-amber-600 dark:text-brand-400" />

@@ -15,7 +15,7 @@ import { CATEGORIES, getCategoryName } from '@kaamgar/shared'
 import { useState, useRef, useEffect } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import NetworkStatus from './NetworkStatus'
-import PWAInstallPrompt, { triggerPWAInstall } from './PWAInstallPrompt'
+import PWAInstallPrompt from './PWAInstallPrompt'
 import AiAssistantModal from './ai/AiAssistantModal'
 import AiFloatingTrigger from './ai/AiFloatingTrigger'
 import JugnuLogo from './common/JugnuLogo'
@@ -1043,33 +1043,6 @@ export default function Layout() {
                   </a>
                 </div>
               </div>
-
-              {/* Option 4: Install Mobile App (PWA) */}
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false)
-                  triggerPWAInstall()
-                }}
-                className="w-full flex items-center justify-between p-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/15 active:scale-[0.98] transition-all cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center font-bold shadow-xs">
-                    <Smartphone className="w-5 h-5" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">
-                      {t('pwa.installApp', 'Install Mobile App')}
-                    </p>
-                    <p className="text-[11px] text-slate-500 dark:text-zinc-400">
-                      फ़ोन में ऐप डाउनलोड करें
-                    </p>
-                  </div>
-                </div>
-                <Badge variant="success" size="sm" className="font-bold">
-                  Install
-                </Badge>
-              </button>
             </div>
 
             {/* 5. Prominent Logout / Back to Login Button */}
