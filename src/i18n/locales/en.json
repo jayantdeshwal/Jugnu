@@ -728,7 +728,7 @@
   },
   "pwa": {
     "installApp": "Install App",
-    "installBannerTitle": "Install Kaamgar App",
+    "installBannerTitle": "Install Jugnu App",
     "installBannerSubtitle": "Add to your home screen for faster bookings, instant WhatsApp contact, and offline access.",
     "installBtn": "Install App",
     "laterBtn": "Later",
@@ -736,7 +736,7 @@
   },
   "appBanner": {
     "eyebrow": "Official Mobile App • <2MB Storage",
-    "title": "Get the Muzaffarnagar Kaamgar Mobile App",
+    "title": "Get the Jugnu Mobile App",
     "subtitle": "Install the app directly on your phone for faster bookings, 1-tap WhatsApp chat, and 0% commission local artisan services.",
     "installBtn": "Install Mobile App Now",
     "installedStatus": "App Already Installed on This Device",

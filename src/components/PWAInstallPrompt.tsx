@@ -162,7 +162,7 @@ export default function PWAInstallPrompt() {
                         </span>
                       </div>
                       <h4 className="font-extrabold text-sm sm:text-base text-white tracking-tight leading-snug">
-                        {t('pwa.installBannerTitle', 'Install Kaamgar App')}
+                        {t('pwa.installBannerTitle', 'Install Jugnu App')}
                       </h4>
                     </div>
 
