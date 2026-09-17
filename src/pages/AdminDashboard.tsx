@@ -411,7 +411,16 @@ export default function AdminDashboard() {
     setIsLoadingAdminTeam(true)
     setAdminTeamError('')
     try {
-      const data = await fetchAdminTeam()
+      const data = await fetchAdminTeam(
+        user?.role === 'admin'
+          ? {
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              phone: user.phone,
+            }
+          : undefined
+      )
       setAdminTeam(data)
     } catch (err) {
       setAdminTeamError(err instanceof Error ? err.message : 'Unable to load administrator team')

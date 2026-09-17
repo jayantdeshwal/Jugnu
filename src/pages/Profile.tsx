@@ -564,9 +564,9 @@ export default function Profile() {
         </div>
 
         {/* ===================================================================== */}
-        {/* 3. THREE QUICK ACTION CARDS ROW (Exact 3-card layout of uc2.jpeg)     */}
+        {/* 3. QUICK ACTION CARDS ROW                                             */}
         {/* ===================================================================== */}
-        <div className="grid grid-cols-3 gap-2.5 sm:gap-3 mb-6">
+        <div className={`gap-2.5 sm:gap-3 mb-6 ${isAdmin ? 'grid grid-cols-2 sm:grid-cols-4' : 'grid grid-cols-3'}`}>
           {isAdmin ? (
             <>
               {/* Admin Card 1: Admin Dashboard */}
@@ -579,7 +579,7 @@ export default function Profile() {
                   <Shield className="w-5 h-5" />
                 </div>
                 <span className="text-xs font-bold text-slate-900 dark:text-zinc-100 group-hover:text-rose-600 dark:group-hover:text-rose-400 leading-tight">
-                  Admin Dashboard
+                  Admin Console
                 </span>
               </button>
 
@@ -597,16 +597,30 @@ export default function Profile() {
                 </span>
               </button>
 
-              {/* Admin Card 3: Platform Alerts */}
+              {/* Admin Card 3: Manage Administrators */}
+              <button
+                type="button"
+                onClick={() => navigate('/admin?tab=admins')}
+                className="p-3 sm:p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-amber-500/40 hover:border-amber-500 hover:bg-amber-50/50 dark:hover:bg-amber-950/20 transition-all flex flex-col items-center justify-center text-center group shadow-xs active:scale-95"
+              >
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-2 group-hover:scale-105 transition-transform">
+                  <Shield className="w-5 h-5 text-amber-500" />
+                </div>
+                <span className="text-xs font-bold text-amber-600 dark:text-amber-400 leading-tight">
+                  Administrators
+                </span>
+              </button>
+
+              {/* Admin Card 4: Platform Alerts */}
               <button
                 type="button"
                 onClick={() => navigate('/admin?tab=notifications')}
-                className="p-3 sm:p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 hover:border-amber-500/40 hover:bg-slate-50 dark:hover:bg-zinc-800/80 transition-all flex flex-col items-center justify-center text-center group shadow-xs active:scale-95"
+                className="p-3 sm:p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 hover:border-blue-500/40 hover:bg-slate-50 dark:hover:bg-zinc-800/80 transition-all flex flex-col items-center justify-center text-center group shadow-xs active:scale-95"
               >
-                <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-2 group-hover:scale-105 transition-transform">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/15 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-2 group-hover:scale-105 transition-transform">
                   <Bell className="w-5 h-5" />
                 </div>
-                <span className="text-xs font-bold text-slate-900 dark:text-zinc-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 leading-tight">
+                <span className="text-xs font-bold text-slate-900 dark:text-zinc-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 leading-tight">
                   Platform Alerts
                 </span>
               </button>
@@ -683,6 +697,32 @@ export default function Profile() {
           {isAdmin ? (
             /* Admin Specific Menu Rows */
             <>
+              {/* Option to Open and Manage Administrators directly from Account */}
+              <div
+                onClick={() => navigate('/admin?tab=admins')}
+                className="flex items-center justify-between py-3.5 px-3.5 rounded-2xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 hover:bg-amber-500/20 cursor-pointer transition-all group shadow-xs mb-2"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="w-9 h-9 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold shadow-xs">
+                    <Shield className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 block">
+                      Manage Administrators
+                    </span>
+                    <span className="text-[11px] text-slate-600 dark:text-zinc-400">
+                      View administrator team list, add sub-admins & configure privileges
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500 text-slate-950">
+                    Open
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-amber-500 group-hover:translate-x-0.5 transition-transform" />
+                </div>
+              </div>
+
               <div
                 onClick={() => navigate('/admin')}
                 className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800/70 cursor-pointer transition-colors group"

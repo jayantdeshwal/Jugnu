@@ -455,22 +455,39 @@ export default function Layout() {
                           </NavLink>
                         )}
 
-                        {/* Admin Dashboard Link */}
+                        {/* Admin Dashboard & Manage Administrators Links */}
                         {isAdmin && (
-                          <NavLink
-                            to="/admin"
-                            onClick={() => setUserMenuOpen(false)}
-                            className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
-                            role="menuitem"
-                          >
-                            <div className="w-8 h-8 rounded-xl bg-rose-500/15 flex items-center justify-center text-rose-500">
-                              <Shield className="w-4 h-4" />
-                            </div>
-                            <div className="flex flex-col text-left">
-                              <span className="font-semibold">{t('nav.adminDashboard')}</span>
-                              <span className="text-[11px] text-slate-500 dark:text-zinc-400 font-normal">{t('nav.platformManagement', 'Platform management')}</span>
-                            </div>
-                          </NavLink>
+                          <>
+                            <NavLink
+                              to="/admin"
+                              onClick={() => setUserMenuOpen(false)}
+                              className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+                              role="menuitem"
+                            >
+                              <div className="w-8 h-8 rounded-xl bg-rose-500/15 flex items-center justify-center text-rose-500">
+                                <Shield className="w-4 h-4" />
+                              </div>
+                              <div className="flex flex-col text-left">
+                                <span className="font-semibold">{t('nav.adminDashboard')}</span>
+                                <span className="text-[11px] text-slate-500 dark:text-zinc-400 font-normal">{t('nav.platformManagement', 'Platform management')}</span>
+                              </div>
+                            </NavLink>
+
+                            <NavLink
+                              to="/admin?tab=admins"
+                              onClick={() => setUserMenuOpen(false)}
+                              className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/25 transition-colors"
+                              role="menuitem"
+                            >
+                              <div className="w-8 h-8 rounded-xl bg-amber-500/15 flex items-center justify-center text-amber-500">
+                                <Shield className="w-4 h-4" />
+                              </div>
+                              <div className="flex flex-col text-left">
+                                <span className="font-semibold">Manage Administrators</span>
+                                <span className="text-[11px] text-slate-500 dark:text-zinc-400 font-normal">Team & console privileges</span>
+                              </div>
+                            </NavLink>
+                          </>
                         )}
                       </div>
 
@@ -891,6 +908,19 @@ export default function Layout() {
                       {isWorker && !isAdmin && <Badge variant="success" size="sm">{t('nav.roleWorker', 'Worker')}</Badge>}
                       {!isWorker && !isAdmin && <Badge variant="info" size="sm">{t('nav.roleCustomer', 'Customer')}</Badge>}
                     </div>
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMobileMenuOpen(false)
+                          navigate('/admin?tab=admins')
+                        }}
+                        className="mt-2 w-full flex items-center justify-center gap-2 py-1.5 px-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-bold hover:bg-amber-500/25 transition-colors cursor-pointer"
+                      >
+                        <Shield className="w-3.5 h-3.5" />
+                        <span>Manage Administrators</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               ) : (
