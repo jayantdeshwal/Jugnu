@@ -67,7 +67,7 @@ export function buildCustomerToWorkerWhatsAppMessage(params: {
   const when = params.date && params.time ? `on ${params.date} at ${params.time}` : ''
   const location = params.address ? `\nAddress: ${params.address}` : ''
 
-  return `Namaste ${name}, I have booked your ${service} on Muzaffarnagar Ka Kaamgar ${when}.${location}\nPlease let me know your estimated arrival time. Thank you!`
+  return `Namaste ${name}, I have booked your ${service} on Jugnu ${when}.${location}\nPlease let me know your estimated arrival time. Thank you!`
 }
 
 /**
@@ -85,5 +85,5 @@ export function buildWorkerToCustomerWhatsAppMessage(params: {
   const service = params.categoryName || 'service'
   const when = params.date && params.time ? `on ${params.date} at ${params.time}` : ''
 
-  return `Namaste ${customer}, I am ${worker} from Muzaffarnagar Ka Kaamgar for your ${service} booking ${when}.\nPlease let me know if you have any location directions or special instructions before I arrive. Thank you!`
+  return `Namaste ${customer}, I am ${worker} from Jugnu for your ${service} booking ${when}.\nPlease let me know if you have any location directions or special instructions before I arrive. Thank you!`
 }

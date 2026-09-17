@@ -60,15 +60,15 @@ export const ASSISTANT_CONFIGS: Record<AssistantPersona, AssistantConfig> = {
 
   customer_care: {
     id: 'customer_care',
-    nameEn: 'Kaamgar Care',
-    nameHi: 'कामगार समाधान',
+    nameEn: 'Jugnu Care',
+    nameHi: 'जुगनू समाधान',
     roleTitleEn: 'Customer Support & Issue Resolver',
     roleTitleHi: 'ग्राहक सहायता एवं समाधान',
     badgeEn: '🛡️ Priority Resolution',
     badgeHi: '🛡️ त्वरित सहायता',
     avatar: '🛡️',
-    greetingEn: 'Hello! I am Kaamgar Care. Have an ongoing booking, arrival delay, payment dispute, or need to reach our Admin desk?',
-    greetingHi: 'नमस्कार! मैं कामगार समाधान हूँ। क्या आपको किसी बुकिंग, कारीगर के आने में देरी, शुल्क विवाद या एडमिन डेस्क से संपर्क में सहायता चाहिए?',
+    greetingEn: 'Hello! I am Jugnu Care. Have an ongoing booking, arrival delay, payment dispute, or need to reach our Admin desk?',
+    greetingHi: 'नमस्कार! मैं जुगनू समाधान हूँ। क्या आपको किसी बुकिंग, कारीगर के आने में देरी, शुल्क विवाद या एडमिन डेस्क से संपर्क में सहायता चाहिए?',
     chips: [
       {
         id: 'cc_delay',
@@ -88,7 +88,7 @@ export const ASSISTANT_CONFIGS: Record<AssistantPersona, AssistantConfig> = {
         id: 'cc_cancel',
         labelEn: '📅 Reschedule or Cancel Booking',
         labelHi: '📅 बुकिंग रद्द या तारीख बदलें',
-        query: 'How can I cancel or reschedule my active booking on Muzaffarnagar Kaamgar?',
+        query: 'How can I cancel or reschedule my active booking on Jugnu?',
         icon: 'Calendar',
       },
       {
@@ -100,9 +100,9 @@ export const ASSISTANT_CONFIGS: Record<AssistantPersona, AssistantConfig> = {
       },
       {
         id: 'cc_admin',
-        labelEn: '📞 Talk Directly with Kaamgar Admin',
-        labelHi: '📞 कामगार एडमिन से सीधी बात करें',
-        query: 'I want to speak directly to the Muzaffarnagar Kaamgar administrator helpline right now.',
+        labelEn: '📞 Talk Directly with Jugnu Admin',
+        labelHi: '📞 जुगनू एडमिन से सीधी बात करें',
+        query: 'I want to speak directly to the Jugnu administrator helpline right now.',
         icon: 'PhoneCall',
       },
     ],
@@ -110,15 +110,15 @@ export const ASSISTANT_CONFIGS: Record<AssistantPersona, AssistantConfig> = {
 
   worker_sarathi: {
     id: 'worker_sarathi',
-    nameEn: 'Kaamgar Sarathi',
-    nameHi: 'कामगार सारथी',
+    nameEn: 'Jugnu Sarathi',
+    nameHi: 'जुगनू सारथी',
     roleTitleEn: 'Artisan Business & Duty Coach',
     roleTitleHi: 'कारीगर व्यवसाय व ड्यूटी मार्गदर्शक',
     badgeEn: '💼 Artisan Coach',
     badgeHi: '💼 आपका सच्चा साथी',
     avatar: '💼',
-    greetingEn: 'Ram Ram! I am Kaamgar Sarathi, your trusted partner. How can I assist you with duty alerts, customer WhatsApp messages, or 0% commission earnings?',
-    greetingHi: 'राम-राम! मैं कामगार सारथी हूँ। आज मैं आपको अधिक ग्राहक बुकिंग पाने, ग्राहक को सम्मानजनक व्हाट्सऐप मैसेज भेजने या 0% कमीशन नीति में कैसे मदद करूँ?',
+    greetingEn: 'Ram Ram! I am Jugnu Sarathi, your trusted partner. How can I assist you with duty alerts, customer WhatsApp messages, or 0% commission earnings?',
+    greetingHi: 'राम-राम! मैं जुगनू सारथी हूँ। आज मैं आपको अधिक ग्राहक बुकिंग पाने, ग्राहक को सम्मानजनक व्हाट्सऐप मैसेज भेजने या 0% कमीशन नीति में कैसे मदद करूँ?',
     chips: [
       {
         id: 'ws_more_jobs',
@@ -138,7 +138,7 @@ export const ASSISTANT_CONFIGS: Record<AssistantPersona, AssistantConfig> = {
         id: 'ws_payment',
         labelEn: '💵 0% Commission & Payment Rule',
         labelHi: '💵 0% कमीशन और भुगतान के नियम',
-        query: 'Does Muzaffarnagar Kaamgar cut any commission from my earnings? How should I take payment from customers?',
+        query: 'Does Jugnu cut any commission from my earnings? How should I take payment from customers?',
         icon: 'Coins',
       },
       {
@@ -159,7 +159,7 @@ export const ASSISTANT_CONFIGS: Record<AssistantPersona, AssistantConfig> = {
         id: 'ws_helpline',
         labelEn: '📞 Artisan Support Desk',
         labelHi: '📞 कारीगर सहायता हेल्पलाइन',
-        query: 'Connect me with the Kaamgar Artisan Support Desk on WhatsApp or phone call.',
+        query: 'Connect me with the Jugnu Artisan Support Desk on WhatsApp or phone call.',
         icon: 'Phone',
       },
     ],

@@ -437,7 +437,7 @@ export default function WorkerDashboard() {
               {approvalStatus === 'approved' ? (
                 <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30">
                   <CheckCircle className="w-3 h-3" />
-                  <span>{t('profile.verifiedWorker', 'Verified Kaamgar')}</span>
+                  <span>{t('profile.verifiedWorker', 'Verified Partner')}</span>
                 </span>
               ) : approvalStatus === 'pending' ? (
                 <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/30">
@@ -539,7 +539,7 @@ export default function WorkerDashboard() {
         </div>
 
         {/* ===================================================================== */}
-        {/* 3.5 KAAMGAR SARATHI AI ASSISTANT CARD                                 */}
+        {/* 3.5 JUGNU SARATHI AI ASSISTANT CARD                                   */}
         {/* ===================================================================== */}
         <div className={`mb-6 p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-surface-100 to-surface-100 border border-amber-500/30 shadow-md flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${isLeadsTab ? 'hidden md:flex' : 'flex'}`}>
           <div className="flex items-center gap-3">
@@ -549,7 +549,7 @@ export default function WorkerDashboard() {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-xs font-bold text-slate-900 dark:text-white tracking-tight">
-                  {i18n.language === 'hi' ? 'कामगार सारथी AI (कारीगर साथी)' : 'Kaamgar Sarathi AI (Artisan Coach)'}
+                  {i18n.language === 'hi' ? 'जुगनू सारथी AI (कारीगर साथी)' : 'Jugnu Sarathi AI (Artisan Coach)'}
                 </h3>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">
                   24x7 AI
@@ -900,7 +900,7 @@ export default function WorkerDashboard() {
       >
         <div className="space-y-3 pt-2">
           <a
-            href="https://api.whatsapp.com/send?phone=918077362606&text=Hello%20Admin%2C%20I%20am%20a%20registered%20Kaamgar%20artisan%20and%20need%20assistance"
+            href="https://api.whatsapp.com/send?phone=918077362606&text=Hello%20Admin%2C%20I%20am%20a%20registered%20Jugnu%20artisan%20and%20need%20assistance"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-between p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 transition-colors group"

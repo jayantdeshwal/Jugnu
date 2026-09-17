@@ -839,7 +839,7 @@ export default function AdminDashboard() {
             Two-Factor Authentication Required
           </h1>
           <p className="mt-2 text-sm text-semantic-text-secondary">
-            Access to the Muzaffarnagar Kaamgar Administrator Console is locked. You must sign in with your administrator credentials and complete mobile OTP 2FA.
+            Access to the Jugnu Administrator Console is locked. You must sign in with your administrator credentials and complete mobile OTP 2FA.
           </p>
           <div className="mt-6">
             <Button
@@ -892,7 +892,7 @@ export default function AdminDashboard() {
                 </div>
 
                 <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight mt-1.5">
-                  Muzaffarnagar Kaamgar Administration
+                  Jugnu Administration
                 </h1>
 
                 <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 mt-0.5 flex items-center gap-2 flex-wrap">
@@ -1440,7 +1440,7 @@ export default function AdminDashboard() {
                       Pending Worker Approvals
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
-                      Verify government ID and approve skilled kaamgars
+                      Verify government ID and approve skilled partners
                     </p>
                   </div>
                   <Button
@@ -1484,7 +1484,7 @@ export default function AdminDashboard() {
                               {worker.name}
                             </p>
                             <p className="text-xs text-slate-500 dark:text-zinc-400 truncate">
-                              {worker.categories.join(', ') || 'General Kaamgar'} • {worker.experience_years} yrs exp
+                              {worker.categories.join(', ') || 'General Artisan'} • {worker.experience_years} yrs exp
                             </p>
                           </div>
                         </div>
@@ -3002,7 +3002,7 @@ export default function AdminDashboard() {
 
             <div>
               <p className="text-xs font-semibold text-semantic-text-secondary uppercase mb-2">
-                Booking History with Muzaffarnagar Kaamgar
+                Booking History with Jugnu
               </p>
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {bookings.filter(b => b.customer_id === inspectCustomer.id).length === 0 ? (
@@ -3279,7 +3279,7 @@ export default function AdminDashboard() {
               required
               value={newAdminEmail}
               onChange={e => setNewAdminEmail(e.target.value)}
-              placeholder="admin@muzaffarnagar-kaamgar.in"
+              placeholder="admin@jugnu.in"
               className="w-full px-3.5 py-2.5 bg-surface-200/80 border border-semantic-border-light rounded-xl text-semantic-text-primary text-sm focus:outline-none focus:border-brand-500 transition-colors"
             />
           </div>

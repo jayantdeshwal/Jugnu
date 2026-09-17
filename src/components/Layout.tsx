@@ -708,7 +708,7 @@ export default function Layout() {
                   <span>{t('footer.emergencyCall')}</span>
                 </a>
                 <a
-                  href="mailto:support@muzaffarnagar-kaamgar.in"
+                  href="mailto:support@jugnu.in"
                   className="flex items-center gap-2 text-xs text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
                   <Mail className="w-3.5 h-3.5 shrink-0" />

@@ -350,7 +350,7 @@ export default function Register() {
               <Sparkles className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
             </div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-              {t('registerPage.title', 'New to Kaamgar? Create Account')}
+              {t('registerPage.title', 'New to Jugnu? Create Account')}
             </h1>
             <p className="mt-1 text-xs text-slate-600 dark:text-zinc-400">
               {t('registerPage.subtitle', 'Select your role to register with mobile OTP verification & password')}

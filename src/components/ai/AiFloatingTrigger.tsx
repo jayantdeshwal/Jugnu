@@ -47,10 +47,10 @@ export default function AiFloatingTrigger() {
             {isWorkerRoute || isWorker
               ? isHindi
                 ? 'कारीगर सारथी'
-                : 'Kaamgar Sarathi'
+                : 'Jugnu Sarathi'
               : isHindi
-              ? 'कामगार AI'
-              : 'Kaamgar AI'}
+              ? 'जुगनू AI'
+              : 'Jugnu AI'}
           </span>
           <span className="text-[9px] text-white/80 leading-none pt-0.5">
             {isWorkerRoute || isWorker

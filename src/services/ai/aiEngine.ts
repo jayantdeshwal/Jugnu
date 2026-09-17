@@ -29,7 +29,7 @@ export async function processAiQuery({
       })
       if (groqResponse) return groqResponse
     } catch (err) {
-      console.warn('Groq API call failed, seamlessly falling back to local Kaamgar domain engine:', err)
+      console.warn('Groq API call failed, seamlessly falling back to local Jugnu domain engine:', err)
     }
   }
 
@@ -52,7 +52,7 @@ async function callGroqCloud({
   const model = import.meta.env.VITE_GROQ_MODEL || DEFAULT_GROQ_MODEL
 
   const systemPrompts: Record<AssistantPersona, string> = {
-    customer_booking: `You are "Booking Mitra (बुकिंग मित्र)", an expert local service guide for Muzaffarnagar Kaamgar in Uttar Pradesh, India.
+    customer_booking: `You are "Booking Mitra (बुकिंग मित्र)", an expert local service guide for Jugnu in Uttar Pradesh, India.
 Your mission:
 1. Help citizens of Muzaffarnagar diagnose household issues (electricity, plumbing, AC, cleaning, salon, carpentry, painting).
 2. Recommend the exact trade artisan they need.
@@ -60,19 +60,19 @@ Your mission:
 4. Emphasize that all artisans are Aadhaar-verified local residents covering PIN 251001 (New Mandi, Shiv Chowk, Gandhi Colony) and PIN 251002 (Civil Lines, Cantt, Circular Road).
 5. Always answer politely with clear headings, first in English and then in Hindi.`,
 
-    customer_care: `You are "Kaamgar Care (कामगार समाधान)", the customer support representative for Muzaffarnagar Kaamgar.
+    customer_care: `You are "Jugnu Care (जुगनू समाधान)", the customer support representative for Jugnu.
 Your mission:
 1. Help customers resolve issues with active bookings, artisan arrival delays, quality concerns, and pricing disputes.
 2. If an artisan is delayed, advise the customer to ping via WhatsApp/Call on their My Bookings page. If delayed past 15 minutes, offer immediate Admin escalation.
-3. If an artisan demands more than standard visiting fees without giving a formal bill, explain Kaamgar's Fair Price Protection.
-4. Muzaffarnagar Kaamgar Admin helpline is +91 8077362606 (WhatsApp & Call).
+3. If an artisan demands more than standard visiting fees without giving a formal bill, explain Jugnu's Fair Price Protection.
+4. Jugnu Admin helpline is +91 8077362606 (WhatsApp & Call).
 5. Answer politely and empathetically with clear guidance, first in English and then in Hindi.`,
 
-    worker_sarathi: `You are "Kaamgar Sarathi (कामगार सारथी)", the business coach and supportive companion for registered local artisans (Kaamgars) in Muzaffarnagar.
+    worker_sarathi: `You are "Jugnu Sarathi (जुगनू सारथी)", the business coach and supportive companion for registered local artisans in Muzaffarnagar.
 Your mission:
 1. Help workers get more booking calls (tips: keep duty ONLINE, respond under 5 mins, earn 5-star ratings, get Aadhaar Verified Gold Badge).
-2. Explain the 0% Commission Policy: Muzaffarnagar Kaamgar takes ₹0 commission for the first 3 months. Workers keep 100% of customer payments directly via Cash or personal UPI.
-3. Generate polite Hindi WhatsApp message templates workers can copy-paste to customers (e.g. "नमस्ते, मैं मुजफ्फरनगर कामगार से...").
+2. Explain the 0% Commission Policy: Jugnu takes ₹0 commission for the first 3 months. Workers keep 100% of customer payments directly via Cash or personal UPI.
+3. Generate polite Hindi WhatsApp message templates workers can copy-paste to customers (e.g. "नमस्ते, मैं जुगनू से...").
 4. Guide workers on handling difficult customer situations politely and connecting to the Artisan Support Desk (+91 8077362606).
 5. Always speak with deep respect for artisans, in a warm, encouraging tone (Hinglish / Hindi friendly).`,
   }
@@ -209,12 +209,12 @@ function extractContextualActions(query: string, persona: AssistantPersona): Cha
       labelEn: 'WhatsApp Admin Desk',
       labelHi: 'व्हाट्सऐप एडमिन डेस्क',
       type: 'external_link',
-      payload: `https://api.whatsapp.com/send?phone=${MUZAFFARNAGAR_KNOWLEDGE.adminPhoneRaw}&text=Kaamgar%20Customer%20Support%3A%20${encodeURIComponent(query)}`,
+      payload: `https://api.whatsapp.com/send?phone=${MUZAFFARNAGAR_KNOWLEDGE.adminPhoneRaw}&text=Jugnu%20Customer%20Support%3A%20${encodeURIComponent(query)}`,
       icon: 'MessageCircle',
     })
   } else if (persona === 'worker_sarathi') {
     if (q.includes('way') || q.includes('message') || q.includes('whatsapp') || q.includes('रास्ते') || q.includes('मैसेज')) {
-      const templateText = `नमस्ते! मैं मुज़फ़्फ़रनगर कामगार से आपका कारीगर हूँ। मैं आपकी बताई लोकेशन के लिए निकल चुका हूँ और 20 मिनट में पहुँच रहा हूँ।`
+      const templateText = `नमस्ते! मैं जुगनू से आपका कारीगर हूँ। मैं आपकी बताई लोकेशन के लिए निकल चुका हूँ और 20 मिनट में पहुँच रहा हूँ।`
       actions.push({
         id: 'act_copy_arrival_msg',
         labelEn: 'Copy Arrival Message',
@@ -237,7 +237,7 @@ function extractContextualActions(query: string, persona: AssistantPersona): Cha
       labelEn: 'Artisan Support WhatsApp',
       labelHi: 'कारीगर सहायता',
       type: 'external_link',
-      payload: `https://api.whatsapp.com/send?phone=${MUZAFFARNAGAR_KNOWLEDGE.adminPhoneRaw}&text=Kaamgar%20Artisan%20Query%3A%20${encodeURIComponent(query)}`,
+      payload: `https://api.whatsapp.com/send?phone=${MUZAFFARNAGAR_KNOWLEDGE.adminPhoneRaw}&text=Jugnu%20Artisan%20Query%3A%20${encodeURIComponent(query)}`,
       icon: 'MessageCircle',
     })
   }
@@ -428,7 +428,7 @@ function resolveLocalQuery(query: string, persona: AssistantPersona): ChatMessag
         labelEn: 'Ask Admin on WhatsApp',
         labelHi: 'व्हाट्सऐप पर पूछें',
         type: 'external_link',
-        payload: `https://api.whatsapp.com/send?phone=${MUZAFFARNAGAR_KNOWLEDGE.adminPhoneRaw}&text=Namaste%20Kaamgar%20Team%2C%20I%20need%20help%20finding%20an%20artisan%20for%3A%20${encodeURIComponent(query)}`,
+        payload: `https://api.whatsapp.com/send?phone=${MUZAFFARNAGAR_KNOWLEDGE.adminPhoneRaw}&text=Namaste%20Jugnu%20Team%2C%20I%20need%20help%20finding%20an%20artisan%20for%3A%20${encodeURIComponent(query)}`,
         icon: 'MessageCircle',
       },
     ]
@@ -474,7 +474,7 @@ function resolveLocalQuery(query: string, persona: AssistantPersona): ChatMessag
         sender: 'assistant',
         persona,
         timestamp: new Date(),
-        textEn: `⏱️ **Handling Artisan Delays**:\n\n1. Check your **My Bookings** page and use the **WhatsApp / Call** button to ping the artisan directly.\n2. Local traffic (e.g. Shiv Chowk or Roorkee Road railway crossing) can occasionally cause a 10-15 minute delay.\n3. If the artisan does not answer within 10 minutes, click the button below to alert our **Kaamgar Admin Desk**—we will immediately dispatch an alternate verified artisan to your location!`,
+        textEn: `⏱️ **Handling Artisan Delays**:\n\n1. Check your **My Bookings** page and use the **WhatsApp / Call** button to ping the artisan directly.\n2. Local traffic (e.g. Shiv Chowk or Roorkee Road railway crossing) can occasionally cause a 10-15 minute delay.\n3. If the artisan does not answer within 10 minutes, click the button below to alert our **Jugnu Admin Desk**—we will immediately dispatch an alternate verified artisan to your location!`,
         textHi: `⏱️ **कारीगर के लेट होने पर क्या करें**:\n\n1. **My Bookings** पेज पर जाकर कारीगर के नंबर पर सीधे व्हाट्सऐप या कॉल करें।\n2. कई बार शहर में जाम (जैसे शिव चौक या रेलवे फाटक) के कारण 10-15 मिनट की देरी हो जाती है।\n3. अगर कारीगर 10 मिनट तक फोन न उठाए, तो नीचे दिए बटन से हमारे **एडमिन डेस्क** को बताएं—हम तुरंत दूसरा कारीगर भेजेंगे!`,
         actions,
       }
@@ -544,7 +544,7 @@ function resolveLocalQuery(query: string, persona: AssistantPersona): ChatMessag
           labelEn: 'WhatsApp Admin Desk',
           labelHi: 'व्हाट्सऐप पर बात करें',
           type: 'external_link',
-          payload: `https://api.whatsapp.com/send?phone=${MUZAFFARNAGAR_KNOWLEDGE.adminPhoneRaw}&text=Hello%20Kaamgar%20Admin%2C%20I%20need%20immediate%20customer%20support.`,
+          payload: `https://api.whatsapp.com/send?phone=${MUZAFFARNAGAR_KNOWLEDGE.adminPhoneRaw}&text=Hello%20Jugnu%20Admin%2C%20I%20need%20immediate%20customer%20support.`,
           icon: 'MessageCircle',
         },
       ]
@@ -554,8 +554,8 @@ function resolveLocalQuery(query: string, persona: AssistantPersona): ChatMessag
         sender: 'assistant',
         persona,
         timestamp: new Date(),
-        textEn: `📞 **Muzaffarnagar Kaamgar Customer Desk**\n\nOur administrative support team is available from 8:00 AM to 9:00 PM every day.\n\n- **Helpline Phone**: ${MUZAFFARNAGAR_KNOWLEDGE.adminPhone}\n- **Direct WhatsApp**: Fast resolution within 10 minutes.\n\nClick below to connect immediately:`,
-        textHi: `📞 **मुज़फ़्फ़रनगर कामगार ग्राहक सहायता**\n\nहमारी एडमिन टीम प्रतिदिन सुबह 8:00 बजे से रात 9:00 बजे तक उपलब्ध है।\n\n- **हेल्पलाइन नंबर**: ${MUZAFFARNAGAR_KNOWLEDGE.adminPhone}\n- **व्हाट्सऐप सहायता**: 10 मिनट में समाधान।\n\nतुरंत संपर्क के लिए नीचे क्लिक करें:`,
+        textEn: `📞 **Jugnu Customer Desk**\n\nOur administrative support team is available from 8:00 AM to 9:00 PM every day.\n\n- **Helpline Phone**: ${MUZAFFARNAGAR_KNOWLEDGE.adminPhone}\n- **Direct WhatsApp**: Fast resolution within 10 minutes.\n\nClick below to connect immediately:`,
+        textHi: `📞 **जुगनू ग्राहक सहायता**\n\nहमारी एडमिन टीम प्रतिदिन सुबह 8:00 बजे से रात 9:00 बजे तक उपलब्ध है।\n\n- **हेल्पलाइन नंबर**: ${MUZAFFARNAGAR_KNOWLEDGE.adminPhone}\n- **व्हाट्सऐप सहायता**: 10 मिनट में समाधान।\n\nतुरंत संपर्क के लिए नीचे क्लिक करें:`,
         actions,
       }
     }
@@ -597,7 +597,7 @@ function resolveLocalQuery(query: string, persona: AssistantPersona): ChatMessag
   if (persona === 'worker_sarathi') {
     // 1. WhatsApp Template generator: On my way
     if (query.includes('way') || query.includes('message') || query.includes('whatsapp') || query.includes('रास्ते') || query.includes('पहुँच') || query.includes('मैसेज')) {
-      const templateText = `नमस्ते! मैं मुज़फ़्फ़रनगर कामगार से आपका इलेक्ट्रीशियन/कारीगर हूँ। मैं आपकी बताई लोकेशन के लिए निकल चुका हूँ और लगभग 20 मिनट में पहुँच रहा हूँ। अगर कोई विशेष दिशा-निर्देश हों तो कृपया बताएँ।`
+      const templateText = `नमस्ते! मैं जुगनू से आपका इलेक्ट्रीशियन/कारीगर हूँ। मैं आपकी बताई लोकेशन के लिए निकल चुका हूँ और लगभग 20 मिनट में पहुँच रहा हूँ। अगर कोई विशेष दिशा-निर्देश हों तो कृपया बताएँ।`
       const actions: ChatAction[] = [
         {
           id: 'act_copy_arrival_msg',
@@ -651,8 +651,8 @@ function resolveLocalQuery(query: string, persona: AssistantPersona): ChatMessag
         sender: 'assistant',
         persona,
         timestamp: new Date(),
-        textEn: `💵 **0% Platform Commission Guarantee**:\n\n- **100% Earnings are Yours**: For the first 3 months, Muzaffarnagar Kaamgar charges **₹0 commission** from artisans.\n- **Direct Customer Payment**: Collect your visiting fees and labour charges directly from the customer via **Cash** or your personal **UPI (PhonePe / Google Pay / Paytm QR)**.\n- Kaamgar never holds or deducts your hard-earned money!`,
-        textHi: `💵 **0% कमीशन और भुगतान गारंटी**:\n\n- **पूरी कमाई आपकी**: पहले 3 महीनों के लिए मुज़फ़्फ़रनगर कामगार आपसे **0% कमीशन** लेता है।\n- **सीधा भुगतान**: अपना विजिटिंग चार्ज और मजदूरी ग्राहक से सीधे **कैश या अपने UPI (PhonePe/GPay/Paytm)** पर लें।\n- कंपनी आपकी मेहनत की कमाई में से एक भी रुपया नहीं काटती!`,
+        textEn: `💵 **0% Platform Commission Guarantee**:\n\n- **100% Earnings are Yours**: For the first 3 months, Jugnu charges **₹0 commission** from artisans.\n- **Direct Customer Payment**: Collect your visiting fees and labour charges directly from the customer via **Cash** or your personal **UPI (PhonePe / Google Pay / Paytm QR)**.\n- Jugnu never holds or deducts your hard-earned money!`,
+        textHi: `💵 **0% कमीशन और भुगतान गारंटी**:\n\n- **पूरी कमाई आपकी**: पहले 3 महीनों के लिए जुगनू आपसे **0% कमीशन** लेता है।\n- **सीधा भुगतान**: अपना विजिटिंग चार्ज और मजदूरी ग्राहक से सीधे **कैश या अपने UPI (PhonePe/GPay/Paytm)** पर लें।\n- कंपनी आपकी मेहनत की कमाई में से एक भी रुपया नहीं काटती!`,
       }
     }
 
@@ -664,7 +664,7 @@ function resolveLocalQuery(query: string, persona: AssistantPersona): ChatMessag
           labelEn: 'Submit ID to Admin on WhatsApp',
           labelHi: 'व्हाट्सऐप पर ID भेजें',
           type: 'external_link',
-          payload: `https://api.whatsapp.com/send?phone=${MUZAFFARNAGAR_KNOWLEDGE.adminPhoneRaw}&text=Namaste%20Admin%2C%20I%20am%20a%20registered%20Kaamgar%20artisan%20and%20want%20to%20verify%20my%20Aadhaar%2FVoter%20ID%20for%20the%20Gold%20Badge.`,
+          payload: `https://api.whatsapp.com/send?phone=${MUZAFFARNAGAR_KNOWLEDGE.adminPhoneRaw}&text=Namaste%20Admin%2C%20I%20am%20a%20registered%20Jugnu%20artisan%20and%20want%20to%20verify%20my%20Aadhaar%2FVoter%20ID%20for%20the%20Gold%20Badge.`,
           icon: 'Shield',
         },
       ]
@@ -706,8 +706,8 @@ function resolveLocalQuery(query: string, persona: AssistantPersona): ChatMessag
         sender: 'assistant',
         persona,
         timestamp: new Date(),
-        textEn: `⚠️ **If Customer Refuses Visiting Charge**:\n\n1. Remain calm and polite. Explain: *"Sir, as per Kaamgar guidelines, the visiting fee covers transport and technical diagnosis."*\n2. Do not argue. Show them the booking card in the app.\n3. If they still refuse, immediately tap the button below to report to our Admin Desk. We will speak with the customer directly and protect your rights.`,
-        textHi: `⚠️ **यदि ग्राहक विजिटिंग चार्ज देने से मना करे**:\n\n1. शांत व शालीन रहें। विनम्रता से कहें: *"सर, कामगार के नियमानुसार विजिटिंग चार्ज आने-जाने और खराबी की जांच का तय शुल्क है।"*\n2. बहस न करें, ऐप में बुकिंग का विवरण दिखाएं।\n3. फिर भी न मानें तो तुरंत नीचे दिए बटन से एडमिन को सूचित करें। एडमिन टीम स्वयं ग्राहक से बात कर समाधान निकालेगी।`,
+        textEn: `⚠️ **If Customer Refuses Visiting Charge**:\n\n1. Remain calm and polite. Explain: *"Sir, as per Jugnu guidelines, the visiting fee covers transport and technical diagnosis."*\n2. Do not argue. Show them the booking card in the app.\n3. If they still refuse, immediately tap the button below to report to our Admin Desk. We will speak with the customer directly and protect your rights.`,
+        textHi: `⚠️ **यदि ग्राहक विजिटिंग चार्ज देने से मना करे**:\n\n1. शांत व शालीन रहें। विनम्रता से कहें: *"सर, जुगनू के नियमानुसार विजिटिंग चार्ज आने-जाने और खराबी की जांच का तय शुल्क है।"*\n2. बहस न करें, ऐप में बुकिंग का विवरण दिखाएं।\n3. फिर भी न मानें तो तुरंत नीचे दिए बटन से एडमिन को सूचित करें। एडमिन टीम स्वयं ग्राहक से बात कर समाधान निकालेगी।`,
         actions,
       }
     }
@@ -719,7 +719,7 @@ function resolveLocalQuery(query: string, persona: AssistantPersona): ChatMessag
         labelEn: 'Artisan Support WhatsApp',
         labelHi: 'कारीगर सहायता व्हाट्सऐप',
         type: 'external_link',
-        payload: `https://api.whatsapp.com/send?phone=${MUZAFFARNAGAR_KNOWLEDGE.adminPhoneRaw}&text=Kaamgar%20Artisan%20Query%3A%20${encodeURIComponent(query)}`,
+        payload: `https://api.whatsapp.com/send?phone=${MUZAFFARNAGAR_KNOWLEDGE.adminPhoneRaw}&text=Jugnu%20Artisan%20Query%3A%20${encodeURIComponent(query)}`,
         icon: 'MessageCircle',
       },
       {
@@ -737,8 +737,8 @@ function resolveLocalQuery(query: string, persona: AssistantPersona): ChatMessag
       sender: 'assistant',
       persona,
       timestamp: new Date(),
-      textEn: `Kaamgar Sarathi is always with you. Keep your duty **ONLINE**, serve customers politely, and collect 100% of your earnings with **0% commission**. For any immediate help, connect with our Artisan Desk at **${MUZAFFARNAGAR_KNOWLEDGE.adminPhone}**.`,
-      textHi: `कामगार सारथी सदैव आपके साथ है। अपनी ड्यूटी **ONLINE** रखें, ग्राहकों से विनम्र रहें और **0% कमीशन** के साथ पूरी कमाई अपने पास रखें। सहायता के लिए **${MUZAFFARNAGAR_KNOWLEDGE.adminPhone}** पर संपर्क करें।`,
+      textEn: `Jugnu Sarathi is always with you. Keep your duty **ONLINE**, serve customers politely, and collect 100% of your earnings with **0% commission**. For any immediate help, connect with our Artisan Desk at **${MUZAFFARNAGAR_KNOWLEDGE.adminPhone}**.`,
+      textHi: `जुगनू सारथी सदैव आपके साथ है। अपनी ड्यूटी **ONLINE** रखें, ग्राहकों से विनम्र रहें और **0% कमीशन** के साथ पूरी कमाई अपने पास रखें। सहायता के लिए **${MUZAFFARNAGAR_KNOWLEDGE.adminPhone}** पर संपर्क करें।`,
       actions: defaultActions,
     }
   }

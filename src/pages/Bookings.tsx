@@ -366,7 +366,7 @@ export default function Bookings() {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-xs font-bold text-slate-900 dark:text-white tracking-tight">
-                  {i18n.language === 'hi' ? 'कामगार AI सहायता (24x7)' : 'Kaamgar AI Assistants (24x7)'}
+                  {i18n.language === 'hi' ? 'जुगनू AI सहायता (24x7)' : 'Jugnu AI Assistants (24x7)'}
                 </h3>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                   {i18n.language === 'hi' ? 'त्वरित सहायता' : 'Fast Support'}

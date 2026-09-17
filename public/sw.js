@@ -150,7 +150,7 @@ self.addEventListener('periodicsync', event => {
 
 // 6. Push Notifications
 self.addEventListener('push', event => {
-  let data = { title: 'Muzaffarnagar Kaamgar', body: 'New update available!' }
+  let data = { title: 'Jugnu', body: 'New update available!' }
   try {
     if (event.data) {
       data = event.data.json()
@@ -162,7 +162,7 @@ self.addEventListener('push', event => {
   }
 
   const options = {
-    body: data.body || 'You have a new update from Muzaffarnagar Kaamgar.',
+    body: data.body || 'You have a new update from Jugnu.',
     icon: '/icon-192.png',
     badge: '/favicon.svg',
     vibrate: [100, 50, 100],
@@ -172,7 +172,7 @@ self.addEventListener('push', event => {
   }
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Muzaffarnagar Kaamgar', options)
+    self.registration.showNotification(data.title || 'Jugnu', options)
   )
 })
 

@@ -210,7 +210,7 @@ export default function Home() {
           <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-xs text-amber-800 dark:text-brand-300 font-medium truncate">
               <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-              <span className="truncate">{t('guestBar.exploringAsGuest', 'You are exploring Muzaffarnagar Kaamgar in Guest Mode')}</span>
+              <span className="truncate">{t('guestBar.exploringAsGuest', 'You are exploring Jugnu in Guest Mode')}</span>
             </div>
             <button
               type="button"

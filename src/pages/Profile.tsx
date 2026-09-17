@@ -446,12 +446,12 @@ export default function Profile() {
   // Native share / WhatsApp referral
   const handleShareApp = () => {
     const shareText = language === 'hi'
-      ? 'मुजफ्फरनगर कामगार: बिना किसी कमीशन के सीधे मुजफ्फरनगर के सत्यापित इलेक्ट्रीशियन, प्लंबर व एसी कारीगर बुक करें! देखें: https://muzaffarnagar-kaamgar.in'
-      : 'Muzaffarnagar Kaamgar: Hire verified local Electricians, Plumbers, Cleaning & AC technicians with 0% commission! Visit: https://muzaffarnagar-kaamgar.in'
+      ? 'जुगनू: बिना किसी कमीशन के सीधे मुजफ्फरनगर के सत्यापित इलेक्ट्रीशियन, प्लंबर व एसी कारीगर बुक करें! देखें: https://jugnu.app'
+      : 'Jugnu: Hire verified local Electricians, Plumbers, Cleaning & AC technicians with 0% commission! Visit: https://jugnu.app'
 
     if (typeof navigator !== 'undefined' && navigator.share) {
       navigator.share({
-        title: 'Muzaffarnagar Kaamgar',
+        title: 'Jugnu',
         text: shareText,
         url: window.location.origin,
       }).catch(() => {})
@@ -469,7 +469,7 @@ export default function Profile() {
   }
 
   const isProfileComplete = Boolean(formData.name && formData.phone)
-  const userDisplayName = formData.name || (user?.role === 'worker' ? 'Verified Kaamgar' : 'Verified Customer')
+  const userDisplayName = formData.name || (user?.role === 'worker' ? 'Verified Partner' : 'Verified Customer')
   const userDisplayPhone = formData.phone
     ? (formData.phone.startsWith('+91') ? formData.phone : `+91 ${formData.phone}`)
     : 'No phone number set'
@@ -526,7 +526,7 @@ export default function Profile() {
               ) : isWorker ? (
                 <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30">
                   <CheckCircle className="w-3 h-3" />
-                  <span>{t('profile.verifiedWorker', 'Verified Kaamgar')}</span>
+                  <span>{t('profile.verifiedWorker', 'Verified Partner')}</span>
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30">
@@ -665,7 +665,7 @@ export default function Profile() {
                     <Briefcase className="w-5 h-5" />
                   </div>
                   <span className="text-xs font-bold text-slate-900 dark:text-zinc-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 leading-tight">
-                    {t('profile.becomeWorker', 'Earn with Kaamgar')}
+                    {t('profile.becomeWorker', 'Earn with Jugnu')}
                   </span>
                 </button>
               )}
@@ -974,7 +974,7 @@ export default function Profile() {
                 <ChevronRight className="w-4 h-4 text-slate-400 dark:text-zinc-500 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all" />
               </div>
 
-              {/* Row: About Kaamgar */}
+              {/* Row: About Jugnu */}
               <div
                 onClick={() => navigate('/')}
                 className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800/70 cursor-pointer transition-colors group"
@@ -982,7 +982,7 @@ export default function Profile() {
                 <div className="flex items-center gap-3.5">
                   <Info className="w-5 h-5 text-slate-500 dark:text-zinc-400 group-hover:text-amber-600 dark:group-hover:text-brand-400" />
                   <span className="text-sm font-medium text-slate-900 dark:text-zinc-100 group-hover:text-amber-600 dark:group-hover:text-brand-400">
-                    {t('profile.aboutApp', 'About Muzaffarnagar Kaamgar')}
+                    {t('profile.aboutApp', 'About Jugnu')}
                   </span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-slate-400 dark:text-zinc-500 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all" />
@@ -1014,7 +1014,7 @@ export default function Profile() {
             <div className="p-5 rounded-3xl bg-gradient-to-r from-purple-50 via-white to-amber-50 dark:from-purple-950/40 dark:via-zinc-900 dark:to-brand-500/10 border border-purple-200/80 dark:border-purple-500/30 flex items-center justify-between gap-4 shadow-sm dark:shadow-xl">
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white mb-1">
-                  {t('profile.referTitle', 'Share Kaamgar & Earn Goodwill')}
+                  {t('profile.referTitle', 'Share Jugnu & Earn Goodwill')}
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed mb-3">
                   {t('profile.referDesc', 'Help your friends and family find verified local electricians, plumbers, and technicians without middlemen.')}
@@ -1257,13 +1257,13 @@ export default function Profile() {
       <Modal
         isOpen={showSupportModal}
         onClose={() => setShowSupportModal(false)}
-        title="Muzaffarnagar Kaamgar Helpline"
+        title="Jugnu Helpline"
         description="Connect with our local support team for booking assistance, issues, or enquiries."
       >
         <div className="space-y-3 pt-2">
           {/* WhatsApp Direct Chat */}
           <a
-            href="https://api.whatsapp.com/send?phone=918077362606&text=Hello%2C%20I%20need%20assistance%20with%20Muzaffarnagar%20Kaamgar%20services"
+            href="https://api.whatsapp.com/send?phone=918077362606&text=Hello%2C%20I%20need%20assistance%20with%20Jugnu%20services"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-between p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 transition-colors group"
@@ -1318,7 +1318,7 @@ export default function Profile() {
         isOpen={showAddressModal}
         onClose={() => setShowAddressModal(false)}
         title="Muzaffarnagar Service Localities"
-        description="Kaamgar currently provides rapid same-day artisan service in the following pincodes."
+        description="Jugnu currently provides rapid same-day artisan service in the following pincodes."
       >
         <div className="space-y-2.5 pt-2">
           {MUZAFFARNAGAR_PINCODES.map(pincode => (

@@ -212,7 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 1. Verify user is already registered. Block if not found!
     const check = await checkPhoneRegistration(cleanPhone)
     if (!check.isRegistered) {
-      throw new Error('No account found with this mobile number. Please sign up to create your Kaamgar account first.')
+      throw new Error('No account found with this mobile number. Please sign up to create your Jugnu account first.')
     }
 
     // Role mismatch verification for Worker portal

@@ -345,7 +345,7 @@ export default function Login() {
           setUnregisteredNotice({
             phone: clean,
             role: 'customer',
-            message: 'No account found with this mobile number. Please sign up to create your Kaamgar account first.'
+            message: 'No account found with this mobile number. Please sign up to create your Jugnu account first.'
           })
           return
         }
@@ -404,7 +404,7 @@ export default function Login() {
           setUnregisteredNotice({
             phone: clean,
             role: 'worker',
-            message: 'No worker account found with this mobile number. Please register as a verified Kaamgar artisan first.'
+            message: 'No worker account found with this mobile number. Please register as a verified Jugnu artisan first.'
           })
           return
         }
@@ -630,7 +630,7 @@ export default function Login() {
               {loginRole === 'admin'
                 ? t('loginPage.adminTitle', 'Administrator Portal')
                 : loginRole === 'worker'
-                ? t('loginPage.workerTitle', 'Kaamgar Worker Login')
+                ? t('loginPage.workerTitle', 'Jugnu Worker Login')
                 : t('loginPage.customerTitle', 'Customer Login')}
             </h1>
             <p className="mt-1 text-[11px] sm:text-xs text-slate-600 dark:text-zinc-400">
@@ -704,7 +704,7 @@ export default function Login() {
                       </p>
                       <p className="text-amber-200/90 leading-relaxed">
                         {unregisteredNotice.message ||
-                          t('auth.notRegisteredCustomerDesc', 'No account found with mobile number +91 {{phone}}. You are not registered yet. Please sign up to create your Kaamgar account first.', { phone: unregisteredNotice.phone })}
+                          t('auth.notRegisteredCustomerDesc', 'No account found with mobile number +91 {{phone}}. You are not registered yet. Please sign up to create your Jugnu account first.', { phone: unregisteredNotice.phone })}
                       </p>
                     </div>
                   </div>
@@ -808,7 +808,7 @@ export default function Login() {
                       </p>
                       <p className="text-amber-200/90 leading-relaxed">
                         {unregisteredNotice.message ||
-                          t('auth.notRegisteredWorkerDesc', 'No worker account found with mobile number +91 {{phone}}. Please register as a verified Kaamgar artisan first to receive jobs.', { phone: unregisteredNotice.phone })}
+                          t('auth.notRegisteredWorkerDesc', 'No worker account found with mobile number +91 {{phone}}. Please register as a verified Jugnu artisan first to receive jobs.', { phone: unregisteredNotice.phone })}
                       </p>
                     </div>
                   </div>
@@ -938,7 +938,7 @@ export default function Login() {
 
               <div className="mt-4 pt-3 border-t border-semantic-border-light/60 text-center">
                 <p className="text-xs text-semantic-text-tertiary mb-1">
-                  {t('loginPage.newWorkerPrompt', 'New Kaamgar? Register as a verified artisan')}
+                  {t('loginPage.newWorkerPrompt', 'New Partner? Register as a verified artisan')}
                 </p>
                 <Link
                   to="/register?role=worker"
@@ -979,7 +979,7 @@ export default function Login() {
                       type="email"
                       value={adminEmail}
                       onChange={e => setAdminEmail(e.target.value)}
-                      placeholder="admin@muzaffarnagar-kaamgar.in"
+                      placeholder="admin@jugnu.in"
                       leftIcon={<Mail className="w-5 h-5 text-semantic-text-tertiary" />}
                       required
                       autoFocus
@@ -1127,7 +1127,7 @@ export default function Login() {
           {/* Footer Callout to Register & Guest Exploration */}
           <div className="mt-5 pt-4 border-t border-semantic-border-light text-center space-y-3">
             <p className="text-xs text-semantic-text-secondary">
-              {t('loginPage.newToKaamgar', 'New to Kaamgar?')}{' '}
+              {t('loginPage.newToKaamgar', 'New to Jugnu?')}{' '}
               <Link
                 to={`/register?role=${loginRole === 'worker' ? 'worker' : 'customer'}`}
                 className="font-semibold text-brand-400 hover:text-brand-300 transition-colors"

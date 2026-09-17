@@ -67,7 +67,7 @@ export default function AppDownloadBanner() {
 
               {/* Main Heading */}
               <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
-                {t('appBanner.title', 'Get the Muzaffarnagar Kaamgar Mobile App')}
+                {t('appBanner.title', 'Get the Jugnu Mobile App')}
               </h2>
 
               {/* Subtitle */}
@@ -192,7 +192,7 @@ export default function AppDownloadBanner() {
                     <p className="leading-relaxed">
                       {t(
                         'appBanner.androidManualDesc',
-                        "Tap the 3 dots (⋮) in Chrome and select 'Install app' or 'Add to Home screen' to add the Kaamgar icon to your phone."
+                        "Tap the 3 dots (⋮) in Chrome and select 'Install app' or 'Add to Home screen' to add the Jugnu icon to your phone."
                       )}
                     </p>
                   )}
@@ -211,7 +211,7 @@ export default function AppDownloadBanner() {
                   <div className="w-24 h-24 rounded-2xl bg-surface-900 border-2 border-brand-500/40 p-2 shadow-xl shadow-brand-500/10 flex items-center justify-center relative">
                     <img
                       src="/icon-192.png"
-                      alt="Muzaffarnagar Kaamgar Icon"
+                      alt="Jugnu Icon"
                       className="w-full h-full object-contain rounded-xl"
                     />
                     <div className="absolute -bottom-2 -right-2 px-2 py-0.5 rounded-full bg-emerald-500 text-surface-950 text-[9px] font-extrabold tracking-wider uppercase shadow">
@@ -221,10 +221,10 @@ export default function AppDownloadBanner() {
 
                   <div>
                     <h3 className="font-extrabold text-lg text-white tracking-tight">
-                      मुजफ्फरनगर का कामगार
+                      Jugnu
                     </h3>
                     <p className="text-xs text-brand-400 font-medium mt-0.5">
-                      Muzaffarnagar Kaamgar App
+                      Ghar Ke Har Kaam Ka Jugnu
                     </p>
                   </div>
 

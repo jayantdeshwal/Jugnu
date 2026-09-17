@@ -25,10 +25,10 @@ export default function AuthChoice() {
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-semibold uppercase tracking-wider mb-3">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>{t('authChoice.badge', 'Muzaffarnagar Kaamgar Portal')}</span>
+            <span>{t('authChoice.badge', 'Jugnu Portal')}</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-semantic-text-primary tracking-tight">
-            {t('authChoice.title', 'Welcome to Muzaffarnagar Kaamgar')}
+            {t('authChoice.title', 'Welcome to Jugnu')}
           </h1>
           <p className="mt-2 text-base text-semantic-text-secondary max-w-lg mx-auto">
             {t(
@@ -62,7 +62,7 @@ export default function AuthChoice() {
               <p className="text-xs text-semantic-text-secondary leading-relaxed mb-6">
                 {t(
                   'authChoice.loginDesc',
-                  'Already registered with Kaamgar? Sign in to access your bookings, worker dashboard, or administrator portal.'
+                  'Already registered with Jugnu? Sign in to access your bookings, worker dashboard, or administrator portal.'
                 )}
               </p>
 
@@ -73,7 +73,7 @@ export default function AuthChoice() {
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-brand-400 shrink-0" />
-                  <span>{t('authChoice.loginPoint2', 'Kaamgar worker job management')}</span>
+                  <span>{t('authChoice.loginPoint2', 'Jugnu worker job management')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-brand-400 shrink-0" />
@@ -93,7 +93,7 @@ export default function AuthChoice() {
             </Button>
           </Card>
 
-          {/* OPTION 2: SIGN UP (NEW TO KAAMGAR) */}
+          {/* OPTION 2: SIGN UP (NEW TO JUGNU) */}
           <Card
             className="p-8 bg-surface-100 border border-semantic-border-light hover:border-emerald-500/40 transition-all duration-200 flex flex-col justify-between group shadow-xl hover:shadow-2xl hover:shadow-emerald-500/5 relative overflow-hidden"
           >
@@ -105,17 +105,17 @@ export default function AuthChoice() {
                   <UserPlus className="w-7 h-7" />
                 </div>
                 <Badge variant="success" size="sm">
-                  {t('authChoice.registerBadge', 'New to Kaamgar')}
+                  {t('authChoice.registerBadge', 'New to Jugnu')}
                 </Badge>
               </div>
 
               <h2 className="text-xl font-bold text-semantic-text-primary mb-2">
-                {t('authChoice.registerTitle', 'New to Kaamgar? Sign Up')}
+                {t('authChoice.registerTitle', 'New to Jugnu? Sign Up')}
               </h2>
               <p className="text-xs text-semantic-text-secondary leading-relaxed mb-6">
                 {t(
                   'authChoice.registerDesc',
-                  'Join Muzaffarnagar Kaamgar for the first time as a Customer seeking services or as a skilled Worker seeking daily work.'
+                  'Join Jugnu for the first time as a Customer seeking services or as a skilled Worker seeking daily work.'
                 )}
               </p>
 

@@ -107,7 +107,7 @@ serve(async (req: Request) => {
               {
                 mobiles: formattedPhone,
                 name: recipient_name || 'User',
-                worker: worker_name || 'Kaamgar Worker',
+                worker: worker_name || 'Jugnu Partner',
                 customer: customer_name || 'Customer',
                 service: service_category || 'Service',
               },
