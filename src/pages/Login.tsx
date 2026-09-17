@@ -32,6 +32,7 @@ import {
   Moon,
 } from 'lucide-react'
 import { checkPhoneRegistration } from '@/services/authCheck'
+import JugnuLogo from '@/components/common/JugnuLogo'
 
 export default function Login() {
   const { t } = useTranslation()
@@ -576,9 +577,7 @@ export default function Login() {
       {/* Top Minimalist Header */}
       <header className="relative z-10 w-full max-w-md mx-auto flex items-center justify-between py-2">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-amber-500 text-slate-950 rounded-lg flex items-center justify-center font-bold shadow-md shadow-amber-500/20">
-            <Truck className="w-4 h-4 text-slate-950" />
-          </div>
+          <JugnuLogo className="w-8 h-8" />
           <span className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white tracking-tight">
             {t('app.name')}
           </span>

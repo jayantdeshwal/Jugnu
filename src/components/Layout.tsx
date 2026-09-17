@@ -18,6 +18,7 @@ import NetworkStatus from './NetworkStatus'
 import PWAInstallPrompt, { triggerPWAInstall } from './PWAInstallPrompt'
 import AiAssistantModal from './ai/AiAssistantModal'
 import AiFloatingTrigger from './ai/AiFloatingTrigger'
+import JugnuLogo from './common/JugnuLogo'
 
 export default function Layout() {
   const { t } = useTranslation()
@@ -251,9 +252,7 @@ export default function Layout() {
 
             {/* Mobile Center: Logo & Name */}
             <NavLink to="/" className="flex items-center gap-2" aria-label={t('app.name')}>
-              <div className="w-7 h-7 bg-amber-500 text-slate-950 rounded-lg flex items-center justify-center font-bold shadow-xs shadow-amber-500/30">
-                <Truck className="w-4 h-4 text-slate-950" />
-              </div>
+              <JugnuLogo className="w-7 h-7" />
               <span className="font-extrabold text-base tracking-tight text-slate-900 dark:text-zinc-100">
                 {t('app.name')}
               </span>
@@ -279,9 +278,7 @@ export default function Layout() {
           <div className="hidden md:flex h-16 items-center justify-between">
             <div className="flex items-center gap-6">
               <NavLink to="/" className="flex items-center gap-2.5" aria-label={t('app.name')}>
-                <div className="w-8 h-8 bg-amber-500 text-slate-950 rounded-xl flex items-center justify-center font-bold shadow-sm shadow-amber-500/20">
-                  <Truck className="w-5 h-5 text-slate-950" />
-                </div>
+                <JugnuLogo className="w-8 h-8" />
                 <span className="font-bold text-lg text-slate-900 dark:text-zinc-100">
                   {t('app.name')}
                 </span>
@@ -602,15 +599,13 @@ export default function Layout() {
             {/* Column 1: Brand & Identity (spans 2 cols on lg) */}
             <div className="lg:col-span-2 space-y-4">
               <Link to="/" className="inline-flex items-center gap-3 group">
-                <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform">
-                  <Truck className="w-5 h-5 text-slate-950" />
-                </div>
+                <JugnuLogo className="w-10 h-10 group-hover:scale-105 transition-transform" />
                 <div>
                   <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white block">
                     {t('app.name')}
                   </span>
                   <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold">
-                    Muzaffarnagar Verified Artisans
+                    {t('app.tagline')}
                   </span>
                 </div>
               </Link>
@@ -873,15 +868,13 @@ export default function Layout() {
             {/* 1. Sidebar Header: Logo & Close X Button */}
             <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-zinc-800/80 sticky top-0 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md z-10">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 bg-amber-500 text-slate-950 rounded-xl flex items-center justify-center font-bold shadow-xs">
-                  <Truck className="w-4.5 h-4.5 text-slate-950" />
-                </div>
+                <JugnuLogo className="w-8 h-8" />
                 <div>
                   <span className="font-extrabold text-base text-slate-900 dark:text-zinc-100 block leading-tight">
                     {t('app.name')}
                   </span>
                   <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold tracking-wide">
-                    Muzaffarnagar Kaamgar
+                    {t('app.tagline')}
                   </span>
                 </div>
               </div>

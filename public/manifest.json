@@ -1,8 +1,8 @@
 {
   "id": "/?source=pwa",
-  "name": "मुजफ्फरनगर का कामगार | Muzaffarnagar Kaamgar",
-  "short_name": "कामगार | Kaamgar",
-  "description": "मुजफ्फरनगर के अपने सत्यापित इलेक्ट्रीशियन, प्लंबर, कारपेंटर और तकनीशियन खोजें। 0% कमीशन।",
+  "name": "Jugnu - Ghar Ke Har Kaam Ka Jugnu",
+  "short_name": "Jugnu",
+  "description": "Jugnu — Ghar Ke Har Kaam Ka Jugnu. Verified local skilled artisans and technicians. 0% commission.",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",

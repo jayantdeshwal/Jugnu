@@ -1,34 +1,45 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
     <linearGradient id="mBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#020617" />
-      <stop offset="50%" stop-color="#0f172a" />
-      <stop offset="100%" stop-color="#020617" />
+      <stop offset="0%" stop-color="#09090b" />
+      <stop offset="50%" stop-color="#18181b" />
+      <stop offset="100%" stop-color="#09090b" />
     </linearGradient>
     <linearGradient id="mGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#fef08a" />
-      <stop offset="40%" stop-color="#f59e0b" />
+      <stop offset="30%" stop-color="#f59e0b" />
       <stop offset="100%" stop-color="#d97706" />
-    </linearGradient>
-    <linearGradient id="mEmeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#34d399" />
-      <stop offset="100%" stop-color="#059669" />
     </linearGradient>
   </defs>
 
-  <!-- Full Bleed Background for Maskable Icon (Edge-to-edge) -->
+  <!-- Full Bleed Background for Maskable Icon -->
   <rect width="512" height="512" fill="url(#mBgGrad)" />
 
-  <!-- Shield Shape Centered inside 80% Safe Area -->
-  <path d="M 256 120 L 365 160 C 365 265 315 345 256 385 C 197 345 147 265 147 160 Z"
-        fill="#0f172a" stroke="url(#mGoldGrad)" stroke-width="12" stroke-linejoin="round" />
+  <!-- Inner Amber Squircle Badge (inside safe zone) -->
+  <rect x="96" y="96" width="320" height="320" rx="76" fill="url(#mGoldGrad)" />
+  <rect x="101" y="101" width="310" height="310" rx="71" stroke="#ffffff" stroke-opacity="0.3" stroke-width="3" fill="none" />
 
-  <!-- Stylized "K" Inside Safe Zone -->
-  <path d="M 226 200 L 226 315" stroke="url(#mGoldGrad)" stroke-width="20" stroke-linecap="round" />
-  <path d="M 230 255 L 298 195" stroke="url(#mGoldGrad)" stroke-width="19" stroke-linecap="round" />
-  <path d="M 230 255 L 302 315" stroke="url(#mGoldGrad)" stroke-width="19" stroke-linecap="round" />
+  <!-- Bold Modern 'J' in Dark Slate -->
+  <path
+    d="M 288 165
+       L 288 288
+       C 288 326 262 352 222 352
+       C 186 352 162 331 162 300
+       C 162 282 175 270 194 270
+       C 211 270 221 282 224 296
+       C 226 307 233 315 244 315
+       C 255 315 260 306 260 288
+       L 260 165
+       Z"
+    fill="#09090b"
+  />
 
-  <!-- Verification Sparkle -->
-  <circle cx="256" cy="165" r="11" fill="url(#mEmeraldGrad)" />
-  <path d="M 251 165 L 254 169 L 261 161" stroke="#ffffff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+  <!-- Glowing Firefly Sparkle -->
+  <g transform="translate(330, 160)">
+    <circle cx="0" cy="0" r="24" fill="#ffffff" opacity="0.35" />
+    <path
+      d="M 0 -30 Q 0 0 30 0 Q 0 0 0 30 Q 0 0 -30 0 Q 0 0 0 -30 Z"
+      fill="#ffffff"
+    />
+  </g>
 </svg>

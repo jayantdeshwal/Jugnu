@@ -1,7 +1,7 @@
 {
   "app": {
-    "name": "Muzaffarnagar Ka Kaamgar",
-    "tagline": "Your Local Service Partner"
+    "name": "Jugnu",
+    "tagline": "Ghar Ke Har Kaam Ka Jugnu"
   },
   "nav": {
     "home": "Home",
@@ -90,7 +90,7 @@
     "verified": "Verified"
   },
   "home": {
-    "heroTitle": "Your Home’s Best Helpers, Just a Tap Away",
+    "heroTitle": "Ghar Ke Har Kaam Ka Jugnu",
     "heroSubtitle": "Connect directly with verified electricians, plumbers, AC technicians & salon experts in Muzaffarnagar. Transparent rates, zero middleman commission, same-day arrival.",
     "searchPlaceholder": "What service do you need?",
     "searchButton": "Find Workers",
@@ -112,7 +112,7 @@
       "local": "Local Focus",
       "localDesc": "Muzaffarnagar only"
     },
-    "heroBadge": "✨ Muzaffarnagar's Trusted Home Network • 100% Verified Local Experts",
+    "heroBadge": "✨ Jugnu • Verified Local Experts In Muzaffarnagar",
     "problemBadge": "The Old Way vs. The Kaamgar Way",
     "problemTitle": "Tired of the Daily Hassle of Home Repairs?",
     "problemSubtitle": "Finding reliable help in Muzaffarnagar shouldn't mean endless follow-up calls, contractor markups, or unvetted strangers.",
@@ -715,7 +715,7 @@
     "contact": "Contact",
     "privacy": "Privacy Policy",
     "terms": "Terms of Service",
-    "copyright": "© 2026 Muzaffarnagar Ka Kaamgar. All rights reserved.",
+    "copyright": "© 2026 Jugnu. All rights reserved.",
     "madeWith": "Made with ❤️ for Muzaffarnagar",
     "tagline": "Connecting Muzaffarnagar residents with background-verified local artisans and technicians.",
     "explore": "Explore & Book",
