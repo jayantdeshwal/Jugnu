@@ -6,13 +6,26 @@
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "handle_links": "preferred",
   "orientation": "portrait-primary",
   "background_color": "#020617",
   "theme_color": "#020617",
   "lang": "hi-IN",
   "dir": "ltr",
   "prefer_related_applications": false,
-  "categories": ["lifestyle", "utilities", "business"],
+  "categories": [
+    "lifestyle",
+    "utilities",
+    "business"
+  ],
   "icons": [
     {
       "src": "/icon.svg",
