@@ -117,9 +117,11 @@ export default function Bookings() {
     setLoadError('')
     try {
       const supabase = getSupabaseClient()
-      const { data: authData, error: authError } = await supabase.auth.getUser()
-      if (authError) throw authError
-      const customerId = authData.user?.id
+      let customerId = user?.id
+      if (!customerId) {
+        const { data: authData } = await supabase.auth.getUser()
+        customerId = authData?.user?.id
+      }
       if (!customerId) throw new Error('Please sign in to view your bookings')
 
       const { data, error } = await supabase
@@ -172,11 +174,38 @@ export default function Bookings() {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [user?.id])
 
   useEffect(() => {
     void loadBookings()
-  }, [loadBookings, user?.id])
+  }, [loadBookings])
+
+  // Real-time updates when worker accepts, starts, or completes customer booking
+  useEffect(() => {
+    const customerId = user?.id
+    if (!customerId) return
+
+    const supabase = getSupabaseClient()
+    const channel = supabase
+      .channel(`customer-bookings-realtime-${customerId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bookings',
+          filter: `customer_id=eq.${customerId}`,
+        },
+        () => {
+          void loadBookings()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      void supabase.removeChannel(channel)
+    }
+  }, [user?.id, loadBookings])
   
   const upcomingBookings = allBookings.filter(b => ['pending', 'accepted', 'in_progress'].includes(b.status))
   const pastBookings = allBookings.filter(b => ['completed', 'rejected', 'cancelled', 'disputed'].includes(b.status))

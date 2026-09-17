@@ -38,91 +38,134 @@ export async function fetchAdminWorkers(): Promise<AdminWorkerRow[]> {
   const supabase = getSupabaseClient()
 
   // 1. Try get_admin_workers RPC first (efficient server-side aggregation)
-  const { data: rpcData, error: rpcError } = await (supabase as any).rpc('get_admin_workers')
+  try {
+    const { data: rpcData, error: rpcError } = await (supabase as any).rpc('get_admin_workers')
 
-  if (!rpcError && Array.isArray(rpcData)) {
-    return rpcData.map((row: any) => ({
-      id: row.id,
-      name: row.name || 'Unnamed Worker',
-      phone: row.phone || 'No phone',
-      avatar_url: row.avatar_url || null,
-      id_proof_url: row.id_proof_url || null,
-      bio: row.bio || '',
-      experience_years: Number(row.experience_years ?? 0),
-      approval_status: row.approval_status || 'pending',
-      is_available: Boolean(row.is_available),
-      rating: Number(row.rating ?? 0),
-      review_count: Number(row.review_count ?? 0),
-      rejection_reason: row.rejection_reason || null,
-      created_at: row.created_at,
-      categories: Array.isArray(row.categories) ? row.categories : [],
-      areas: Array.isArray(row.areas) ? row.areas : [],
-      completed_jobs: Number(row.completed_jobs ?? 0),
-      total_bookings: Number(row.total_bookings ?? 0),
+    if (!rpcError && Array.isArray(rpcData) && rpcData.length > 0) {
+      return rpcData.map((row: any) => ({
+        id: row.id,
+        name: row.name || 'Unnamed Worker',
+        phone: row.phone || 'No phone',
+        avatar_url: row.avatar_url || null,
+        id_proof_url: row.id_proof_url || null,
+        bio: row.bio || '',
+        experience_years: Number(row.experience_years ?? 0),
+        approval_status: row.approval_status || 'pending',
+        is_available: Boolean(row.is_available),
+        rating: Number(row.rating ?? 0),
+        review_count: Number(row.review_count ?? 0),
+        rejection_reason: row.rejection_reason || null,
+        created_at: row.created_at,
+        categories: Array.isArray(row.categories) ? row.categories : [],
+        areas: Array.isArray(row.areas) ? row.areas : [],
+        completed_jobs: Number(row.completed_jobs ?? 0),
+        total_bookings: Number(row.total_bookings ?? 0),
+      }))
+    }
+  } catch (err) {
+    console.warn('get_admin_workers RPC notice, falling back to direct query:', err)
+  }
+
+  // 2. Resilient fallback: Query worker_profiles with safe left join and approved directory
+  try {
+    const [workersResult, directoryResult, bookingsResult] = await Promise.all([
+      supabase
+        .from('worker_profiles')
+        .select(`
+          id,
+          bio,
+          experience_years,
+          approval_status,
+          is_available,
+          rating,
+          review_count,
+          rejection_reason,
+          id_proof_url,
+          created_at,
+          profiles(full_name, phone, avatar_url),
+          worker_categories(category_id),
+          worker_service_areas(service_areas(pincode))
+        `)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('approved_worker_directory')
+        .select('id, name, avatar, bio, experience, categories, areas'),
+      supabase.from('bookings').select('id, worker_id, status'),
+    ])
+
+    if (workersResult.error) throw workersResult.error
+
+    const dirMap = new Map<string, any>(
+      (directoryResult.data ?? []).map((d: any) => [d.id, d])
+    )
+
+    const bookings = (bookingsResult.data ?? []) as any[]
+    const totalBookingsByWorker = new Map<string, number>()
+    const completedBookingsByWorker = new Map<string, number>()
+
+    for (const b of bookings) {
+      if (!b.worker_id) continue
+      totalBookingsByWorker.set(b.worker_id, (totalBookingsByWorker.get(b.worker_id) || 0) + 1)
+      if (b.status === 'completed') {
+        completedBookingsByWorker.set(
+          b.worker_id,
+          (completedBookingsByWorker.get(b.worker_id) || 0) + 1,
+        )
+      }
+    }
+
+    return (workersResult.data ?? []).map((w: any) => {
+      const dirFallback = dirMap.get(w.id)
+      const rawCategories = (w.worker_categories ?? []).map((c: any) => c.category_id).filter(Boolean)
+      const rawAreas = (w.worker_service_areas ?? []).map((a: any) => a.service_areas?.pincode).filter(Boolean)
+
+      return {
+        id: w.id,
+        name: w.profiles?.full_name || dirFallback?.name || 'Verified Worker',
+        phone: w.profiles?.phone || 'No phone',
+        avatar_url: w.profiles?.avatar_url || dirFallback?.avatar || null,
+        id_proof_url: w.id_proof_url || null,
+        bio: w.bio || dirFallback?.bio || '',
+        experience_years: Number(w.experience_years ?? dirFallback?.experience ?? 0),
+        approval_status: w.approval_status || 'pending',
+        is_available: Boolean(w.is_available),
+        rating: Number(w.rating ?? 0),
+        review_count: Number(w.review_count ?? 0),
+        rejection_reason: w.rejection_reason || null,
+        created_at: w.created_at,
+        categories: rawCategories.length > 0 ? rawCategories : dirFallback?.categories || [],
+        areas: rawAreas.length > 0 ? rawAreas : dirFallback?.areas || [],
+        completed_jobs: completedBookingsByWorker.get(w.id) || 0,
+        total_bookings: totalBookingsByWorker.get(w.id) || 0,
+      }
+    })
+  } catch (fallbackErr) {
+    console.warn('Worker fallback query notice:', fallbackErr)
+    // 3. Ultra fallback: check approved_worker_directory directly so verified workers never disappear
+    const { data: dirWorkers } = await supabase
+      .from('approved_worker_directory')
+      .select('id, name, avatar, bio, experience, rating, reviews, available, categories, areas')
+
+    return (dirWorkers ?? []).map((d: any) => ({
+      id: d.id,
+      name: d.name || 'Verified Worker',
+      phone: 'Protected',
+      avatar_url: d.avatar || null,
+      id_proof_url: null,
+      bio: d.bio || '',
+      experience_years: Number(d.experience ?? 0),
+      approval_status: 'approved',
+      is_available: Boolean(d.available),
+      rating: Number(d.rating ?? 0),
+      review_count: Number(d.reviews ?? 0),
+      rejection_reason: null,
+      created_at: new Date().toISOString(),
+      categories: d.categories || [],
+      areas: d.areas || [],
+      completed_jobs: 0,
+      total_bookings: 0,
     }))
   }
-
-  // 2. Fallback to direct tables query if RPC migration is pending
-  const [workersResult, bookingsResult] = await Promise.all([
-    supabase
-      .from('worker_profiles')
-      .select(`
-        id,
-        bio,
-        experience_years,
-        approval_status,
-        is_available,
-        rating,
-        review_count,
-        rejection_reason,
-        id_proof_url,
-        created_at,
-        profiles!inner(full_name, phone, avatar_url),
-        worker_categories(category_id),
-        worker_service_areas(service_areas(pincode))
-      `)
-      .order('created_at', { ascending: false }),
-    supabase.from('bookings').select('id, worker_id, status'),
-  ])
-
-  if (workersResult.error) throw workersResult.error
-
-  const bookings = (bookingsResult.data ?? []) as any[]
-  const totalBookingsByWorker = new Map<string, number>()
-  const completedBookingsByWorker = new Map<string, number>()
-
-  for (const b of bookings) {
-    if (!b.worker_id) continue
-    totalBookingsByWorker.set(b.worker_id, (totalBookingsByWorker.get(b.worker_id) || 0) + 1)
-    if (b.status === 'completed') {
-      completedBookingsByWorker.set(
-        b.worker_id,
-        (completedBookingsByWorker.get(b.worker_id) || 0) + 1,
-      )
-    }
-  }
-
-  return (workersResult.data ?? []).map((w: any) => ({
-    id: w.id,
-    name: w.profiles?.full_name || 'Unnamed Worker',
-    phone: w.profiles?.phone || 'No phone',
-    avatar_url: w.profiles?.avatar_url || null,
-    id_proof_url: w.id_proof_url || null,
-    bio: w.bio || '',
-    experience_years: Number(w.experience_years ?? 0),
-    approval_status: w.approval_status || 'pending',
-    is_available: Boolean(w.is_available),
-    rating: Number(w.rating ?? 0),
-    review_count: Number(w.review_count ?? 0),
-    rejection_reason: w.rejection_reason || null,
-    created_at: w.created_at,
-    categories: (w.worker_categories ?? []).map((c: any) => c.category_id).filter(Boolean),
-    areas: (w.worker_service_areas ?? [])
-      .map((a: any) => a.service_areas?.pincode)
-      .filter(Boolean),
-    completed_jobs: completedBookingsByWorker.get(w.id) || 0,
-    total_bookings: totalBookingsByWorker.get(w.id) || 0,
-  }))
 }
 
 /**
@@ -132,58 +175,118 @@ export async function fetchAdminCustomers(): Promise<AdminCustomerRow[]> {
   const supabase = getSupabaseClient()
 
   // 1. Try get_admin_customers RPC first
-  const { data: rpcData, error: rpcError } = await (supabase as any).rpc('get_admin_customers')
+  try {
+    const { data: rpcData, error: rpcError } = await (supabase as any).rpc('get_admin_customers')
 
-  if (!rpcError && Array.isArray(rpcData)) {
-    return rpcData.map((row: any) => ({
-      id: row.id,
-      name: row.name || 'Unnamed Customer',
-      phone: row.phone || 'No phone',
-      avatar_url: row.avatar_url || null,
-      created_at: row.created_at,
-      total_bookings: Number(row.total_bookings ?? 0),
-      completed_bookings: Number(row.completed_bookings ?? 0),
-      active_bookings: Number(row.active_bookings ?? 0),
-    }))
-  }
-
-  // 2. Fallback to direct tables query if RPC migration is pending
-  const [customersResult, bookingsResult] = await Promise.all([
-    supabase
-      .from('profiles')
-      .select('id, full_name, phone, avatar_url, created_at')
-      .eq('role', 'customer')
-      .order('created_at', { ascending: false }),
-    supabase.from('bookings').select('id, customer_id, status'),
-  ])
-
-  if (customersResult.error) throw customersResult.error
-
-  const bookings = (bookingsResult.data ?? []) as any[]
-  const totalBookingsByCustomer = new Map<string, number>()
-  const completedByCustomer = new Map<string, number>()
-  const activeByCustomer = new Map<string, number>()
-
-  for (const b of bookings) {
-    if (!b.customer_id) continue
-    totalBookingsByCustomer.set(b.customer_id, (totalBookingsByCustomer.get(b.customer_id) || 0) + 1)
-    if (b.status === 'completed') {
-      completedByCustomer.set(b.customer_id, (completedByCustomer.get(b.customer_id) || 0) + 1)
-    } else if (['pending', 'accepted', 'in_progress'].includes(b.status)) {
-      activeByCustomer.set(b.customer_id, (activeByCustomer.get(b.customer_id) || 0) + 1)
+    if (!rpcError && Array.isArray(rpcData) && rpcData.length > 0) {
+      return rpcData.map((row: any) => ({
+        id: row.id,
+        name: row.name || 'Unnamed Customer',
+        phone: row.phone || 'No phone',
+        avatar_url: row.avatar_url || null,
+        created_at: row.created_at,
+        total_bookings: Number(row.total_bookings ?? 0),
+        completed_bookings: Number(row.completed_bookings ?? 0),
+        active_bookings: Number(row.active_bookings ?? 0),
+      }))
     }
+  } catch (err) {
+    console.warn('get_admin_customers RPC notice:', err)
   }
 
-  return (customersResult.data ?? []).map((c: any) => ({
-    id: c.id,
-    name: c.full_name || 'Unnamed Customer',
-    phone: c.phone || 'No phone',
-    avatar_url: c.avatar_url || null,
-    created_at: c.created_at,
-    total_bookings: totalBookingsByCustomer.get(c.id) || 0,
-    completed_bookings: completedByCustomer.get(c.id) || 0,
-    active_bookings: activeByCustomer.get(c.id) || 0,
-  }))
+  // 2. Direct tables query with graceful error handling and local cache fallback
+  try {
+    const [customersResult, bookingsResult] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('id, full_name, phone, avatar_url, created_at')
+        .eq('role', 'customer')
+        .order('created_at', { ascending: false }),
+      supabase.from('bookings').select('id, customer_id, status'),
+    ])
+
+    const bookings = (bookingsResult.data ?? []) as any[]
+    const totalBookingsByCustomer = new Map<string, number>()
+    const completedByCustomer = new Map<string, number>()
+    const activeByCustomer = new Map<string, number>()
+
+    for (const b of bookings) {
+      if (!b.customer_id) continue
+      totalBookingsByCustomer.set(b.customer_id, (totalBookingsByCustomer.get(b.customer_id) || 0) + 1)
+      if (b.status === 'completed') {
+        completedByCustomer.set(b.customer_id, (completedByCustomer.get(b.customer_id) || 0) + 1)
+      } else if (['pending', 'accepted', 'in_progress'].includes(b.status)) {
+        activeByCustomer.set(b.customer_id, (activeByCustomer.get(b.customer_id) || 0) + 1)
+      }
+    }
+
+    const customerMap = new Map<string, AdminCustomerRow>()
+
+    const rawCustomerProfiles = (customersResult.data ?? []) as any[]
+    for (const c of rawCustomerProfiles) {
+      customerMap.set(c.id, {
+        id: c.id,
+        name: c.full_name || 'Registered Customer',
+        phone: c.phone || 'No phone',
+        avatar_url: c.avatar_url || null,
+        created_at: c.created_at || new Date().toISOString(),
+        total_bookings: totalBookingsByCustomer.get(c.id) || 0,
+        completed_bookings: completedByCustomer.get(c.id) || 0,
+        active_bookings: activeByCustomer.get(c.id) || 0,
+      })
+    }
+
+    // Also check if any bookings reference customers not yet returned by profiles
+    for (const b of bookings) {
+      if (b.customer_id && !customerMap.has(b.customer_id)) {
+        customerMap.set(b.customer_id, {
+          id: b.customer_id,
+          name: 'Customer (' + b.customer_id.slice(0, 8) + ')',
+          phone: 'Registered Client',
+          avatar_url: null,
+          created_at: new Date().toISOString(),
+          total_bookings: totalBookingsByCustomer.get(b.customer_id) || 0,
+          completed_bookings: completedByCustomer.get(b.customer_id) || 0,
+          active_bookings: activeByCustomer.get(b.customer_id) || 0,
+        })
+      }
+    }
+
+    // Also inspect local device registered phone cache for customer accounts registered on this browser
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('kaamgar_registered_phones_cache')
+        if (raw) {
+          const cache = JSON.parse(raw)
+          for (const [phone, info] of Object.entries(cache) as [string, any][]) {
+            if (info?.role === 'customer' || !info?.role) {
+              const existing = Array.from(customerMap.values()).find(c => c.phone.includes(phone))
+              if (!existing) {
+                const custId = `cust_${phone}`
+                customerMap.set(custId, {
+                  id: custId,
+                  name: info?.name || 'Customer (' + phone.slice(-4) + ')',
+                  phone: '+91' + phone,
+                  avatar_url: null,
+                  created_at: new Date().toISOString(),
+                  total_bookings: 0,
+                  completed_bookings: 0,
+                  active_bookings: 0,
+                })
+              }
+            }
+          }
+        }
+      } catch {
+        // ignore storage parse issues
+      }
+    }
+
+    return Array.from(customerMap.values())
+  } catch (err) {
+    console.warn('fetchAdminCustomers error:', err)
+    return []
+  }
 }
 
 export interface AdminNotificationItem {

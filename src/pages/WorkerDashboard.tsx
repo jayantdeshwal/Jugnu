@@ -168,9 +168,11 @@ export default function WorkerDashboard() {
     setError('')
     try {
       const supabase = getSupabaseClient()
-      const { data: authData, error: authError } = await supabase.auth.getUser()
-      if (authError) throw authError
-      const workerId = authData.user?.id
+      let workerId = user?.id
+      if (!workerId) {
+        const { data: authData } = await supabase.auth.getUser()
+        workerId = authData?.user?.id
+      }
       if (!workerId) throw new Error('Please sign in to access worker workspace')
 
       // Fetch worker profile and categories
@@ -238,14 +240,55 @@ export default function WorkerDashboard() {
     void loadDashboardData()
   }, [loadDashboardData])
 
+  // Real-time synchronization for worker jobs, status changes, and approvals
+  useEffect(() => {
+    const workerId = user?.id
+    if (!workerId) return
+
+    const supabase = getSupabaseClient()
+    const channel = supabase
+      .channel(`worker-dashboard-realtime-${workerId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bookings',
+          filter: `worker_id=eq.${workerId}`,
+        },
+        () => {
+          void loadDashboardData()
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'worker_profiles',
+          filter: `id=eq.${workerId}`,
+        },
+        () => {
+          void loadDashboardData()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      void supabase.removeChannel(channel)
+    }
+  }, [user?.id, loadDashboardData])
+
   const handleUpdateStatus = async (bookingId: string, status: WorkerBookingRow['status']) => {
     setUpdatingBookingId(bookingId)
     setError('')
     try {
       const supabase = getSupabaseClient()
-      const { data: authData, error: authError } = await supabase.auth.getUser()
-      if (authError) throw authError
-      const workerId = authData.user?.id
+      let workerId = user?.id
+      if (!workerId) {
+        const { data: authData } = await supabase.auth.getUser()
+        workerId = authData?.user?.id
+      }
       if (!workerId) throw new Error('Please sign in to update bookings')
 
       const { error: rpcError } = await (supabase as any).rpc('update_booking_status', {
@@ -281,9 +324,11 @@ export default function WorkerDashboard() {
 
     try {
       const supabase = getSupabaseClient()
-      const { data: authData, error: authError } = await supabase.auth.getUser()
-      if (authError) throw authError
-      const workerId = authData.user?.id
+      let workerId = user?.id
+      if (!workerId) {
+        const { data: authData } = await supabase.auth.getUser()
+        workerId = authData?.user?.id
+      }
       if (!workerId) throw new Error('Please sign in to manage availability')
 
       const { error: rpcError } = await (supabase as any).rpc('update_worker_availability', {

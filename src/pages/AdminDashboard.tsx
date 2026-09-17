@@ -106,6 +106,12 @@ export default function AdminDashboard() {
   useEffect(() => {
     const raw = searchParams.get('tab') as AdminTabType | null
     const tab = raw === 'overview' ? 'dashboard' : raw
+    const statusParam = searchParams.get('status')
+    if (statusParam === 'pending' || statusParam === 'approved' || statusParam === 'rejected' || statusParam === 'all') {
+      setWorkerStatusFilter(statusParam)
+    } else if (tab === 'workers' && !statusParam) {
+      setWorkerStatusFilter('all')
+    }
     if (
       tab &&
       ['dashboard', 'workers', 'customers', 'bookings', 'notifications', 'admins'].includes(tab)
@@ -478,8 +484,48 @@ export default function AdminDashboard() {
   }
 
   useEffect(() => {
-    if (isAdmin) {
-      void refreshAll()
+    if (!isAdmin) return
+
+    void refreshAll()
+
+    const supabase = getSupabaseClient()
+    const channel = supabase
+      .channel('admin-dashboard-realtime-sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'worker_profiles' },
+        () => {
+          void loadWorkersData()
+          void loadStats()
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        () => {
+          void loadCustomersData()
+          void loadStats()
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'bookings' },
+        () => {
+          void loadBookings()
+          void loadStats()
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notifications' },
+        () => {
+          void loadNotificationsData()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      void supabase.removeChannel(channel)
     }
   }, [isAdmin])
 
@@ -946,6 +992,7 @@ export default function AdminDashboard() {
             whileHover={{ y: -3, scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
             onClick={() => {
+              setWorkerStatusFilter('all')
               setActiveTab('workers')
               setSearchParams({ tab: 'workers' })
             }}
@@ -959,7 +1006,7 @@ export default function AdminDashboard() {
                   {t('admin.stats.totalWorkers')}
                 </span>
                 <p className="text-3xl font-extrabold text-slate-900 dark:text-white mt-1.5 font-mono">
-                  {isLoadingStats ? '...' : stats?.workers ?? allWorkers.length}
+                  {isLoadingStats ? '...' : Math.max(stats?.workers ?? 0, allWorkers.length)}
                 </p>
               </div>
               <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-center text-amber-500 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-slate-950 transition-all shadow-xs">
@@ -995,7 +1042,7 @@ export default function AdminDashboard() {
                   {t('admin.stats.totalCustomers')}
                 </span>
                 <p className="text-3xl font-extrabold text-slate-900 dark:text-white mt-1.5 font-mono">
-                  {isLoadingStats ? '...' : stats?.customers ?? customers.length}
+                  {isLoadingStats ? '...' : Math.max(stats?.customers ?? 0, customers.length)}
                 </p>
               </div>
               <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-500 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-slate-950 transition-all shadow-xs">
@@ -1116,6 +1163,9 @@ export default function AdminDashboard() {
               <button
                 key={tab.key}
                 onClick={() => {
+                  if (tab.key === 'workers') {
+                    setWorkerStatusFilter('all')
+                  }
                   setActiveTab(tab.key as any)
                   setSearchParams({ tab: tab.key })
                 }}
@@ -1654,8 +1704,26 @@ export default function AdminDashboard() {
                     </tr>
                   ) : filteredWorkers.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-6 py-8 text-center text-semantic-text-secondary">
-                        No workers found matching your criteria.
+                      <td colSpan={7} className="px-6 py-12 text-center text-slate-500 dark:text-zinc-400">
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white mb-1">
+                          No workers found matching the "{workerStatusFilter}" filter.
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-zinc-400 mb-4">
+                          {allWorkers.length} total worker(s) registered on the platform.
+                        </p>
+                        {workerStatusFilter !== 'all' && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setWorkerStatusFilter('all')
+                              setWorkerSearch('')
+                            }}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 text-slate-950 text-xs font-bold hover:bg-amber-400 transition-colors shadow-xs cursor-pointer"
+                          >
+                            <RefreshCw className="w-3.5 h-3.5" />
+                            Show All Workers ({allWorkers.length})
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ) : (
