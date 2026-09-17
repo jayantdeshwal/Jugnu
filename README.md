@@ -1,8 +1,6 @@
-# Muzaffarnagar Ka Kaamgar
+# Jugnu
 
-A frontend-only prototype for a local-services marketplace in Muzaffarnagar. It connects people looking for electricians, plumbers, carpenters, AC technicians, and painters with local workers.
-
-The current version is in the first backend-foundation phase. Screens still use mock data and browser state, while the Supabase browser client is prepared for a later database and authentication slice.
+Ghar Ke Har Kaam Ka Jugnu. A hyperlocal service platform connecting residents of Muzaffarnagar with verified electricians, plumbers, carpenters, AC technicians, and painters with 0% commission.
 
 ## Run locally
 
