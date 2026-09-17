@@ -941,10 +941,10 @@ export default function Profile() {
                 </div>
               </div>
 
-              {/* Row: Dedicated PWA Install Button (Hidden on mobile devices) */}
+              {/* Row: Dedicated PWA Install Button (Kept in Account page) */}
               <div
                 onClick={() => triggerPWAInstall()}
-                className="hidden md:flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800/70 cursor-pointer transition-colors group"
+                className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800/70 cursor-pointer transition-colors group"
               >
                 <div className="flex items-center gap-3.5">
                   <Smartphone className="w-5 h-5 text-amber-600 dark:text-brand-400" />

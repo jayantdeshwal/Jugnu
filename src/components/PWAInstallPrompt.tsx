@@ -75,34 +75,20 @@ export default function PWAInstallPrompt() {
       e.preventDefault()
       globalDeferredPrompt = e
       setDeferredPrompt(e)
-      // Only auto-expand if unauthenticated AND on the login page
-      if (!isAuthenticated && isLoginPage) {
-        setIsExpanded(true)
-      }
     }
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
 
-    // 4. Custom event listener for when user taps "Install App" button in Login or Profile
+    // 4. Custom event listener for when user taps "Install App" button in Account
     const handleOpenDialog = () => {
       setIsExpanded(true)
       setShowGuide(true)
     }
     window.addEventListener('open-pwa-install-dialog', handleOpenDialog)
 
-    // 5. Pop up automatically on Login page ONLY after 2s delay (if not dismissed in this session and NOT authenticated)
-    let timer: any = null
-    const hasDismissed = sessionStorage.getItem('kaamgar_pwa_dismissed_session')
-    if (!hasDismissed && !isAuthenticated && isLoginPage) {
-      timer = setTimeout(() => {
-        setIsExpanded(true)
-      }, 2000)
-    }
-
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
       window.removeEventListener('open-pwa-install-dialog', handleOpenDialog)
-      if (timer) clearTimeout(timer)
     }
   }, [isAuthenticated, isLoginPage])
 
@@ -126,13 +112,8 @@ export default function PWAInstallPrompt() {
     setIsExpanded(false)
   }
 
-  const isMobile =
-    typeof window !== 'undefined' &&
-    (/android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent) ||
-      window.matchMedia('(max-width: 768px)').matches)
-
-  // If already installed or viewing on a mobile device, hide install prompt completely
-  if (isStandalone || isMobile) return null
+  // If already running in standalone installed app mode, hide install prompt completely
+  if (isStandalone) return null
 
   return (
     <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-md z-50 pointer-events-none">
