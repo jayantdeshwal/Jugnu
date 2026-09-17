@@ -54,7 +54,8 @@ self.addEventListener('fetch', event => {
     url.hostname.includes('supabase.co') ||
     url.hostname.includes('msg91.com') ||
     url.pathname.startsWith('/rest/') ||
-    url.pathname.startsWith('/auth/')
+    url.pathname.startsWith('/auth/') ||
+    url.pathname.startsWith('/.well-known/')
   ) {
     return
   }
