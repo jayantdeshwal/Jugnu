@@ -236,33 +236,34 @@ export default function Layout() {
           
           {/* ========================================================= */}
           {/* MOBILE TOP BAR (Visible on screens < 768px: md:hidden)   */}
-          {/* Top Left: 3-lines menu | Center: Brand | Top Right: AI   */}
+          {/* Left: 3-lines menu + Jugnu Brand | Right: AI Support     */}
           {/* ========================================================= */}
           <div className="flex md:hidden h-14 items-center justify-between">
-            {/* Top Left: 3-lines hamburger button */}
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(true)}
-              className="flex items-center justify-center w-10 h-10 -ml-1 rounded-xl text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800/80 active:scale-95 transition-all cursor-pointer"
-              aria-label="Open navigation sidebar"
-              title="Menu"
-            >
-              <Menu className="w-6 h-6" />
-            </button>
+            {/* Left Group: 3-lines button + Jugnu logo & name placed close together */}
+            <div className="flex items-center gap-2 min-w-0">
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(true)}
+                className="flex items-center justify-center w-9 h-9 -ml-1 rounded-xl text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800/80 active:scale-95 transition-all cursor-pointer shrink-0"
+                aria-label="Open navigation sidebar"
+                title="Menu"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
 
-            {/* Mobile Center: Logo & Name */}
-            <NavLink to="/" className="flex items-center gap-2" aria-label={t('app.name')}>
-              <JugnuLogo className="w-7 h-7" />
-              <span className="font-extrabold text-base tracking-tight text-slate-900 dark:text-zinc-100">
-                {t('app.name')}
-              </span>
-            </NavLink>
+              <NavLink to="/" className="flex items-center gap-2 min-w-0" aria-label={t('app.name')}>
+                <JugnuLogo className="w-8 h-8 rounded-xl shrink-0 shadow-sm" />
+                <span className="font-black text-lg tracking-tight text-slate-900 dark:text-white truncate">
+                  {t('app.name')}
+                </span>
+              </NavLink>
+            </div>
 
             {/* Top Right: AI Support Button */}
             <button
               type="button"
               onClick={() => openAssistant('customer_booking')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-extrabold text-xs shadow-md shadow-amber-500/25 hover:brightness-105 active:scale-95 transition-all border border-amber-400/40 cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-extrabold text-xs shadow-md shadow-amber-500/25 hover:brightness-105 active:scale-95 transition-all border border-amber-400/40 cursor-pointer shrink-0"
               aria-label="AI Support"
               title="AI Support Assistant"
             >
@@ -278,8 +279,8 @@ export default function Layout() {
           <div className="hidden md:flex h-16 items-center justify-between">
             <div className="flex items-center gap-6">
               <NavLink to="/" className="flex items-center gap-2.5" aria-label={t('app.name')}>
-                <JugnuLogo className="w-8 h-8" />
-                <span className="font-bold text-lg text-slate-900 dark:text-zinc-100">
+                <JugnuLogo className="w-9 h-9 rounded-xl shadow-sm" />
+                <span className="font-black text-xl text-slate-900 dark:text-white">
                   {t('app.name')}
                 </span>
               </NavLink>
