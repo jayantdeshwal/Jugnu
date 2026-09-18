@@ -196,17 +196,13 @@ export const MUZAFFARNAGAR_KNOWLEDGE = {
       visit: '₹249 - ₹349',
       scope: 'Inspection, filter deep wash, gas pressure testing (gas refill extra ₹1200-₹1800).',
     },
-    cleaning: {
+    part_time_maid: {
       visit: '₹499 - ₹1499',
       scope: 'Bathroom deep cleaning from ₹399, full 2BHK/3BHK house deep cleaning ₹1299-₹2499.',
     },
-    men_salon: {
-      visit: '₹199 - ₹399',
-      scope: 'Haircut + beard grooming + head massage at home.',
-    },
-    women_spa: {
-      visit: '₹399 - ₹899',
-      scope: 'Facial, cleanup, waxing, manicure/pedicure by verified female professionals.',
+    parlour_service: {
+      visit: '₹199 - ₹899',
+      scope: 'Haircut, facial, grooming, nail care, mehendi and beauty care at home.',
     },
     carpenter: {
       visit: '₹199 - ₹299',

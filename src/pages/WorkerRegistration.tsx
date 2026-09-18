@@ -125,20 +125,11 @@ export default function WorkerRegistration() {
   const [uploadProgress, setUploadProgress] = useState('')
   const [submitted, setSubmitted] = useState(false)
 
-  // 5-Category selection state
+  // 5-Category selection state (Two-level selection flow)
   const [selectedServices, setSelectedServices] = useState<string[]>(
     formData.category ? [formData.category] : []
   )
-  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
-    home_repair: true,
-  })
-
-  const toggleCategoryAccordion = (categoryId: string) => {
-    setExpandedCategories(prev => ({
-      ...prev,
-      [categoryId]: !prev[categoryId],
-    }))
-  }
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
 
   const toggleServiceSelection = (serviceId: string) => {
     setSelectedServices(prev => {
@@ -716,164 +707,217 @@ export default function WorkerRegistration() {
             {/* STEP 2: WORK DETAILS */}
             {currentStepKey === 'work' && (
               <div className="space-y-6">
-                {/* 5-Category Accordions with + / - controls */}
+                {/* STEP 2: TWO-LEVEL CATEGORY & SERVICE SELECTION */}
                 <div>
-                  <div className="mb-3">
-                    <label className="label text-semantic-text-secondary block font-bold text-sm">
-                      {t('auth.workerRegistration.selectServicesTitle', 'Work Category & Services')} *
-                    </label>
-                    <p className="text-xs text-semantic-text-tertiary mt-0.5">
-                      {t(
-                        'auth.workerRegistration.selectServicesSubtitle',
-                        'Expand a category using (+) to choose the service(s) you provide.'
-                      )}
-                    </p>
-                  </div>
+                  {/* LEVEL 1: When no category is selected, show ONLY the 5 canonical categories */}
+                  {selectedCategoryId === null ? (
+                    <div>
+                      <div className="mb-4">
+                        <label className="label text-semantic-text-secondary block font-bold text-sm">
+                          {t('auth.workerRegistration.selectTradeCategory', 'Select Your Trade / Service Category')} *
+                        </label>
+                        <p className="text-xs text-semantic-text-tertiary mt-0.5">
+                          {t(
+                            'auth.workerRegistration.selectCategorySubtitle',
+                            'Choose your trade category to see available services.'
+                          )}
+                        </p>
+                      </div>
 
-                  <div className="space-y-3">
-                    {JUGNU_CATEGORIES.map(category => {
-                      const isExpanded = !!expandedCategories[category.id]
-                      const CatIcon = categoryIconMap[category.icon] || Wrench
+                      {/* 5 Categories List - Strictly 0 services shown here */}
+                      <div className="space-y-3">
+                        {JUGNU_CATEGORIES.map(category => {
+                          const CatIcon = categoryIconMap[category.icon] || Wrench
+                          const isHindiLang = i18n.language === 'hi'
+                          const primaryName = isHindiLang ? category.name_hi : category.name_en
+                          const secondaryName = isHindiLang ? category.name_en : category.name_hi
+                          const selectedCountInCategory = category.services.filter(s =>
+                            selectedServices.includes(s.id)
+                          ).length
+
+                          return (
+                            <div
+                              key={category.id}
+                              onClick={() => setSelectedCategoryId(category.id)}
+                              className="p-4 rounded-2xl border border-semantic-border-light bg-surface-200/50 hover:bg-surface-200 hover:border-brand-500/50 cursor-pointer transition-all flex items-center justify-between group shadow-sm active:scale-[0.99] select-none"
+                              role="button"
+                              tabIndex={0}
+                            >
+                              <div className="flex items-center gap-3.5 min-w-0">
+                                <div className="w-11 h-11 rounded-2xl bg-brand-500/10 border border-brand-500/25 flex items-center justify-center text-brand-400 shrink-0 group-hover:scale-105 group-hover:bg-brand-500 group-hover:text-surface-950 transition-all">
+                                  <CatIcon className="w-5 h-5" />
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="text-sm font-bold text-semantic-text-primary truncate group-hover:text-brand-400 transition-colors">
+                                      {primaryName}
+                                    </h4>
+                                    {selectedCountInCategory > 0 && (
+                                      <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                        {t('auth.workerRegistration.selectedCount', {
+                                          count: selectedCountInCategory,
+                                        })}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-semantic-text-tertiary truncate mt-0.5">
+                                    {secondaryName}
+                                  </p>
+                                </div>
+                              </div>
+                              <ArrowRight className="w-5 h-5 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-1 transition-all shrink-0 ml-2" />
+                            </div>
+                          )
+                        })}
+                      </div>
+
+                      {/* Selected Services Summary if worker previously selected any services */}
+                      {selectedServices.length > 0 && (
+                        <div className="mt-4 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+                          <div className="flex items-center justify-between gap-2 mb-1.5">
+                            <span className="text-xs font-bold text-emerald-400">
+                              ✓ {selectedServices.length} {t('common.services', 'services')} selected:
+                            </span>
+                            <span className="text-[11px] text-emerald-300/80">
+                              {t('auth.workerRegistration.selectedCount', { count: selectedServices.length })}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {selectedServices.map(svcId => {
+                              const svc = getServiceById(svcId)
+                              const isHindiLang = i18n.language === 'hi'
+                              const name = svc ? (isHindiLang ? svc.name_hi : svc.name_en) : svcId
+                              return (
+                                <span
+                                  key={svcId}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-medium border border-emerald-500/30"
+                                >
+                                  {name}
+                                </span>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    /* LEVEL 2: Show ONLY the services of the chosen category with a Back button */
+                    (() => {
+                      const activeCategory = JUGNU_CATEGORIES.find(c => c.id === selectedCategoryId)!
+                      const CatIcon = categoryIconMap[activeCategory.icon] || Wrench
                       const isHindiLang = i18n.language === 'hi'
-                      const primaryName = isHindiLang ? category.name_hi : category.name_en
-                      const secondaryName = isHindiLang ? category.name_en : category.name_hi
-                      const selectedCountInCategory = category.services.filter(s =>
-                        selectedServices.includes(s.id)
-                      ).length
+                      const categoryPrimary = isHindiLang ? activeCategory.name_hi : activeCategory.name_en
+                      const categorySecondary = isHindiLang ? activeCategory.name_en : activeCategory.name_hi
+                      const selectedCount = activeCategory.services.filter(s => selectedServices.includes(s.id)).length
 
                       return (
-                        <div
-                          key={category.id}
-                          className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
-                            isExpanded
-                              ? 'border-brand-500/60 bg-surface-150/90 shadow-md ring-1 ring-brand-500/20'
-                              : 'border-semantic-border-light bg-surface-200/40 hover:border-semantic-border-medium'
-                          }`}
-                        >
-                          {/* Category Header with (+) / (-) button */}
-                          <div
-                            onClick={() => toggleCategoryAccordion(category.id)}
-                            className="p-3.5 sm:p-4 flex items-center justify-between cursor-pointer hover:bg-surface-200/70 transition-colors select-none"
-                            role="button"
-                            tabIndex={0}
-                            aria-expanded={isExpanded}
-                          >
-                            <div className="flex items-center gap-3 min-w-0">
-                              <div
-                                className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all ${
-                                  isExpanded
-                                    ? 'bg-brand-500 text-surface-950 font-bold shadow-sm'
-                                    : 'bg-brand-500/10 text-brand-400 border border-brand-500/25'
-                                }`}
-                              >
-                                <CatIcon className="w-4 h-4" />
+                        <div className="space-y-4">
+                          {/* Back to Categories Button */}
+                          <div>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedCategoryId(null)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-200 hover:bg-surface-300 text-xs font-semibold text-semantic-text-secondary hover:text-white border border-semantic-border-light transition-all active:scale-95 cursor-pointer"
+                            >
+                              <ArrowLeft className="w-3.5 h-3.5 text-brand-400" />
+                              <span>{t('auth.workerRegistration.backToCategories', '← Back to Categories')}</span>
+                            </button>
+                          </div>
+
+                          {/* Selected Category Header Banner */}
+                          <div className="p-4 rounded-2xl bg-surface-200/60 border border-brand-500/40 flex items-center justify-between gap-3.5">
+                            <div className="flex items-center gap-3.5 min-w-0">
+                              <div className="w-11 h-11 rounded-2xl bg-brand-500 text-surface-950 font-bold flex items-center justify-center shrink-0 shadow-md">
+                                <CatIcon className="w-5 h-5" />
                               </div>
                               <div className="min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <h4 className="text-sm font-bold text-semantic-text-primary truncate">
-                                    {primaryName}
-                                  </h4>
-                                  {selectedCountInCategory > 0 && (
-                                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                                      {t('auth.workerRegistration.selectedCount', {
-                                        count: selectedCountInCategory,
-                                      })}
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-[11px] text-semantic-text-tertiary truncate">
-                                  {secondaryName}
+                                <h3 className="text-base font-bold text-semantic-text-primary truncate">
+                                  {categoryPrimary}
+                                </h3>
+                                <p className="text-xs text-semantic-text-tertiary truncate">
+                                  {categorySecondary}
                                 </p>
                               </div>
                             </div>
 
-                            <button
-                              type="button"
-                              onClick={e => {
-                                e.stopPropagation()
-                                toggleCategoryAccordion(category.id)
-                              }}
-                              className={`w-7 h-7 rounded-full flex items-center justify-center border transition-all ${
-                                isExpanded
-                                  ? 'bg-brand-500 text-surface-950 border-brand-400 shadow-xs'
-                                  : 'bg-surface-300/80 text-semantic-text-secondary border-semantic-border-light hover:border-brand-500/50'
-                              }`}
-                              aria-label={isExpanded ? 'Collapse' : 'Expand'}
-                            >
-                              {isExpanded ? (
-                                <Minus className="w-3.5 h-3.5 stroke-[2.5]" />
-                              ) : (
-                                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                              )}
-                            </button>
+                            {selectedCount > 0 && (
+                              <span className="text-xs font-extrabold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
+                                {selectedCount} selected
+                              </span>
+                            )}
                           </div>
 
-                          {/* Expanded Service Checkbox Options */}
-                          <AnimatePresence initial={false}>
-                            {isExpanded && (
-                              <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.22, ease: 'easeInOut' }}
-                                className="overflow-hidden border-t border-semantic-border-light bg-surface-200/20"
-                              >
-                                <div className="p-3 sm:p-4 space-y-2">
-                                  {category.services.map(service => {
-                                    const isSelected = selectedServices.includes(service.id)
-                                    const ServiceIcon = categoryIconMap[service.icon] || Wrench
-                                    const servicePrimary = isHindiLang
-                                      ? service.name_hi
-                                      : service.name_en
-                                    const serviceSecondary = isHindiLang
-                                      ? service.name_en
-                                      : service.name_hi
+                          <div className="flex items-center justify-between pt-1">
+                            <label className="text-xs font-bold text-semantic-text-secondary">
+                              {t('auth.workerRegistration.selectServicePrompt', 'Select the service(s) you provide:')}
+                            </label>
+                            <span className="text-[11px] text-semantic-text-tertiary">
+                              {selectedCount} / {activeCategory.services.length} selected
+                            </span>
+                          </div>
 
-                                    return (
-                                      <div
-                                        key={service.id}
-                                        onClick={() => toggleServiceSelection(service.id)}
-                                        className={`p-3 rounded-xl border flex items-center gap-3 cursor-pointer transition-all ${
-                                          isSelected
-                                            ? 'border-brand-500 bg-brand-500/10 text-brand-300 ring-1 ring-brand-500/30 font-semibold'
-                                            : 'border-semantic-border-light bg-surface-150/60 hover:bg-surface-200/60 hover:border-brand-500/40 text-semantic-text-secondary'
-                                        }`}
-                                      >
-                                        <div
-                                          className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
-                                            isSelected
-                                              ? 'bg-brand-500 border-brand-500 text-surface-950'
-                                              : 'border-slate-500 dark:border-zinc-500 bg-transparent'
-                                          }`}
-                                        >
-                                          {isSelected && (
-                                            <Check className="w-3.5 h-3.5 stroke-[3]" />
-                                          )}
-                                        </div>
+                          {/* Services Checklist - Strictly ONLY activeCategory.services */}
+                          <div className="space-y-2.5">
+                            {activeCategory.services.map(service => {
+                              const isSelected = selectedServices.includes(service.id)
+                              const ServiceIcon = categoryIconMap[service.icon] || Wrench
+                              const servicePrimary = isHindiLang ? service.name_hi : service.name_en
+                              const serviceSecondary = isHindiLang ? service.name_en : service.name_hi
 
-                                        <div className="w-7 h-7 rounded-lg bg-surface-200 border border-semantic-border-light flex items-center justify-center text-semantic-text-secondary shrink-0">
-                                          <ServiceIcon className="w-3.5 h-3.5" />
-                                        </div>
+                              return (
+                                <div
+                                  key={service.id}
+                                  onClick={() => toggleServiceSelection(service.id)}
+                                  className={`p-3.5 rounded-xl border flex items-center gap-3 cursor-pointer transition-all ${
+                                    isSelected
+                                      ? 'border-brand-500 bg-brand-500/15 text-brand-300 ring-1 ring-brand-500/30 font-semibold'
+                                      : 'border-semantic-border-light bg-surface-150/60 hover:bg-surface-200/60 hover:border-brand-500/40 text-semantic-text-secondary'
+                                  }`}
+                                >
+                                  <div
+                                    className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
+                                      isSelected
+                                        ? 'bg-brand-500 border-brand-500 text-surface-950'
+                                        : 'border-slate-500 dark:border-zinc-500 bg-transparent'
+                                    }`}
+                                  >
+                                    {isSelected && (
+                                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                    )}
+                                  </div>
 
-                                        <div className="min-w-0 flex-1">
-                                          <p className="text-xs sm:text-sm font-bold text-semantic-text-primary truncate">
-                                            {servicePrimary}
-                                          </p>
-                                          <p className="text-[10px] text-semantic-text-tertiary truncate">
-                                            {serviceSecondary}
-                                          </p>
-                                        </div>
-                                      </div>
-                                    )
-                                  })}
+                                  <div className="w-8 h-8 rounded-lg bg-surface-200 border border-semantic-border-light flex items-center justify-center text-semantic-text-secondary shrink-0">
+                                    <ServiceIcon className="w-4 h-4" />
+                                  </div>
+
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-bold text-semantic-text-primary truncate">
+                                      {servicePrimary}
+                                    </p>
+                                    <p className="text-[11px] text-semantic-text-tertiary truncate">
+                                      {serviceSecondary}
+                                    </p>
+                                  </div>
                                 </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
+                              )
+                            })}
+                          </div>
+
+                          {/* Done / Return to Categories Button */}
+                          <div className="pt-2">
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              className="w-full py-2.5 text-xs font-semibold"
+                              onClick={() => setSelectedCategoryId(null)}
+                            >
+                              {t('auth.workerRegistration.doneCategorySelection', 'Done / View All Categories')}
+                            </Button>
+                          </div>
                         </div>
                       )
-                    })}
-                  </div>
+                    })()
+                  )}
 
                   {errors.category && (
                     <p className="mt-2 text-xs text-red-400 font-medium flex items-center gap-1">

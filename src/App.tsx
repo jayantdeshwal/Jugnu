@@ -87,6 +87,7 @@ function AppRoutes() {
         <Route path="worker/:id" element={<GuestOrAuthRoute><WorkerProfile /></GuestOrAuthRoute>} />
         <Route path="booking/:workerId" element={<ProtectedRoute><Booking /></ProtectedRoute>} />
         <Route path="bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
+        <Route path="my-bookings" element={<Navigate to="/bookings" replace />} />
         <Route path="auth" element={<Login />} />
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />

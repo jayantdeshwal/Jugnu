@@ -29,7 +29,8 @@ import { openOtpWidget } from '@/services/otp'
 import { checkPhoneRegistration } from '@/services/authCheck'
 
 export default function Register() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const isHindi = i18n.language === 'hi'
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const initialRole = searchParams.get('role') === 'worker' ? 'worker' : 'customer'
@@ -53,6 +54,7 @@ export default function Register() {
   const [workerPhone, setWorkerPhone] = useState(queryPhone)
   const [workerPassword, setWorkerPassword] = useState('')
   const [workerConfirmPassword, setWorkerConfirmPassword] = useState('')
+  const [workerParentCategory, setWorkerParentCategory] = useState('')
   const [workerCategory, setWorkerCategory] = useState('')
   const [workerAreas, setWorkerAreas] = useState<string[]>([])
   const [workerExperience, setWorkerExperience] = useState('')
@@ -616,31 +618,57 @@ export default function Register() {
                   />
                 </div>
 
-                {/* Category Selection */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider mb-1">
-                    {t('registerPage.tradeCategory', 'Trade / Service Category *')}
-                  </label>
-                  <select
-                    required
-                    value={workerCategory}
-                    onChange={e => setWorkerCategory(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors"
-                  >
-                    <option value="">{t('registerPage.selectCategory', '-- Select Your Trade / Category --')}</option>
-                    {JUGNU_CATEGORIES.map(category => (
-                      <optgroup
-                        key={category.id}
-                        label={`${getCategoryName(category, 'en')} (${getCategoryName(category, 'hi')})`}
+                {/* Two-Level Trade Category & Service Selection Flow */}
+                <div className="space-y-3">
+                  {/* LEVEL 1: Select Category (5 Canonical Categories Only) */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider mb-1">
+                      {t('registerPage.tradeCategory', 'Trade / Service Category *')}
+                    </label>
+                    <select
+                      required
+                      value={workerParentCategory}
+                      onChange={e => {
+                        const newParent = e.target.value
+                        setWorkerParentCategory(newParent)
+                        // If current service doesn't belong to the new parent, clear it
+                        const validServices = JUGNU_CATEGORIES.find(c => c.id === newParent)?.services.map(s => s.id) || []
+                        if (!validServices.includes(workerCategory)) {
+                          setWorkerCategory('')
+                        }
+                      }}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors"
+                    >
+                      <option value="">{t('registerPage.selectParentCategory', '-- 1. Select Category (5 Categories) --')}</option>
+                      {JUGNU_CATEGORIES.map(category => (
+                        <option key={category.id} value={category.id}>
+                          {isHindi ? `${category.name_hi} (${category.name_en})` : `${category.name_en} (${category.name_hi})`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* LEVEL 2: Select Specific Service (Only services of chosen category) */}
+                  {workerParentCategory && (
+                    <div className="pt-1">
+                      <label className="block text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">
+                        {t('registerPage.tradeService', 'Specific Service *')}
+                      </label>
+                      <select
+                        required
+                        value={workerCategory}
+                        onChange={e => setWorkerCategory(e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/50 rounded-xl text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-colors"
                       >
-                        {category.services.map(svc => (
+                        <option value="">{t('registerPage.selectService', '-- 2. Select Your Specific Service --')}</option>
+                        {JUGNU_CATEGORIES.find(c => c.id === workerParentCategory)?.services.map(svc => (
                           <option key={svc.id} value={svc.id}>
-                            {getCategoryName(svc, 'en')} ({getCategoryName(svc, 'hi')})
+                            {isHindi ? `${svc.name_hi} (${svc.name_en})` : `${svc.name_en} (${svc.name_hi})`}
                           </option>
                         ))}
-                      </optgroup>
-                    ))}
-                  </select>
+                      </select>
+                    </div>
+                  )}
                 </div>
 
                 {/* Experience */}

@@ -3,7 +3,7 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import { Button, Card, Avatar, Badge, RatingStars, Chip, Input } from '@/ui'
-import { getCategoryName, getServicesByCategoryId, getServiceById, getCategoryById, LEGACY_CATEGORY_MAP } from '@kaamgar/shared'
+import { getCategoryName, getServicesByCategoryId, getServiceById, getCategoryById } from '@kaamgar/shared'
 import { usePublicCatalog } from '@/hooks/usePublicCatalog'
 import { Search as SearchIcon, Filter, MapPin, Star, Clock, CheckCircle, Truck, X, ChevronDown, ArrowRight, ArrowLeft, Power } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -234,6 +234,18 @@ export default function Search() {
   const [isLoadingWorkers, setIsLoadingWorkers] = useState(true)
 
   useEffect(() => {
+    const cat = searchParams.get('category')
+    if (cat !== null) {
+      setSelectedCategory(cat)
+    }
+    const q = searchParams.get('q')
+    if (q !== null) {
+      setSearchQuery(q)
+    }
+    const area = searchParams.get('area')
+    if (area !== null) {
+      setSelectedArea(area)
+    }
     if (searchParams.get('view') === 'services' || searchParams.get('filters') || searchParams.get('category')) {
       setFiltersOpen(true)
     }
@@ -267,16 +279,7 @@ export default function Search() {
     if (selectedCategory) {
       const childServices = getServicesByCategoryId(selectedCategory)
       const targetIds = new Set<string>([selectedCategory])
-      if (LEGACY_CATEGORY_MAP[selectedCategory]) targetIds.add(LEGACY_CATEGORY_MAP[selectedCategory])
-      for (const [legacyKey, newId] of Object.entries(LEGACY_CATEGORY_MAP)) {
-        if (newId === selectedCategory) targetIds.add(legacyKey)
-      }
-      childServices.forEach(s => {
-        targetIds.add(s.id)
-        for (const [legacyKey, newId] of Object.entries(LEGACY_CATEGORY_MAP)) {
-          if (newId === s.id) targetIds.add(legacyKey)
-        }
-      })
+      childServices.forEach(s => targetIds.add(s.id))
 
       workers = workers.filter(w => targetIds.has(w.category) || (w.categories && w.categories.some((c: string) => targetIds.has(c))))
     }

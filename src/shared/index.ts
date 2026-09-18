@@ -92,22 +92,9 @@ export const JUGNU_CATEGORIES: CategoryGroup[] = [
 
 export const ALL_SERVICES: ServiceItem[] = JUGNU_CATEGORIES.flatMap(cat => cat.services)
 
-export const LEGACY_CATEGORY_MAP: Record<string, string> = {
-  ac: 'ac_repair',
-  cleaning: 'part_time_maid',
-  men_salon: 'parlour_service',
-  women_spa: 'parlour_service',
-}
-
-// Flat list for backwards compatibility across existing pages and components
+// Flat list of canonical services and categories
 export const CATEGORIES = [
   ...ALL_SERVICES.map(s => ({ id: s.id, name_en: s.name_en, name_hi: s.name_hi, icon: s.icon })),
-  // Legacy aliases
-  { id: 'ac', name_en: 'AC Repair & Service', name_hi: 'AC मरम्मत और सर्विस', icon: 'snowflake' },
-  { id: 'cleaning', name_en: 'Part-time Home Maid', name_hi: 'पार्ट-टाइम घरेलू काम', icon: 'user' },
-  { id: 'men_salon', name_en: 'Parlour Service', name_hi: 'पार्लर सेवा', icon: 'scissors' },
-  { id: 'women_spa', name_en: 'Parlour Service', name_hi: 'पार्लर सेवा', icon: 'scissors' },
-  // Top level categories
   ...JUGNU_CATEGORIES.map(c => ({ id: c.id, name_en: c.name_en, name_hi: c.name_hi, icon: c.icon })),
 ]
 
@@ -123,8 +110,7 @@ export function getCategoryName(
 }
 
 export function getServiceById(id: string): ServiceItem | undefined {
-  const normalizedId = LEGACY_CATEGORY_MAP[id] || id
-  return ALL_SERVICES.find(s => s.id === normalizedId || s.id === id)
+  return ALL_SERVICES.find(s => s.id === id)
 }
 
 export function getCategoryById(id: string): CategoryGroup | undefined {

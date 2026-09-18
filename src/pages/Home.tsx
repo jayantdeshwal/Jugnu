@@ -61,13 +61,13 @@ const iconMap: Record<string, any> = {
 // Popular search issue chips for quick selection
 const POPULAR_SEARCHES = [
   { label: 'Switchboard / MCB Repair', category: 'electrician' },
-  { label: 'AC Filter & Gas Service', category: 'ac' },
+  { label: 'AC Filter & Gas Service', category: 'ac_repair' },
   { label: 'Water Pipe Leakage', category: 'plumber' },
-  { label: 'Deep Home Cleaning', category: 'cleaning' },
-  { label: 'Men\'s Haircut & Beard', category: 'men_salon' },
-  { label: 'Women\'s Facial & Spa', category: 'women_spa' },
+  { label: 'Part-time Home Maid', category: 'part_time_maid' },
+  { label: 'Parlour Service & Care', category: 'parlour_service' },
   { label: 'Door Lock / Furniture Fix', category: 'carpenter' },
   { label: 'Wall Paint & Dampness', category: 'painter' },
+  { label: 'Car Repair & Service', category: 'car_mechanic' },
 ]
 
 export default function Home() {
@@ -107,12 +107,12 @@ export default function Home() {
   const placeholders = [
     t('categories.electrician', 'Electrician'),
     t('categories.plumber', 'Plumber'),
-    t('categories.ac', 'AC Technician'),
-    t('categories.cleaning', 'Cleaning & Pest Control'),
-    t('categories.men_salon', 'Men\'s Salon & Grooming'),
-    t('categories.women_spa', 'Women\'s Salon & Spa'),
+    t('categories.ac_repair', 'AC Repair & Service'),
+    t('categories.part_time_maid', 'Part-time Home Maid'),
+    t('categories.parlour_service', 'Parlour Service'),
     t('categories.carpenter', 'Carpenter'),
     t('categories.painter', 'Painter'),
+    t('categories.car_mechanic', 'Car Mechanic'),
   ]
 
   useEffect(() => {
@@ -860,60 +860,60 @@ export default function Home() {
                 </span>
               </motion.div>
 
-              {/* Card 2: Women's Salon & Spa */}
+              {/* Card 2: Parlour Service & Care */}
               <motion.div
                 whileHover={{ y: -4, scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
                 transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-                onClick={() => handleQuickPick('women_spa')}
+                onClick={() => handleQuickPick('parlour_service')}
                 className="group p-4 sm:p-5 rounded-2xl bg-white dark:bg-surface-100/90 border border-slate-200/90 dark:border-semantic-border-light hover:border-pink-500/60 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden flex flex-col items-center text-center shadow-sm"
               >
                 <div className="w-12 h-12 mb-2.5 rounded-2xl bg-pink-500/10 dark:bg-pink-500/15 border border-pink-500/25 dark:border-pink-500/30 flex items-center justify-center text-pink-600 dark:text-pink-400 group-hover:scale-110 transition-transform">
                   <Flower2 className="w-6 h-6" />
                 </div>
                 <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors">
-                  {t('categories.women_spa', 'Women\'s Salon & Spa')}
+                  {t('categories.parlour_service', 'Parlour Service')}
                 </h3>
                 <span className="mt-1 text-[10px] font-semibold text-pink-700 dark:text-pink-300 bg-pink-50 dark:bg-pink-500/10 border border-pink-200/60 dark:border-transparent px-2 py-0.5 rounded-full">
-                  Home Service
+                  Personal Care
                 </span>
               </motion.div>
 
-              {/* Card 3: Men's Salon & Massage */}
+              {/* Card 3: Carpenter & Woodwork */}
               <motion.div
                 whileHover={{ y: -4, scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
                 transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-                onClick={() => handleQuickPick('men_salon')}
-                className="group p-4 sm:p-5 rounded-2xl bg-white dark:bg-surface-100/90 border border-slate-200/90 dark:border-semantic-border-light hover:border-blue-500/60 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden flex flex-col items-center text-center shadow-sm"
+                onClick={() => handleQuickPick('carpenter')}
+                className="group p-4 sm:p-5 rounded-2xl bg-white dark:bg-surface-100/90 border border-slate-200/90 dark:border-semantic-border-light hover:border-amber-500/60 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden flex flex-col items-center text-center shadow-sm"
               >
-                <div className="w-12 h-12 mb-2.5 rounded-2xl bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/25 dark:border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 mb-2.5 rounded-2xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/25 dark:border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform">
                   <Scissors className="w-6 h-6" />
                 </div>
-                <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                  {t('categories.men_salon', 'Men\'s Salon & Grooming')}
+                <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                  {t('categories.carpenter', 'Carpenter & Woodwork')}
                 </h3>
-                <span className="mt-1 text-[10px] font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-500/10 border border-blue-200/60 dark:border-transparent px-2 py-0.5 rounded-full">
-                  Hair & Grooming
+                <span className="mt-1 text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200/60 dark:border-transparent px-2 py-0.5 rounded-full">
+                  Furniture Fix
                 </span>
               </motion.div>
 
-              {/* Card 4: Cleaning & Pest Control */}
+              {/* Card 4: Part-time Home Maid */}
               <motion.div
                 whileHover={{ y: -4, scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
                 transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-                onClick={() => handleQuickPick('cleaning')}
+                onClick={() => handleQuickPick('part_time_maid')}
                 className="group p-4 sm:p-5 rounded-2xl bg-white dark:bg-surface-100/90 border border-slate-200/90 dark:border-semantic-border-light hover:border-emerald-500/60 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden flex flex-col items-center text-center shadow-sm"
               >
                 <div className="w-12 h-12 mb-2.5 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/25 dark:border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
                   <Sparkles className="w-6 h-6" />
                 </div>
                 <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                  {t('categories.cleaning', 'Cleaning & Pest Control')}
+                  {t('categories.part_time_maid', 'Part-time Home Maid')}
                 </h3>
                 <span className="mt-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/60 dark:border-transparent px-2 py-0.5 rounded-full">
-                  Deep Clean
+                  Home Help
                 </span>
               </motion.div>
 
@@ -922,14 +922,14 @@ export default function Home() {
                 whileHover={{ y: -4, scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
                 transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-                onClick={() => handleQuickPick('ac')}
+                onClick={() => handleQuickPick('ac_repair')}
                 className="group p-4 sm:p-5 rounded-2xl bg-white dark:bg-surface-100/90 border border-slate-200/90 dark:border-semantic-border-light hover:border-cyan-500/60 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden flex flex-col items-center text-center shadow-sm"
               >
                 <div className="w-12 h-12 mb-2.5 rounded-2xl bg-cyan-500/10 dark:bg-cyan-500/15 border border-cyan-500/25 dark:border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 group-hover:scale-110 transition-transform">
                   <Snowflake className="w-6 h-6" />
                 </div>
                 <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
-                  {t('categories.ac', 'AC & Appliance Repair')}
+                  {t('categories.ac_repair', 'AC Repair & Service')}
                 </h3>
                 <span className="mt-1 text-[10px] font-semibold text-cyan-700 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-200/60 dark:border-transparent px-2 py-0.5 rounded-full">
                   ⚡ 44 mins

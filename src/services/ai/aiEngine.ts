@@ -162,28 +162,20 @@ function extractContextualActions(query: string, persona: AssistantPersona): Cha
     } else if (q.includes('clean') || q.includes('सफाई') || q.includes('pest')) {
       actions.push({
         id: 'act_find_clean',
-        labelEn: 'Book Deep Cleaning Service',
-        labelHi: 'सफाई सेवा बुक करें',
+        labelEn: 'Book Home Maid / Cleaning',
+        labelHi: 'घरेलू काम व सफाई बुक करें',
         type: 'navigate',
-        payload: '/search?category=cleaning',
+        payload: '/search?category=part_time_maid',
         icon: 'Sparkles',
       })
-    } else if (q.includes('salon') || q.includes('spa') || q.includes('hair') || q.includes('सैलून')) {
+    } else if (q.includes('salon') || q.includes('spa') || q.includes('hair') || q.includes('सैलून') || q.includes('पार्लर') || q.includes('mehendi') || q.includes('nail')) {
       actions.push({
-        id: 'act_men_salon',
-        labelEn: "Men's Salon at Home",
-        labelHi: 'पुरुष सैलून',
+        id: 'act_parlour_service',
+        labelEn: 'Parlour & Personal Care',
+        labelHi: 'पार्लर व सौंदर्य सेवा',
         type: 'navigate',
-        payload: '/search?category=men_salon',
+        payload: '/search?category=parlour_service',
         icon: 'Scissors',
-      })
-      actions.push({
-        id: 'act_women_spa',
-        labelEn: "Women's Salon & Spa",
-        labelHi: 'महिला सैलून व स्पा',
-        type: 'navigate',
-        payload: '/search?category=women_spa',
-        icon: 'Heart',
       })
     } else {
       actions.push({
@@ -357,24 +349,16 @@ function resolveLocalQuery(query: string, persona: AssistantPersona): ChatMessag
       }
     }
 
-    // 5. Salon & Grooming (Men / Women)
-    if (query.includes('salon') || query.includes('hair') || query.includes('spa') || query.includes('facial') || query.includes('groom') || query.includes('बाल') || query.includes('दाढ़ी') || query.includes('सैलून') || query.includes('स्पा')) {
+    // 5. Salon & Personal Care
+    if (query.includes('salon') || query.includes('hair') || query.includes('spa') || query.includes('facial') || query.includes('groom') || query.includes('बाल') || query.includes('दाढ़ी') || query.includes('सैलून') || query.includes('स्पा') || query.includes('पार्लर') || query.includes('mehendi')) {
       const actions: ChatAction[] = [
         {
-          id: 'act_men_salon',
-          labelEn: "Men's Salon at Home",
-          labelHi: 'पुरुष सैलून',
+          id: 'act_parlour_service',
+          labelEn: 'Parlour Service at Home',
+          labelHi: 'पार्लर सेवा (घर पर)',
           type: 'navigate',
-          payload: '/search?category=men_salon',
+          payload: '/search?category=parlour_service',
           icon: 'Scissors',
-        },
-        {
-          id: 'act_women_spa',
-          labelEn: "Women's Salon & Spa",
-          labelHi: 'महिला सैलून व स्पा',
-          type: 'navigate',
-          payload: '/search?category=women_spa',
-          icon: 'Heart',
         },
       ]
 
