@@ -3,9 +3,9 @@
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "com.muzaffarnagar.kaamgar",
+      "package_name": "com.jugnu.app",
       "sha256_cert_fingerprints": [
-        "B4:51:B1:FD:CD:91:F5:82:26:53:C0:AB:34:FD:33:43:F2:8E:5C:65:7E:4F:33:B9:28:32:D0:C1:72:E3:C3:12"
+        "79:F5:AF:30:3D:89:E0:05:3B:6B:37:19:D9:61:B9:0B:7A:96:63:1D:EB:CD:7D:DC:A3:66:94:E2:D9:C6:6F:53"
       ]
     }
   }
