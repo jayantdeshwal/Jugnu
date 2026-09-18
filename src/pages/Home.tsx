@@ -737,7 +737,6 @@ export default function Home() {
                   { title: t('home.problem1OldTitle'), desc: t('home.problem1OldDesc') },
                   { title: t('home.problem2OldTitle'), desc: t('home.problem2OldDesc') },
                   { title: t('home.problem3OldTitle'), desc: t('home.problem3OldDesc') },
-                  { title: t('home.problem4OldTitle'), desc: t('home.problem4OldDesc') },
                 ].map((item, idx) => (
                   <div
                     key={idx}
@@ -788,7 +787,6 @@ export default function Home() {
                   { title: t('home.problem1NewTitle'), desc: t('home.problem1NewDesc') },
                   { title: t('home.problem2NewTitle'), desc: t('home.problem2NewDesc') },
                   { title: t('home.problem3NewTitle'), desc: t('home.problem3NewDesc') },
-                  { title: t('home.problem4NewTitle'), desc: t('home.problem4NewDesc') },
                 ].map((item, idx) => (
                   <div
                     key={idx}
