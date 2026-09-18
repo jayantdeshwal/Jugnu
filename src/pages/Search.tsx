@@ -3,7 +3,7 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import { Button, Card, Avatar, Badge, RatingStars, Chip, Input } from '@/ui'
-import { getCategoryName, getServicesByCategoryId, getServiceById, getCategoryById } from '@kaamgar/shared'
+import { CATEGORIES, getCategoryName, getServicesByCategoryId, getServiceById, getCategoryById } from '@kaamgar/shared'
 import { usePublicCatalog } from '@/hooks/usePublicCatalog'
 import { Search as SearchIcon, Filter, MapPin, Star, Clock, CheckCircle, Truck, X, ChevronDown, ArrowRight, ArrowLeft, Power } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -130,7 +130,12 @@ function WorkerGrid({ filteredWorkers, t, iconComponents, CATEGORIES, getCategor
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ staggerChildren: 0.08 }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {filteredWorkers.map((worker: any, index: number) => {
-        const cat = CATEGORIES.find((c: typeof CATEGORIES[0]) => c.id === worker.category)
+        const workerCats = worker.categories && worker.categories.length > 0 ? worker.categories : [worker.category]
+        const catLabel = workerCats.map((cId: string) => {
+          const cObj = CATEGORIES.find((c: typeof CATEGORIES[0]) => c.id === cId)
+          return cObj ? getCategoryName(cObj, i18n.language === 'hi' ? 'hi' : 'en') : cId
+        }).join(' • ')
+
         return (
           <motion.div key={worker.id} style={{ transitionDelay: `${index * 80}ms` }}>
             <Link to={`/worker/${worker.id}`} className="card-interactive group">
@@ -147,12 +152,12 @@ function WorkerGrid({ filteredWorkers, t, iconComponents, CATEGORIES, getCategor
                       )}
                     </div>
                     <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-semantic-text-secondary">
-                      <span className="flex items-center gap-1">
+                      <span className="flex items-center gap-1" title={catLabel}>
                         {React.createElement(
                           iconComponents[worker.category as keyof typeof iconComponents] || Truck,
                           { className: 'w-4 h-4' }
                         )}
-                        {cat ? getCategoryName(cat, i18n.language === 'hi' ? 'hi' : 'en') : worker.category}
+                        <span className="truncate max-w-[200px]">{catLabel}</span>
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock className="w-4 h-4" />
@@ -286,7 +291,18 @@ export default function Search() {
     if (selectedArea) workers = workers.filter(w => w.areas.includes(selectedArea))
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
-      workers = workers.filter(w => w.name.toLowerCase().includes(query) || w.bio.toLowerCase().includes(query) || getCategoryName({ id: w.category, name_en: w.category, name_hi: w.category, icon: '', sort_order: 0 }, 'en').toLowerCase().includes(query))
+      workers = workers.filter(w => {
+        const matchesName = w.name.toLowerCase().includes(query)
+        const matchesBio = (w.bio || '').toLowerCase().includes(query)
+        const allCats = w.categories && w.categories.length > 0 ? w.categories : [w.category]
+        const matchesCat = allCats.some((catId: string) => {
+          const cObj = CATEGORIES.find((c: typeof CATEGORIES[0]) => c.id === catId)
+          const nameEn = cObj?.name_en || catId
+          const nameHi = cObj?.name_hi || catId
+          return catId.toLowerCase().includes(query) || nameEn.toLowerCase().includes(query) || nameHi.toLowerCase().includes(query)
+        })
+        return matchesName || matchesBio || matchesCat
+      })
     }
     workers.sort((a, b) => {
       switch (sortBy) {

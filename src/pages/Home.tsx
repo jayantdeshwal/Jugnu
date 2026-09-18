@@ -202,9 +202,15 @@ function getMatchingTaxonomyServiceIds(query: string): Set<string> {
     }
   }
 
-  // 3. Check synonym / alias mappings
+  // 3. Check synonym / alias mappings (ensuring short aliases like 'ac', 'car' respect word boundaries)
+  const tokens = q.split(/\s+/)
   for (const [aliasWord, serviceIds] of Object.entries(SERVICE_ALIASES)) {
-    if (q.includes(aliasWord) || aliasWord.includes(q)) {
+    const isShort = aliasWord.length <= 3
+    const matchedAlias = isShort
+      ? tokens.includes(aliasWord) || new RegExp(`(^|[^a-zA-Z0-9\u0900-\u097F])${aliasWord}([^a-zA-Z0-9\u0900-\u097F]|$)`, 'i').test(q)
+      : (q.includes(aliasWord) || aliasWord.includes(q))
+
+    if (matchedAlias) {
       for (const sid of serviceIds) {
         matched.add(sid)
       }
@@ -349,15 +355,26 @@ export default function Home() {
       // 3. Search Query Check (if searchQuery is active)
       if (query) {
         const matchesName = worker.name.toLowerCase().includes(query)
-        const matchesBio = (worker.bio || '').toLowerCase().includes(query)
-        const matchesCategoryDirect = worker.categories.some(c => {
-          const cClean = c.replace(/_/g, ' ').toLowerCase()
-          return c.toLowerCase().includes(query) || cClean.includes(query) || query.includes(cClean)
-        })
-        const matchesTaxonomy = worker.categories.some(c => matchedServiceIds.has(c))
+        const matchesTaxonomy = matchedServiceIds.size > 0 && worker.categories.some(c => matchedServiceIds.has(c))
 
-        if (!matchesName && !matchesBio && !matchesCategoryDirect && !matchesTaxonomy) {
-          return false
+        if (matchedServiceIds.size > 0) {
+          // Specific service query (e.g. "parlour", "electrician", "AC repair", "mehendi", "plumber", "car mechanic"):
+          // Must actually provide the canonical service (or match the worker's name directly).
+          // Prevents unrelated bio keyword mentions from falsely qualifying a worker for a service they do not provide.
+          if (!matchesTaxonomy && !matchesName) {
+            return false
+          }
+        } else {
+          // General free-text query (e.g. artisan name, specialty, or general bio search):
+          const matchesBio = (worker.bio || '').toLowerCase().includes(query)
+          const matchesCategoryDirect = worker.categories.some(c => {
+            const cClean = c.replace(/_/g, ' ').toLowerCase()
+            return c.toLowerCase().includes(query) || cClean.includes(query) || query.includes(cClean)
+          })
+
+          if (!matchesName && !matchesBio && !matchesCategoryDirect) {
+            return false
+          }
         }
       }
 
@@ -822,8 +839,9 @@ export default function Home() {
                 {matchingWorkers.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
                     {matchingWorkers.map(worker => {
-                      const primaryCat = worker.categories[0] || 'electrician'
-                      const catName = getCategoryDisplayName(primaryCat)
+                      const catName = worker.categories && worker.categories.length > 0
+                        ? worker.categories.map(c => getCategoryDisplayName(c)).join(' • ')
+                        : getCategoryDisplayName('electrician')
 
                       return (
                         <div
@@ -848,7 +866,7 @@ export default function Home() {
                                     <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
                                   </span>
                                 </div>
-                                <p className="text-xs text-amber-600 dark:text-amber-400 font-semibold truncate mt-0.5">
+                                <p className="text-xs text-amber-600 dark:text-amber-400 font-semibold truncate mt-0.5" title={catName}>
                                   {catName}
                                 </p>
                                 <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500 dark:text-zinc-400">

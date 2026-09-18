@@ -132,11 +132,34 @@ export default function WorkerRegistration() {
     formData.category ? [formData.category] : []
   )
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
+  const [selectedParentCategory, setSelectedParentCategory] = useState<string | null>(null)
+  const [serviceLimitMessage, setServiceLimitMessage] = useState<string | null>(null)
 
   const toggleServiceSelection = (serviceId: string) => {
     setSelectedServices(prev => {
       const exists = prev.includes(serviceId)
-      const next = exists ? prev.filter(id => id !== serviceId) : [...prev, serviceId]
+      if (exists) {
+        // Removing a selected service
+        const next = prev.filter(id => id !== serviceId)
+        setServiceLimitMessage(null)
+        setFormData(f => ({ ...f, category: next[0] || '' }))
+        return next
+      }
+
+      // Check strict limit of 2 services
+      if (prev.length >= 2) {
+        setServiceLimitMessage(
+          t(
+            'auth.workerRegistration.maxTwoServicesError',
+            'You can select a maximum of 2 services within this category. Please remove one service first to select another.'
+          )
+        )
+        return prev
+      }
+
+      // Adding 1st or 2nd service
+      setServiceLimitMessage(null)
+      const next = [...prev, serviceId]
       setFormData(f => ({ ...f, category: next[0] || '' }))
       if (next.length > 0) {
         setErrors(err => {
@@ -147,6 +170,22 @@ export default function WorkerRegistration() {
       }
       return next
     })
+  }
+
+  const handleSelectParentCategory = (categoryId: string) => {
+    if (selectedParentCategory && selectedParentCategory !== categoryId) {
+      // Worker changed parent category: clear previously selected services
+      setSelectedServices([])
+      setFormData(f => ({ ...f, category: '' }))
+      setErrors(err => {
+        const updated = { ...err }
+        delete updated.category
+        return updated
+      })
+    }
+    setSelectedParentCategory(categoryId)
+    setSelectedCategoryId(categoryId)
+    setServiceLimitMessage(null)
   }
 
   // Sync with user if logged in via Google OAuth redirect
@@ -325,8 +364,17 @@ export default function WorkerRegistration() {
     }
 
     if (currentStep === 1) {
-      if (selectedServices.length === 0 && !formData.category) {
-        newErrors.category = t('auth.workerRegistration.selectAtLeastOneService', 'Please select at least one work service')
+      if (selectedServices.length === 0) {
+        newErrors.category = t('auth.workerRegistration.selectAtLeastOneService', 'Please select at least one work service (maximum 2)')
+      } else if (selectedServices.length > 2) {
+        newErrors.category = t('auth.workerRegistration.maxTwoServicesError', 'You can select a maximum of 2 services within this category.')
+      } else if (selectedParentCategory) {
+        const parentCategory = JUGNU_CATEGORIES.find(c => c.id === selectedParentCategory)
+        const validServiceIds = new Set(parentCategory?.services.map(s => s.id) || [])
+        const hasCrossCategory = selectedServices.some(sId => !validServiceIds.has(sId))
+        if (hasCrossCategory) {
+          newErrors.category = 'All selected services must belong to the selected parent category'
+        }
       }
       if (!formData.experience) newErrors.experience = 'Experience is required'
       if (formData.areas.length === 0) newErrors.areas = 'Select at least one service area'
@@ -371,6 +419,18 @@ export default function WorkerRegistration() {
         avatarUrl = await uploadAvatar(formData.avatar, activeUser.id)
       }
 
+      // Enforce business rules before RPC dispatch
+      if (selectedServices.length < 1 || selectedServices.length > 2) {
+        throw new Error('A worker must select between 1 and 2 services')
+      }
+      if (selectedParentCategory) {
+        const parentCategory = JUGNU_CATEGORIES.find(c => c.id === selectedParentCategory)
+        const validServiceIds = new Set(parentCategory?.services.map(s => s.id) || [])
+        if (selectedServices.some(sId => !validServiceIds.has(sId))) {
+          throw new Error('Selected services belong to different categories')
+        }
+      }
+
       // 3. Register worker details via RPC
       setUploadProgress('Registering worker profile...')
       const supabase = getSupabaseClient()
@@ -385,6 +445,7 @@ export default function WorkerRegistration() {
         worker_area_pincodes: formData.areas,
         worker_avatar_url: avatarUrl || null,
         worker_id_proof_url: idProofPath || null,
+        worker_category_ids: selectedServices,
       })
 
       if (rpcError) {
@@ -396,6 +457,8 @@ export default function WorkerRegistration() {
           worker_experience: Number(formData.experience),
           worker_category_id: primaryCategory,
           worker_area_pincodes: formData.areas,
+          worker_avatar_url: avatarUrl || null,
+          worker_id_proof_url: idProofPath || null,
         })
 
         if (legacyError) throw legacyError
@@ -406,18 +469,18 @@ export default function WorkerRegistration() {
         if (idProofPath) {
           await (supabase.from('worker_profiles') as any).update({ id_proof_url: idProofPath }).eq('id', activeUser.id)
         }
-      }
 
-      // If worker selected multiple services, record additional services in worker_categories
-      if (selectedServices.length > 1) {
-        const additional = selectedServices.slice(1).map(catId => ({
-          worker_id: activeUser.id,
-          category_id: catId,
-        }))
-        try {
-          await (supabase.from('worker_categories') as any).upsert(additional, { onConflict: 'worker_id,category_id' })
-        } catch (multiErr) {
-          console.warn('Additional services registration note:', multiErr)
+        // If worker selected multiple services, record additional services in worker_categories
+        if (selectedServices.length > 1) {
+          const additional = selectedServices.slice(1).map(catId => ({
+            worker_id: activeUser.id,
+            category_id: catId,
+          }))
+          try {
+            await (supabase.from('worker_categories') as any).upsert(additional, { onConflict: 'worker_id,category_id' })
+          } catch (multiErr) {
+            console.warn('Additional services registration note:', multiErr)
+          }
         }
       }
 
@@ -425,7 +488,7 @@ export default function WorkerRegistration() {
       await notifyAdminsOfWorkerRegistration({
         workerId: activeUser.id,
         workerName: formData.name,
-        category: primaryCategory,
+        category: selectedServices.join(', '),
       })
 
       setSubmitted(true)
@@ -733,14 +796,12 @@ export default function WorkerRegistration() {
                           const isHindiLang = i18n.language === 'hi'
                           const primaryName = isHindiLang ? category.name_hi : category.name_en
                           const secondaryName = isHindiLang ? category.name_en : category.name_hi
-                          const selectedCountInCategory = category.services.filter(s =>
-                            selectedServices.includes(s.id)
-                          ).length
+                          const selectedCountInCategory = selectedParentCategory === category.id ? selectedServices.length : 0
 
                           return (
                             <div
                               key={category.id}
-                              onClick={() => setSelectedCategoryId(category.id)}
+                              onClick={() => handleSelectParentCategory(category.id)}
                               className="p-4 rounded-2xl border border-semantic-border-light bg-surface-200/50 hover:bg-surface-200 hover:border-brand-500/50 cursor-pointer transition-all flex items-center justify-between group shadow-sm active:scale-[0.99] select-none"
                               role="button"
                               tabIndex={0}
@@ -756,9 +817,7 @@ export default function WorkerRegistration() {
                                     </h4>
                                     {selectedCountInCategory > 0 && (
                                       <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                                        {t('auth.workerRegistration.selectedCount', {
-                                          count: selectedCountInCategory,
-                                        })}
+                                        {selectedCountInCategory} / 2 services selected
                                       </span>
                                     )}
                                   </div>
@@ -778,23 +837,26 @@ export default function WorkerRegistration() {
                         <div className="mt-4 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
                           <div className="flex items-center justify-between gap-2 mb-1.5">
                             <span className="text-xs font-bold text-emerald-400">
-                              ✓ {selectedServices.length} {t('common.services', 'services')} selected:
+                              ✓ {selectedServices.length} / 2 {t('common.services', 'services')} selected:
                             </span>
                             <span className="text-[11px] text-emerald-300/80">
-                              {t('auth.workerRegistration.selectedCount', { count: selectedServices.length })}
+                              {selectedServices.length === 1 ? '1 more service allowed' : 'Maximum 2 services selected'}
                             </span>
                           </div>
                           <div className="flex flex-wrap gap-1.5">
-                            {selectedServices.map(svcId => {
+                            {selectedServices.map((svcId, idx) => {
                               const svc = getServiceById(svcId)
                               const isHindiLang = i18n.language === 'hi'
                               const name = svc ? (isHindiLang ? svc.name_hi : svc.name_en) : svcId
                               return (
                                 <span
                                   key={svcId}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-medium border border-emerald-500/30"
+                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-medium border border-emerald-500/30"
                                 >
-                                  {name}
+                                  <span className="text-[10px] bg-emerald-500/40 text-white px-1 rounded font-bold">
+                                    {idx + 1}
+                                  </span>
+                                  <span>{name}</span>
                                 </span>
                               )
                             })}
@@ -810,7 +872,7 @@ export default function WorkerRegistration() {
                       const isHindiLang = i18n.language === 'hi'
                       const categoryPrimary = isHindiLang ? activeCategory.name_hi : activeCategory.name_en
                       const categorySecondary = isHindiLang ? activeCategory.name_en : activeCategory.name_hi
-                      const selectedCount = activeCategory.services.filter(s => selectedServices.includes(s.id)).length
+                      const selectedCount = selectedServices.length
 
                       return (
                         <div className="space-y-4">
@@ -818,7 +880,10 @@ export default function WorkerRegistration() {
                           <div>
                             <button
                               type="button"
-                              onClick={() => setSelectedCategoryId(null)}
+                              onClick={() => {
+                                setSelectedCategoryId(null)
+                                setServiceLimitMessage(null)
+                              }}
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-200 hover:bg-surface-300 text-xs font-semibold text-semantic-text-secondary hover:text-white border border-semantic-border-light transition-all active:scale-95 cursor-pointer"
                             >
                               <ArrowLeft className="w-3.5 h-3.5 text-brand-400" />
@@ -842,19 +907,75 @@ export default function WorkerRegistration() {
                               </div>
                             </div>
 
-                            {selectedCount > 0 && (
-                              <span className="text-xs font-extrabold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
-                                {selectedCount} selected
-                              </span>
-                            )}
+                            <span className="text-xs font-extrabold px-2.5 py-1 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30 shrink-0">
+                              {selectedCount} / 2 selected
+                            </span>
                           </div>
+
+                          {/* 3rd Service Limit Warning Banner */}
+                          {serviceLimitMessage && (
+                            <div className="p-3 bg-amber-500/15 border border-amber-500/40 rounded-xl flex items-start gap-2.5 text-amber-300 text-xs">
+                              <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                              <div className="flex-1">
+                                <p className="font-semibold">{serviceLimitMessage}</p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setServiceLimitMessage(null)}
+                                className="text-amber-400/80 hover:text-white cursor-pointer"
+                                aria-label="Dismiss warning"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Selected Services Chips Bar */}
+                          {selectedServices.length > 0 && (
+                            <div className="p-3 bg-surface-200/50 rounded-xl border border-semantic-border-light">
+                              <div className="flex items-center justify-between gap-2 mb-2">
+                                <span className="text-xs font-bold text-semantic-text-secondary">
+                                  Selected Services ({selectedServices.length}/2):
+                                </span>
+                                <span className="text-[11px] text-semantic-text-tertiary">
+                                  {selectedServices.length === 1 ? 'You can select 1 more service' : 'Maximum 2 services reached'}
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {selectedServices.map((svcId, idx) => {
+                                  const svc = getServiceById(svcId)
+                                  const name = svc ? (isHindiLang ? svc.name_hi : svc.name_en) : svcId
+                                  return (
+                                    <span
+                                      key={svcId}
+                                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-500/20 text-brand-300 text-xs font-semibold border border-brand-500/40 shadow-xs"
+                                    >
+                                      <span className="text-[10px] bg-brand-500 text-surface-950 px-1 py-0.2 rounded font-bold">
+                                        {idx === 0 ? '1' : '2'}
+                                      </span>
+                                      <span>{name}</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => toggleServiceSelection(svcId)}
+                                        className="hover:text-white cursor-pointer ml-0.5 text-brand-400 hover:text-white transition-colors"
+                                        title={`Remove ${name}`}
+                                        aria-label={`Remove ${name}`}
+                                      >
+                                        <X className="w-3.5 h-3.5" />
+                                      </button>
+                                    </span>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
 
                           <div className="flex items-center justify-between pt-1">
                             <label className="text-xs font-bold text-semantic-text-secondary">
-                              {t('auth.workerRegistration.selectServicePrompt', 'Select the service(s) you provide:')}
+                              {t('auth.workerRegistration.selectServicePrompt', 'Select 1 or 2 services you provide:')}
                             </label>
-                            <span className="text-[11px] text-semantic-text-tertiary">
-                              {selectedCount} / {activeCategory.services.length} selected
+                            <span className="text-[11px] font-semibold text-semantic-text-tertiary">
+                              {selectedCount} / 2 selected (Max 2)
                             </span>
                           </div>
 
@@ -862,6 +983,7 @@ export default function WorkerRegistration() {
                           <div className="space-y-2.5">
                             {activeCategory.services.map(service => {
                               const isSelected = selectedServices.includes(service.id)
+                              const selectedIndex = selectedServices.indexOf(service.id)
                               const ServiceIcon = categoryIconMap[service.icon] || Wrench
                               const servicePrimary = isHindiLang ? service.name_hi : service.name_en
                               const serviceSecondary = isHindiLang ? service.name_en : service.name_hi
@@ -870,9 +992,11 @@ export default function WorkerRegistration() {
                                 <div
                                   key={service.id}
                                   onClick={() => toggleServiceSelection(service.id)}
-                                  className={`p-3.5 rounded-xl border flex items-center gap-3 cursor-pointer transition-all ${
+                                  className={`p-3.5 rounded-xl border flex items-center gap-3 cursor-pointer transition-all select-none ${
                                     isSelected
-                                      ? 'border-brand-500 bg-brand-500/15 text-brand-300 ring-1 ring-brand-500/30 font-semibold'
+                                      ? 'border-brand-500 bg-brand-500/15 text-brand-300 ring-1 ring-brand-500/30 font-semibold shadow-sm'
+                                      : selectedServices.length >= 2
+                                      ? 'border-semantic-border-light bg-surface-150/40 opacity-75 hover:opacity-100 hover:border-amber-500/50 text-semantic-text-secondary'
                                       : 'border-semantic-border-light bg-surface-150/60 hover:bg-surface-200/60 hover:border-brand-500/40 text-semantic-text-secondary'
                                   }`}
                                 >
@@ -893,9 +1017,16 @@ export default function WorkerRegistration() {
                                   </div>
 
                                   <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-bold text-semantic-text-primary truncate">
-                                      {servicePrimary}
-                                    </p>
+                                    <div className="flex items-center gap-2">
+                                      <p className="text-sm font-bold text-semantic-text-primary truncate">
+                                        {servicePrimary}
+                                      </p>
+                                      {isSelected && (
+                                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-brand-500/20 text-brand-300 border border-brand-500/30">
+                                          {selectedIndex === 0 ? 'Service 1' : 'Service 2'}
+                                        </span>
+                                      )}
+                                    </div>
                                     <p className="text-[11px] text-semantic-text-tertiary truncate">
                                       {serviceSecondary}
                                     </p>
