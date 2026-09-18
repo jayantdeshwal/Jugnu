@@ -1,10 +1,19 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
-import { Button, Card, Badge } from '@/ui'
+import { Button, Card, Badge, Avatar, RatingStars } from '@/ui'
 import { usePublicCatalog } from '@/hooks/usePublicCatalog'
 import { fetchCategoryWorkerStats, fetchApprovedWorkers, CategoryWorkerStat, PublicWorker } from '@/services/workers'
-import { CATEGORIES, MUZAFFARNAGAR_PINCODES, getCategoryName } from '@kaamgar/shared'
+import {
+  CATEGORIES,
+  ALL_SERVICES,
+  JUGNU_CATEGORIES,
+  MUZAFFARNAGAR_PINCODES,
+  getCategoryName,
+  getServicesByCategoryId,
+  getServiceById,
+  getCategoryById,
+} from '@kaamgar/shared'
 import {
   Search,
   Truck,
@@ -70,6 +79,141 @@ const POPULAR_SEARCHES = [
   { label: 'Car Repair & Service', category: 'car_mechanic' },
 ]
 
+// Common query aliases mapping to canonical service IDs in @kaamgar/shared
+const SERVICE_ALIASES: Record<string, string[]> = {
+  parlour: ['parlour_service'],
+  parlor: ['parlour_service'],
+  salon: ['parlour_service'],
+  beauty: ['parlour_service', 'nail_extension', 'mehendi_artist'],
+  makeup: ['parlour_service'],
+  facial: ['parlour_service'],
+  waxing: ['parlour_service'],
+  hair: ['parlour_service'],
+  mehendi: ['mehendi_artist'],
+  mehndi: ['mehendi_artist'],
+  henna: ['mehendi_artist'],
+  nail: ['nail_extension'],
+  nails: ['nail_extension'],
+  ac: ['ac_repair'],
+  'ac repair': ['ac_repair'],
+  'ac service': ['ac_repair'],
+  aircon: ['ac_repair'],
+  cool: ['ac_repair', 'refrigerator_repair'],
+  fridge: ['refrigerator_repair'],
+  refrigerator: ['refrigerator_repair'],
+  washing: ['washing_machine_repair'],
+  'washing machine': ['washing_machine_repair'],
+  laundry: ['dry_clean_press', 'part_time_maid'],
+  iron: ['dry_clean_press'],
+  press: ['dry_clean_press'],
+  maid: ['part_time_maid'],
+  cleaning: ['part_time_maid'],
+  cook: ['part_time_maid'],
+  plumber: ['plumber'],
+  pipe: ['plumber'],
+  leak: ['plumber'],
+  leakage: ['plumber'],
+  tap: ['plumber'],
+  water: ['plumber', 'ro_repair'],
+  ro: ['ro_repair'],
+  geyser: ['geyser_repair'],
+  heater: ['geyser_repair'],
+  electrician: ['electrician'],
+  electric: ['electrician'],
+  wiring: ['electrician'],
+  switch: ['electrician'],
+  switchboard: ['electrician'],
+  mcb: ['electrician'],
+  fan: ['electrician'],
+  light: ['electrician'],
+  carpenter: ['carpenter'],
+  furniture: ['carpenter'],
+  wood: ['carpenter'],
+  door: ['carpenter'],
+  lock: ['carpenter'],
+  painter: ['painter'],
+  paint: ['painter'],
+  painting: ['painter'],
+  wall: ['painter', 'raj_mistri'],
+  mechanic: ['car_mechanic'],
+  car: ['car_mechanic', 'part_time_driver'],
+  vehicle: ['car_mechanic', 'part_time_driver'],
+  auto: ['car_mechanic'],
+  driver: ['part_time_driver'],
+  ambulance: ['ambulance'],
+  emergency: ['ambulance'],
+  mason: ['raj_mistri'],
+  mistri: ['raj_mistri', 'daily_wage_worker'],
+  mazdoor: ['daily_wage_worker'],
+  labour: ['daily_wage_worker'],
+  // Hindi aliases
+  बिजली: ['electrician'],
+  प्लंबर: ['plumber'],
+  बढ़ई: ['carpenter'],
+  पेंटर: ['painter'],
+  पार्लर: ['parlour_service'],
+  मेहंदी: ['mehendi_artist'],
+  सफाई: ['part_time_maid'],
+  कामवाली: ['part_time_maid'],
+  ड्राइवर: ['part_time_driver'],
+  मैकेनिक: ['car_mechanic'],
+  एसी: ['ac_repair'],
+  फ्रिज: ['refrigerator_repair'],
+  गीजर: ['geyser_repair'],
+}
+
+function getMatchingTaxonomyServiceIds(query: string): Set<string> {
+  const q = query.trim().toLowerCase()
+  const matched = new Set<string>()
+  if (!q) return matched
+
+  // 1. Check direct service name & id matches
+  for (const s of ALL_SERVICES) {
+    const en = s.name_en.toLowerCase()
+    const hi = s.name_hi.toLowerCase()
+    const idClean = s.id.replace(/_/g, ' ').toLowerCase()
+    if (
+      s.id.toLowerCase().includes(q) ||
+      idClean.includes(q) ||
+      q.includes(idClean) ||
+      en.includes(q) ||
+      q.includes(en) ||
+      hi.includes(q)
+    ) {
+      matched.add(s.id)
+    }
+  }
+
+  // 2. Check category group name & id matches
+  for (const c of JUGNU_CATEGORIES) {
+    const en = c.name_en.toLowerCase()
+    const hi = c.name_hi.toLowerCase()
+    const idClean = c.id.replace(/_/g, ' ').toLowerCase()
+    if (
+      c.id.toLowerCase().includes(q) ||
+      idClean.includes(q) ||
+      en.includes(q) ||
+      hi.includes(q)
+    ) {
+      matched.add(c.id)
+      for (const s of c.services) {
+        matched.add(s.id)
+      }
+    }
+  }
+
+  // 3. Check synonym / alias mappings
+  for (const [aliasWord, serviceIds] of Object.entries(SERVICE_ALIASES)) {
+    if (q.includes(aliasWord) || aliasWord.includes(q)) {
+      for (const sid of serviceIds) {
+        matched.add(sid)
+      }
+    }
+  }
+
+  return matched
+}
+
 export default function Home() {
   const { t, i18n } = useTranslation()
   const { categories } = usePublicCatalog()
@@ -87,20 +231,22 @@ export default function Home() {
     navigate('/login')
   }
 
-  // Search & Filter state
+  // Search & Filter state — strictly decoupled
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState('')
   const [selectedArea, setSelectedArea] = useState('')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
 
   // Real worker stats from database
   const [workerStats, setWorkerStats] = useState<Record<string, CategoryWorkerStat>>({})
   const [loadingStats, setLoadingStats] = useState(true)
 
-  // Live worker list for instant search suggestions
+  // Live worker list from database
   const [allWorkers, setAllWorkers] = useState<PublicWorker[]>([])
   const searchContainerRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const filterPanelRef = useRef<HTMLDivElement>(null)
+  const filterButtonRef = useRef<HTMLButtonElement>(null)
 
   // Rotating placeholder suggestion
   const [placeholderIndex, setPlaceholderIndex] = useState(0)
@@ -144,20 +290,25 @@ export default function Home() {
     }
   }, [])
 
-  // Close search overlay on click outside or Escape key
+  // Close filter panel on click outside or Escape key without affecting search bar
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
-        setIsSearchOpen(false)
+      if (
+        filterPanelRef.current &&
+        !filterPanelRef.current.contains(event.target as Node) &&
+        filterButtonRef.current &&
+        !filterButtonRef.current.contains(event.target as Node)
+      ) {
+        setIsFilterOpen(false)
       }
     }
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
-        setIsSearchOpen(false)
+        setIsFilterOpen(false)
       }
     }
 
-    if (isSearchOpen) {
+    if (isFilterOpen) {
       document.addEventListener('mousedown', handleClickOutside)
       document.addEventListener('keydown', handleKeyDown)
     }
@@ -165,36 +316,73 @@ export default function Home() {
       document.removeEventListener('mousedown', handleClickOutside)
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [isSearchOpen])
+  }, [isFilterOpen])
+
+  // Helper to get friendly name for any category or service
+  const getCategoryDisplayName = (catId: string) => {
+    const service = getServiceById(catId)
+    if (service) return getCategoryName(service, i18n.language === 'hi' ? 'hi' : 'en')
+    const categoryGroup = getCategoryById(catId)
+    if (categoryGroup) return getCategoryName(categoryGroup, i18n.language === 'hi' ? 'hi' : 'en')
+    return catId.replace(/_/g, ' ')
+  }
+
+  // Composed filter + search matching
+  const matchingWorkers = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+    const matchedServiceIds = query ? getMatchingTaxonomyServiceIds(query) : new Set<string>()
+
+    return allWorkers.filter(worker => {
+      // 1. Category Filter Check (if selectedCategory is active)
+      if (selectedCategory) {
+        const childServices = getServicesByCategoryId(selectedCategory)
+        const targetIds = new Set<string>([selectedCategory, ...childServices.map(s => s.id)])
+        const matchesCat = worker.categories.some(c => targetIds.has(c))
+        if (!matchesCat) return false
+      }
+
+      // 2. Area Filter Check (if selectedArea is active)
+      if (selectedArea) {
+        if (!worker.areas.includes(selectedArea)) return false
+      }
+
+      // 3. Search Query Check (if searchQuery is active)
+      if (query) {
+        const matchesName = worker.name.toLowerCase().includes(query)
+        const matchesBio = (worker.bio || '').toLowerCase().includes(query)
+        const matchesCategoryDirect = worker.categories.some(c => {
+          const cClean = c.replace(/_/g, ' ').toLowerCase()
+          return c.toLowerCase().includes(query) || cClean.includes(query) || query.includes(cClean)
+        })
+        const matchesTaxonomy = worker.categories.some(c => matchedServiceIds.has(c))
+
+        if (!matchesName && !matchesBio && !matchesCategoryDirect && !matchesTaxonomy) {
+          return false
+        }
+      }
+
+      return true
+    })
+  }, [allWorkers, selectedCategory, selectedArea, searchQuery])
+
+  const hasActiveSearchOrFilter = Boolean(searchQuery.trim() || selectedCategory || selectedArea)
+  const activeFilterCount = (selectedCategory ? 1 : 0) + (selectedArea ? 1 : 0)
+
+  const clearAllSearchAndFilters = () => {
+    setSearchQuery('')
+    setSelectedCategory('')
+    setSelectedArea('')
+  }
 
   const handleSearchSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault()
-    setIsSearchOpen(false)
-    const params = new URLSearchParams()
-    if (searchQuery.trim()) params.set('q', searchQuery.trim())
-    if (selectedCategory) params.set('category', selectedCategory)
-    if (selectedArea) params.set('area', selectedArea)
-    const queryString = params.toString()
-    navigate(queryString ? `/search?${queryString}` : '/search')
+    setIsFilterOpen(false)
   }
 
   const handleQuickPick = (categoryId: string) => {
-    setIsSearchOpen(false)
-    navigate(`/search?category=${categoryId}`)
+    setSelectedCategory(categoryId)
+    setIsFilterOpen(false)
   }
-
-  const handleAreaSelect = (pincode: string) => {
-    setSelectedArea(prev => (prev === pincode ? '' : pincode))
-  }
-
-  // Filter workers based on query in search drawer
-  const filteredSuggestions = searchQuery.trim()
-    ? allWorkers.filter(w =>
-        w.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        w.bio.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        w.categories.some(c => c.toLowerCase().includes(searchQuery.toLowerCase()))
-      ).slice(0, 4)
-    : []
 
   return (
     <div className="min-h-screen bg-semantic-bg-primary text-semantic-text-primary relative">
@@ -229,7 +417,7 @@ export default function Home() {
       {/* ========================================================================= */}
       <div
         ref={searchContainerRef}
-        className="sticky top-16 z-30 bg-white/90 dark:bg-zinc-950/95 backdrop-blur-md border-b border-slate-200/80 dark:border-zinc-800 shadow-sm transition-all"
+        className="sticky top-16 z-30 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-b border-slate-200/80 dark:border-zinc-800 shadow-sm transition-all"
       >
         <div className="max-w-4xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 relative">
           {/* Location indicator & delivery speed banner */}
@@ -254,57 +442,59 @@ export default function Home() {
                 ⚡ 30-45 mins
               </span>
             </div>
+
+            {/* Independent Filter Panel Toggle Button */}
             <button
+              ref={filterButtonRef}
               type="button"
-              onClick={() => setIsSearchOpen(prev => !prev)}
-              className="text-[11px] text-amber-600 dark:text-amber-400 hover:text-amber-700 font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+              onClick={() => setIsFilterOpen(prev => !prev)}
+              aria-expanded={isFilterOpen}
+              aria-label="Toggle filter options"
+              className={`text-[11px] font-semibold flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                isFilterOpen || activeFilterCount > 0
+                  ? 'bg-amber-500/10 border-amber-500/40 text-amber-700 dark:text-amber-400 dark:bg-amber-500/15'
+                  : 'bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300'
+              }`}
             >
-              <SlidersHorizontal className="w-3 h-3" />
-              <span>{isSearchOpen ? t('common.close', 'Close') : t('common.filter', 'Options')}</span>
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span>{isFilterOpen ? t('common.close', 'Close Filters') : t('common.filter', 'Filters')}</span>
+              {activeFilterCount > 0 && (
+                <span className="w-4 h-4 rounded-full bg-amber-500 text-white font-bold text-[10px] flex items-center justify-center">
+                  {activeFilterCount}
+                </span>
+              )}
             </button>
           </div>
 
-          {/* Search Input Box */}
+          {/* Search Input Box — Always visible, focused, and typeable */}
           <form
             onSubmit={handleSearchSubmit}
-            className={`
-              relative rounded-2xl border transition-all duration-200 flex items-center px-3 sm:px-4 py-2 sm:py-2.5 shadow-sm
-              ${isSearchOpen
-                ? 'bg-white dark:bg-zinc-900 border-amber-500/80 ring-2 ring-amber-500/20'
-                : 'bg-slate-50 dark:bg-zinc-800 hover:bg-white dark:hover:bg-zinc-700 border-slate-200 dark:border-zinc-700 hover:border-amber-500/50'
-              }
-            `}
+            className="relative z-20 rounded-2xl border transition-all duration-200 flex items-center px-3 sm:px-4 py-2 sm:py-2.5 shadow-sm bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 hover:border-amber-500/50 focus-within:border-amber-500/80 focus-within:ring-2 focus-within:ring-amber-500/20"
           >
-            <Search className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 dark:text-brand-400 shrink-0 mr-2.5" />
+            <Search className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 dark:text-amber-400 shrink-0 mr-2.5" />
             <input
               ref={searchInputRef}
               type="text"
               value={searchQuery}
-              onFocus={() => setIsSearchOpen(true)}
-              onClick={() => setIsSearchOpen(true)}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder={`${t('common.search', 'Search for')} '${placeholders[placeholderIndex]}' ...`}
+              placeholder={`${t('common.search', 'Search for')} '${placeholders[placeholderIndex]}' (e.g. parlour, electrician, plumber) ...`}
               className="w-full bg-transparent text-xs sm:text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:outline-none"
               aria-label="Search services or artisans"
             />
 
-            {/* Clear Button */}
+            {/* Clear Search Text Button */}
             {searchQuery && (
               <button
                 type="button"
-                onClick={() => setSearchQuery('')}
-                className="p-1 text-slate-400 hover:text-slate-700 dark:text-zinc-500 dark:hover:text-zinc-200 mr-1 cursor-pointer"
+                onClick={() => {
+                  setSearchQuery('')
+                  searchInputRef.current?.focus()
+                }}
+                className="p-1 text-slate-400 hover:text-slate-700 dark:text-zinc-500 dark:hover:text-zinc-200 mr-1.5 cursor-pointer transition-colors"
                 aria-label="Clear search text"
               >
                 <X className="w-4 h-4" />
               </button>
-            )}
-
-            {/* Active filters indicator badge */}
-            {(selectedCategory || selectedArea) && (
-              <span className="mr-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-brand-500/20 text-amber-800 dark:text-brand-300 border border-amber-300 dark:border-brand-500/40 hidden sm:inline-block">
-                Active Filter
-              </span>
             )}
 
             <Button
@@ -317,233 +507,460 @@ export default function Home() {
             </Button>
           </form>
 
+          {/* Active Filter Pills Bar (Directly below search input, always accessible) */}
+          {hasActiveSearchOrFilter && (
+            <div className="flex flex-wrap items-center gap-1.5 mt-2 pt-2 border-t border-slate-200/60 dark:border-zinc-800/80">
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 mr-1">
+                Active:
+              </span>
+
+              {/* Search Query Pill */}
+              {searchQuery.trim() && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300">
+                  <span>Query: "{searchQuery.trim()}"</span>
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="hover:text-amber-950 dark:hover:text-white cursor-pointer ml-0.5"
+                    aria-label="Remove search query"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+
+              {/* Selected Category Pill */}
+              {selectedCategory && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 border border-blue-500/30 text-blue-800 dark:text-blue-300">
+                  <span>Service: {getCategoryDisplayName(selectedCategory)}</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCategory('')}
+                    className="hover:text-blue-950 dark:hover:text-white cursor-pointer ml-0.5"
+                    aria-label="Remove category filter"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+
+              {/* Selected Area Pill */}
+              {selectedArea && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300">
+                  <span>Area: {selectedArea}</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedArea('')}
+                    className="hover:text-emerald-950 dark:hover:text-white cursor-pointer ml-0.5"
+                    aria-label="Remove area filter"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+
+              {/* Clear All Action */}
+              <button
+                type="button"
+                onClick={clearAllSearchAndFilters}
+                className="text-[11px] font-bold text-slate-500 hover:text-rose-600 dark:text-zinc-400 dark:hover:text-rose-400 ml-auto transition-colors cursor-pointer"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
+
           {/* ===================================================================== */}
-          {/* EXPANDING SEARCH OVERLAY / CATEGORIES DRAWER (Floating Absolute Dropdown) */}
+          {/* INDEPENDENT FILTER PANEL (Docked below search bar, auto-closes on pick) */}
           {/* ===================================================================== */}
           <AnimatePresence>
-            {isSearchOpen && (
-              <>
-                {/* Backdrop Click Dismiss */}
-                <div
-                  className="fixed inset-0 bg-black/40 backdrop-blur-xs z-40"
-                  onClick={() => setIsSearchOpen(false)}
-                />
-
-                {/* Floating Absolute Dropdown Drawer */}
-                <motion.div
-                  initial={{ opacity: 0, y: -8, scale: 0.99 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -8, scale: 0.99 }}
-                  transition={{ duration: 0.18 }}
-                  className="absolute left-3 right-3 sm:left-6 sm:right-6 top-full mt-2 z-50 p-4 sm:p-5 rounded-2xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-slate-200 dark:border-zinc-800 shadow-2xl max-h-[70vh] overflow-y-auto space-y-4"
-                >
-                  {/* Top Bar with Back Button & Cross (Cut) Button */}
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-zinc-800">
-                    <button
-                      type="button"
-                      onClick={() => setIsSearchOpen(false)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer border border-slate-200 dark:border-zinc-700 active:scale-95"
-                      aria-label="Back to Homepage"
-                    >
-                      <ArrowLeft className="w-3.5 h-3.5 text-amber-500 dark:text-brand-400" />
-                      <span>{t('common.backToHome', 'Back to Home')}</span>
-                    </button>
-
-                    <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider hidden sm:inline-block">
-                      {t('home.exploreServices', 'Explore Services & Areas')}
+            {isFilterOpen && (
+              <motion.div
+                ref={filterPanelRef}
+                initial={{ opacity: 0, y: -6, scale: 0.99 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -6, scale: 0.99 }}
+                transition={{ duration: 0.15 }}
+                className="absolute left-3 right-3 sm:left-6 sm:right-6 top-full mt-2 z-30 p-4 sm:p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xl max-h-[65vh] overflow-y-auto space-y-4"
+              >
+                {/* Header with Title & Close button */}
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-zinc-800">
+                  <div className="flex items-center gap-2">
+                    <SlidersHorizontal className="w-4 h-4 text-amber-500" />
+                    <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                      {t('home.filterPanelTitle', 'Filter Services & Local Areas')}
                     </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsFilterOpen(false)}
+                    className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                    aria-label="Close filters"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
 
+                {/* 1. Local Area Filter */}
+                <div>
+                  <h4 className="text-xs font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span>{t('home.stickyAreasTitle', 'Select Local Area')}</span>
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
-                      onClick={() => setIsSearchOpen(false)}
-                      className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-rose-50 dark:bg-zinc-800 dark:hover:bg-rose-500/20 text-slate-500 dark:text-zinc-400 hover:text-rose-600 dark:hover:text-rose-300 flex items-center justify-center transition-colors cursor-pointer border border-slate-200 dark:border-zinc-700 active:scale-95"
-                      aria-label="Close"
+                      onClick={() => {
+                        setSelectedArea('')
+                        setIsFilterOpen(false)
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
+                        !selectedArea
+                          ? 'bg-emerald-50 dark:bg-emerald-500/20 border-emerald-500 text-emerald-700 dark:text-emerald-300 font-bold'
+                          : 'bg-slate-50 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:text-white'
+                      }`}
                     >
-                      <X className="w-4 h-4" />
+                      All Muzaffarnagar
                     </button>
-                  </div>
-
-                  {/* 1. SELECT LOCAL AREA (On Top as requested) */}
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                      <span>{t('home.stickyAreasTitle', 'Select Local Area')}</span>
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
+                    {MUZAFFARNAGAR_PINCODES.map(pincode => (
                       <button
+                        key={pincode}
                         type="button"
-                        onClick={() => setSelectedArea('')}
+                        onClick={() => {
+                          setSelectedArea(prev => (prev === pincode ? '' : pincode))
+                          setIsFilterOpen(false)
+                        }}
                         className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
-                          !selectedArea
+                          selectedArea === pincode
                             ? 'bg-emerald-50 dark:bg-emerald-500/20 border-emerald-500 text-emerald-700 dark:text-emerald-300 font-bold'
                             : 'bg-slate-50 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:text-white'
                         }`}
                       >
-                        All Muzaffarnagar
+                        {pincode} - {pincode === '251001' ? 'City / New Mandi' : 'Cantt / Civil Lines'}
                       </button>
-                      {MUZAFFARNAGAR_PINCODES.map(pincode => (
-                        <button
-                          key={pincode}
-                          type="button"
-                          onClick={() => handleAreaSelect(pincode)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
-                            selectedArea === pincode
-                              ? 'bg-emerald-50 dark:bg-emerald-500/20 border-emerald-500 text-emerald-700 dark:text-emerald-300 font-bold'
-                              : 'bg-slate-50 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:text-white'
-                          }`}
-                        >
-                          {pincode} - {pincode === '251001' ? 'City / New Mandi' : 'Cantt / Civil Lines'}
-                        </button>
-                      ))}
-                    </div>
+                    ))}
                   </div>
+                </div>
 
-                  {/* 2. POPULAR SEARCHES (Second as requested) */}
-                  <div className="pt-2 border-t border-slate-200 dark:border-zinc-800">
-                    <h4 className="text-xs font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                      <Flame className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
-                      <span>{t('home.stickyPopularSearches', 'Popular Searches')}</span>
+                {/* 2. Popular Search Shortcuts */}
+                <div className="pt-2 border-t border-slate-200 dark:border-zinc-800">
+                  <h4 className="text-xs font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <Flame className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
+                    <span>{t('home.stickyPopularSearches', 'Popular Searches')}</span>
+                  </h4>
+                  <div className="flex flex-wrap gap-1.5">
+                    {POPULAR_SEARCHES.map(item => (
+                      <button
+                        key={item.label}
+                        type="button"
+                        onClick={() => {
+                          setSelectedCategory(item.category)
+                          setIsFilterOpen(false)
+                        }}
+                        className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-slate-50 hover:bg-slate-100 dark:bg-zinc-800/80 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 3. Service Category Filter */}
+                <div className="pt-2 border-t border-slate-200 dark:border-zinc-800">
+                  <div className="flex items-center justify-between mb-2.5">
+                    <h4 className="text-xs font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <Grid className="w-3.5 h-3.5 text-amber-500" />
+                      <span>{t('home.stickyCategoriesTitle', 'Select Service Category')}</span>
                     </h4>
-                    <div className="flex flex-wrap gap-1.5">
-                      {POPULAR_SEARCHES.map(item => (
-                        <button
-                          key={item.label}
-                          type="button"
-                          onClick={() => {
-                            setSelectedCategory(item.category)
-                            handleQuickPick(item.category)
-                          }}
-                          className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-slate-50 hover:bg-slate-100 dark:bg-zinc-800/80 dark:hover:bg-zinc-750 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
-                        >
-                          {item.label}
-                        </button>
-                      ))}
-                    </div>
+                    <span className="text-[11px] text-slate-500 dark:text-zinc-400">Tap to apply & close</span>
                   </div>
 
-                  {/* 3. ALL SERVICE CATEGORIES (Third as requested, with 1-Click Direct Access) */}
-                  <div className="pt-2 border-t border-slate-200 dark:border-zinc-800">
-                    <div className="flex items-center justify-between mb-2.5">
-                      <h4 className="text-xs font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                        <Grid className="w-3.5 h-3.5 text-amber-500 dark:text-brand-400" />
-                        <span>{t('home.stickyCategoriesTitle', 'All Service Categories')}</span>
-                      </h4>
-                      <span className="text-[11px] text-amber-600 dark:text-brand-400 font-semibold">1-Click Direct Access</span>
-                    </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {categories.map(cat => {
-                        const Icon = iconMap[cat.icon as keyof typeof iconMap] || Wrench
-                        const isSelected = selectedCategory === cat.id
-                        const stat = workerStats[cat.id]
-                        const totalCount = stat ? stat.total : 0
-
-                        return (
-                          <button
-                            key={cat.id}
-                            type="button"
-                            onClick={() => handleQuickPick(cat.id)}
-                            className={`
-                              p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all cursor-pointer
-                              ${isSelected
-                                ? 'bg-amber-50 dark:bg-brand-500/20 border-amber-500 text-amber-800 dark:text-brand-300 shadow-sm'
-                                : 'bg-slate-50/80 hover:bg-slate-100 dark:bg-zinc-800/80 dark:hover:bg-zinc-750 border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-200 hover:border-amber-500/40'
-                              }
-                            `}
-                          >
-                            <div className="w-8 h-8 rounded-lg bg-amber-500/10 dark:bg-brand-500/15 border border-amber-500/25 dark:border-brand-500/25 flex items-center justify-center text-amber-600 dark:text-brand-400 shrink-0">
-                              <Icon className="w-4 h-4" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-xs font-semibold truncate text-slate-900 dark:text-zinc-100">
-                                {getCategoryName(cat, i18n.language === 'hi' ? 'hi' : 'en')}
-                              </p>
-                              <p className="text-[10px] text-slate-500 dark:text-zinc-400 truncate">
-                                {totalCount > 0 ? `${totalCount} Verified` : 'Same-day'}
-                              </p>
-                            </div>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-
-                  {/* 4. Live Worker Search Results (if typing) */}
-                  {filteredSuggestions.length > 0 && (
-                    <div className="pt-2 border-t border-slate-200 dark:border-zinc-800">
-                      <h4 className="text-xs font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wider mb-2">
-                        Matching Verified Artisans
-                      </h4>
-                      <div className="space-y-1.5">
-                        {filteredSuggestions.map(worker => (
-                          <div
-                            key={worker.id}
-                            onClick={() => {
-                              setIsSearchOpen(false)
-                              navigate(`/search?q=${encodeURIComponent(worker.name)}`)
-                            }}
-                            className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-zinc-800 dark:hover:bg-zinc-750 border border-slate-200 dark:border-zinc-700 cursor-pointer transition-colors"
-                          >
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-8 h-8 rounded-full bg-amber-500/15 text-amber-700 dark:text-brand-300 font-bold flex items-center justify-center text-xs">
-                                {worker.name.charAt(0)}
-                              </div>
-                              <div>
-                                <p className="text-xs font-bold text-slate-900 dark:text-white">{worker.name}</p>
-                                <p className="text-[10px] text-slate-500 dark:text-zinc-400 capitalize">
-                                  {worker.categories.join(', ')} • {worker.experience} yrs exp
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-1 text-amber-500 text-xs font-semibold">
-                              <Star className="w-3.5 h-3.5 fill-amber-500" />
-                              <span>{worker.rating > 0 ? worker.rating.toFixed(1) : '5.0'}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Bottom Actions */}
-                  <div className="pt-3 border-t border-slate-200 dark:border-zinc-800 flex items-center justify-between">
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {/* All Services option */}
+                    <button
+                      type="button"
                       onClick={() => {
                         setSelectedCategory('')
-                        setSelectedArea('')
-                        setSearchQuery('')
+                        setIsFilterOpen(false)
                       }}
-                      className="text-xs text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white cursor-pointer"
+                      className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all cursor-pointer ${
+                        !selectedCategory
+                          ? 'bg-amber-50 dark:bg-amber-500/20 border-amber-500 text-amber-800 dark:text-amber-300 shadow-sm'
+                          : 'bg-slate-50/80 hover:bg-slate-100 dark:bg-zinc-800/80 dark:hover:bg-zinc-700 border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-200'
+                      }`}
                     >
-                      Clear All Filters
-                    </Button>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsSearchOpen(false)}
-                        className="text-xs font-medium px-3 border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white cursor-pointer"
-                      >
-                        {t('common.close', 'Close')}
-                      </Button>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => handleSearchSubmit()}
-                        className="text-xs font-bold px-5 cursor-pointer"
-                      >
-                        Apply & View Results →
-                      </Button>
-                    </div>
+                      <div className="w-8 h-8 rounded-lg bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+                        <Wrench className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold truncate text-slate-900 dark:text-zinc-100">
+                          {t('categories.all', 'All Services')}
+                        </p>
+                        <p className="text-[10px] text-slate-500 dark:text-zinc-400 truncate">
+                          View all
+                        </p>
+                      </div>
+                    </button>
+
+                    {/* Canonical Categories / Services */}
+                    {CATEGORIES.map(cat => {
+                      const Icon = iconMap[cat.icon as keyof typeof iconMap] || Wrench
+                      const isSelected = selectedCategory === cat.id
+                      const stat = workerStats[cat.id]
+                      const totalCount = stat ? stat.total : 0
+
+                      return (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedCategory(prev => (prev === cat.id ? '' : cat.id))
+                            setIsFilterOpen(false)
+                          }}
+                          className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all cursor-pointer ${
+                            isSelected
+                              ? 'bg-amber-50 dark:bg-amber-500/20 border-amber-500 text-amber-800 dark:text-amber-300 shadow-sm'
+                              : 'bg-slate-50/80 hover:bg-slate-100 dark:bg-zinc-800/80 dark:hover:bg-zinc-700 border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-200 hover:border-amber-500/40'
+                          }`}
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-semibold truncate text-slate-900 dark:text-zinc-100">
+                              {getCategoryName(cat, i18n.language === 'hi' ? 'hi' : 'en')}
+                            </p>
+                            <p className="text-[10px] text-slate-500 dark:text-zinc-400 truncate">
+                              {totalCount > 0 ? `${totalCount} Verified` : 'Same-day'}
+                            </p>
+                          </div>
+                        </button>
+                      )
+                    })}
                   </div>
-                </motion.div>
-              </>
+                </div>
+
+                {/* Bottom Filter Controls */}
+                <div className="pt-3 border-t border-slate-200 dark:border-zinc-800 flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCategory('')
+                      setSelectedArea('')
+                      setIsFilterOpen(false)
+                    }}
+                    className="text-xs text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white cursor-pointer font-medium"
+                  >
+                    Clear Filters
+                  </button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => setIsFilterOpen(false)}
+                    className="text-xs font-bold px-4 cursor-pointer"
+                  >
+                    Done
+                  </Button>
+                </div>
+              </motion.div>
             )}
           </AnimatePresence>
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* DYNAMIC SEARCH & FILTER RESULTS SECTION (Appears when searching or filtering) */}
+      {/* ========================================================================= */}
+      <AnimatePresence>
+        {hasActiveSearchOrFilter && (
+          <motion.section
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="py-8 sm:py-10 bg-slate-50/80 dark:bg-zinc-950 border-b border-slate-200 dark:border-zinc-800 relative z-10"
+          >
+            <div className="container-app">
+              <div className="max-w-5xl mx-auto">
+                {/* Results Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                      <span>Verified Artisans</span>
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
+                        {matchingWorkers.length} {matchingWorkers.length === 1 ? 'Found' : 'Found'}
+                      </span>
+                    </h2>
+                    <p className="text-xs text-slate-600 dark:text-zinc-400 mt-1">
+                      Direct phone & WhatsApp connection • 0% platform fee • Aadhaar & Police verified
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={clearAllSearchAndFilters}
+                      className="text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-white px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 transition-colors cursor-pointer"
+                    >
+                      Clear Results
+                    </button>
+                    <Link
+                      to={`/search?${new URLSearchParams({
+                        ...(searchQuery ? { q: searchQuery } : {}),
+                        ...(selectedCategory ? { category: selectedCategory } : {}),
+                        ...(selectedArea ? { area: selectedArea } : {}),
+                      }).toString()}`}
+                      className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1"
+                    >
+                      <span>Full Directory</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Worker Results Grid */}
+                {matchingWorkers.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                    {matchingWorkers.map(worker => {
+                      const primaryCat = worker.categories[0] || 'electrician'
+                      const catName = getCategoryDisplayName(primaryCat)
+
+                      return (
+                        <div
+                          key={worker.id}
+                          className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 shadow-sm hover:shadow-md hover:border-amber-500/50 dark:hover:border-amber-500/40 transition-all flex flex-col justify-between"
+                        >
+                          <div>
+                            {/* Top row: Avatar, Name, Verification, Availability */}
+                            <div className="flex items-start gap-3.5">
+                              <Avatar
+                                name={worker.name}
+                                src={worker.avatar || undefined}
+                                size="lg"
+                                className="shrink-0 ring-2 ring-amber-500/20"
+                              />
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5">
+                                  <h3 className="font-bold text-sm text-slate-900 dark:text-white truncate">
+                                    {worker.name}
+                                  </h3>
+                                  <span title="Verified Artisan">
+                                    <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+                                  </span>
+                                </div>
+                                <p className="text-xs text-amber-600 dark:text-amber-400 font-semibold truncate mt-0.5">
+                                  {catName}
+                                </p>
+                                <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500 dark:text-zinc-400">
+                                  <span className="flex items-center gap-0.5 text-amber-500 font-bold">
+                                    <Star className="w-3 h-3 fill-amber-500" />
+                                    <span>{worker.rating > 0 ? worker.rating.toFixed(1) : '5.0'}</span>
+                                  </span>
+                                  <span>•</span>
+                                  <span>{worker.reviews} {t('common.reviews', 'reviews')}</span>
+                                  <span>•</span>
+                                  <span>{worker.experience} yrs exp</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Bio / Services */}
+                            {worker.bio && (
+                              <p className="text-xs text-slate-600 dark:text-zinc-400 line-clamp-2 mt-3 leading-relaxed">
+                                {worker.bio}
+                              </p>
+                            )}
+
+                            {/* Service Areas */}
+                            <div className="flex items-center gap-1.5 mt-3 text-[11px] text-slate-500 dark:text-zinc-400">
+                              <MapPin className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                              <span className="truncate">
+                                Areas: {worker.areas.join(', ') || 'All Muzaffarnagar'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Footer action */}
+                          <div className="mt-4 pt-3.5 border-t border-slate-100 dark:border-zinc-800/80 flex items-center justify-between">
+                            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                              <span>{worker.available ? 'Available Now' : 'Accepting Calls'}</span>
+                            </span>
+                            <Link
+                              to={`/worker/${worker.id}`}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-xs active:scale-95 transition-all"
+                            >
+                              <span>View & Call</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </Link>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  /* Empty state when query or filter yields no approved worker */
+                  <div className="py-10 px-4 rounded-3xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-center max-w-xl mx-auto shadow-sm">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-3">
+                      <Search className="w-6 h-6" />
+                    </div>
+                    <h3 className="font-bold text-base text-slate-900 dark:text-white mb-1">
+                      No matching verified artisans found
+                    </h3>
+                    <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed max-w-md mx-auto mb-4">
+                      {searchQuery
+                        ? `We couldn't find an approved artisan matching "${searchQuery}" in Muzaffarnagar right now.`
+                        : 'No approved artisans match the selected category or area filters.'}
+                    </p>
+
+                    {/* Quick fallback category suggestions */}
+                    <div className="mb-4">
+                      <p className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 mb-2">
+                        Try one of our active categories:
+                      </p>
+                      <div className="flex flex-wrap justify-center gap-1.5">
+                        {['plumber', 'electrician', 'parlour_service', 'ac_repair', 'carpenter'].map(catId => (
+                          <button
+                            key={catId}
+                            type="button"
+                            onClick={() => {
+                              setSelectedCategory(catId)
+                              setSearchQuery('')
+                            }}
+                            className="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 transition-colors cursor-pointer"
+                          >
+                            {getCategoryDisplayName(catId)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={clearAllSearchAndFilters}
+                        className="text-xs font-bold"
+                      >
+                        Reset All Filters
+                      </Button>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => aiAssistant?.openAssistant?.('customer_booking')}
+                        className="text-xs font-bold inline-flex items-center gap-1.5"
+                      >
+                        <Bot className="w-3.5 h-3.5" />
+                        <span>Ask AI Assistant</span>
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.section>
+        )}
+      </AnimatePresence>
 
       {/* ========================================================================= */}
       {/* 2. HERO INTRODUCTION SECTION (Below Sticky Search Bar)                   */}
@@ -941,7 +1358,10 @@ export default function Home() {
                 whileHover={{ y: -4, scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
                 transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-                onClick={() => setIsSearchOpen(true)}
+                onClick={() => {
+                  setIsFilterOpen(true)
+                  searchContainerRef.current?.scrollIntoView({ behavior: 'smooth' })
+                }}
                 className="group p-4 sm:p-5 rounded-2xl bg-white dark:bg-zinc-900/80 border border-slate-200/90 dark:border-zinc-800 hover:border-amber-500/60 dark:hover:border-amber-500/60 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden flex flex-col items-center text-center shadow-sm"
               >
                 <div className="w-12 h-12 mb-2.5 rounded-2xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/25 dark:border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform">
@@ -1048,7 +1468,7 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-              className="mt-8 max-w-2xl mx-auto p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-amber-500/10 dark:from-zinc-900 dark:via-zinc-850 dark:to-zinc-900 border border-amber-500/25 dark:border-amber-500/30 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-md"
+              className="mt-8 max-w-2xl mx-auto p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-amber-500/10 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-900 border border-amber-500/25 dark:border-amber-500/30 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-md"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-amber-500/15 dark:bg-amber-500/20 border border-amber-500/25 dark:border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
@@ -1175,7 +1595,7 @@ export default function Home() {
             <motion.div
               whileHover={{ y: -3, scale: 1.01 }}
               transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-              className="p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-amber-50/70 via-white to-slate-50 dark:from-zinc-900 dark:via-zinc-850 dark:to-zinc-900 border border-amber-200/80 dark:border-zinc-800 relative overflow-hidden flex flex-col justify-between shadow-md dark:shadow-lg"
+              className="p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-amber-50/70 via-white to-slate-50 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-900 border border-amber-200/80 dark:border-zinc-800 relative overflow-hidden flex flex-col justify-between shadow-md dark:shadow-lg"
             >
               <div className="absolute -top-12 -right-12 w-40 h-40 bg-amber-500/10 dark:bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
               <div>
@@ -1207,7 +1627,7 @@ export default function Home() {
             <motion.div
               whileHover={{ y: -3, scale: 1.01 }}
               transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-              className="p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-emerald-50/70 via-white to-slate-50 dark:from-zinc-900 dark:via-zinc-850 dark:to-zinc-900 border border-emerald-200/80 dark:border-emerald-500/30 relative overflow-hidden flex flex-col justify-between shadow-md dark:shadow-lg"
+              className="p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-emerald-50/70 via-white to-slate-50 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-900 border border-emerald-200/80 dark:border-emerald-500/30 relative overflow-hidden flex flex-col justify-between shadow-md dark:shadow-lg"
             >
               <div className="absolute -top-12 -right-12 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
               <div>
