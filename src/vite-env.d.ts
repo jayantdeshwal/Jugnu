@@ -4,8 +4,8 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_URL?: string
   readonly VITE_SUPABASE_PUBLISHABLE_KEY?: string
   readonly VITE_SUPABASE_ANON_KEY?: string
-  readonly VITE_GROQ_API_KEY?: string
-  readonly VITE_GROQ_MODEL?: string
+  readonly VITE_MSG91_WIDGET_ID?: string
+  readonly VITE_MSG91_TOKEN_AUTH?: string
 }
 
 interface ImportMeta {

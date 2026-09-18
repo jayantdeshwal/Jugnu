@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext'
 import { fetchApprovedWorker } from '@/services/workers'
 import { getSupabaseClient } from '@/lib/supabase'
 import { sendBookingCreatedSms } from '@/services/sms'
+import { sanitizeErrorMessage } from '@/utils/errors'
 
 interface CreateBookingRpc {
   rpc: (
@@ -105,7 +106,7 @@ export default function Booking() {
       }
 
       const supabase = getSupabaseClient() as unknown as CreateBookingRpc
-      const { error } = await supabase.rpc('create_booking', {
+      const { data: newBookingId, error } = await supabase.rpc('create_booking', {
         target_worker_id: worker.id,
         target_category_id: worker.categories[0],
         target_pincode: formData.pincode,
@@ -121,6 +122,7 @@ export default function Booking() {
 
       // Dispatch real-time SMS alert to worker (non-blocking)
       void sendBookingCreatedSms({
+        bookingId: newBookingId || undefined,
         workerId: worker.id,
         workerPhone: worker.phone || undefined,
         workerName: worker.name || 'Worker',
@@ -129,7 +131,7 @@ export default function Booking() {
         scheduledAt: scheduledAt.toLocaleString(),
       })
     } catch (bookingError) {
-      const message = bookingError instanceof Error ? bookingError.message : 'Unable to create booking'
+      const message = sanitizeErrorMessage(bookingError, 'Unable to create booking. Please try again.')
       setBookingError(message)
       setErrors({ form: message })
     } finally {

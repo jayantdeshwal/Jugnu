@@ -56,3 +56,5 @@ dist/
 # Misc
 *.pem
 .cache/
+scratch/
+supabase/.temp/

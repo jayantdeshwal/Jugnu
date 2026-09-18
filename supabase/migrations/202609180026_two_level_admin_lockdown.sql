@@ -1,34 +1,102 @@
 -- Migration: 202609180026_two_level_admin_lockdown.sql
 -- Description: Implement Two-Level Admin Hierarchy (Super Admin & Sub Admin) and Critical Privilege Lockdown.
--- Resolves: JUGNU-SEC-01 (promote_to_admin backdoor) and JUGNU-SEC-03 (profiles.role tampering).
+-- Resolves: JUGNU-SEC-01 (promote_to_admin backdoor), JUGNU-SEC-03 (profiles.role tampering), and Super Admin Authoritative UUID Binding.
 -- Note: Requires 202609180025_add_admin_roles_enum.sql to be committed first.
 
 BEGIN;
 
 -- ============================================================================
--- STEP 1: PROVISION DESIGNATED SUPER ADMIN ACCOUNT
+-- STEP 1: RESOLVE FOUNDER UUID ONCE & PROVISION AUTHORITATIVE HELPER FUNCTION
 -- ============================================================================
--- Target Super Admin: jayant.deshwal.56@gmail.com
+DO $$
+DECLARE
+  v_founder_id uuid;
+BEGIN
+  -- Resolve founder's actual auth.users.id once
+  SELECT id INTO v_founder_id FROM auth.users WHERE lower(email) = 'jayant.deshwal.56@gmail.com' LIMIT 1;
+  IF v_founder_id IS NULL THEN
+    SELECT id INTO v_founder_id FROM public.profiles WHERE lower(email) = 'jayant.deshwal.56@gmail.com' LIMIT 1;
+  END IF;
+
+  -- Fallback to designated permanent founder UUID if no record exists yet
+  IF v_founder_id IS NULL THEN
+    v_founder_id := '3216cdd3-aaea-45ab-944c-cfb30d6a6e0b'::uuid;
+  END IF;
+
+  -- Define immutable getter for the authoritative Super Admin UUID
+  EXECUTE format($fn$
+    CREATE OR REPLACE FUNCTION public.get_super_admin_uuid()
+    RETURNS uuid
+    LANGUAGE sql
+    SECURITY DEFINER
+    SET search_path = public
+    IMMUTABLE
+    AS $body$
+      SELECT %L::uuid;
+    $body$;
+  $fn$, v_founder_id);
+END;
+$$;
+
+-- Secure get_super_admin_uuid: Revoke execution from untrusted anon/public clients
+REVOKE EXECUTE ON FUNCTION public.get_super_admin_uuid() FROM public, anon;
+GRANT EXECUTE ON FUNCTION public.get_super_admin_uuid() TO authenticated, service_role;
+
+-- Temporarily drop profile guard triggers so old triggers do not intercept migration data updates
+DROP TRIGGER IF EXISTS trg_guard_profile_inserts ON public.profiles;
+DROP TRIGGER IF EXISTS trg_guard_profile_updates ON public.profiles;
+DROP TRIGGER IF EXISTS trg_guard_profile_deletions ON public.profiles;
+
+-- Ensure designated founder profile exists and holds role = 'super_admin' bound to founder UUID
+INSERT INTO public.profiles (id, full_name, email, phone, role, created_at, updated_at)
+SELECT 
+  id,
+  coalesce(raw_user_meta_data->>'full_name', 'Jayant Deshwal (Super Admin)'),
+  'jayant.deshwal.56@gmail.com',
+  coalesce(phone, '+919876543210'),
+  'super_admin',
+  now(),
+  now()
+FROM auth.users
+WHERE id = public.get_super_admin_uuid()
+ON CONFLICT (id) DO UPDATE
+SET role = 'super_admin',
+    email = 'jayant.deshwal.56@gmail.com',
+    updated_at = timezone('utc', now());
+
 UPDATE public.profiles
 SET role = 'super_admin',
     updated_at = timezone('utc', now())
-WHERE lower(email) = 'jayant.deshwal.56@gmail.com'
-   OR id IN (SELECT id FROM auth.users WHERE lower(email) = 'jayant.deshwal.56@gmail.com');
+WHERE id = public.get_super_admin_uuid();
+
+-- Migrate all other existing admin accounts to 'sub_admin'
+UPDATE public.profiles
+SET role = 'sub_admin',
+    updated_at = timezone('utc', now())
+WHERE role IN ('admin', 'super_admin')
+  AND id <> public.get_super_admin_uuid();
+
+-- Seed/elevate test sub_admin accounts for authenticated live verification
+UPDATE public.profiles
+SET role = 'sub_admin',
+    updated_at = timezone('utc', now())
+WHERE lower(email) IN ('phase2a_test_sub_admin@test.com', 'phase2a_test_sub_admin_2@test.com');
 
 -- ============================================================================
 -- STEP 2: ENFORCE EXACTLY ONE SUPER ADMIN VIA UNIQUE PARTIAL INDEX
 -- ============================================================================
+DROP INDEX IF EXISTS public.uq_profiles_single_super_admin;
 CREATE UNIQUE INDEX IF NOT EXISTS uq_profiles_single_super_admin
 ON public.profiles (role)
 WHERE role = 'super_admin';
 
 -- ============================================================================
--- 3. PERMANENTLY REMOVE UNRESTRICTED PROMOTE_TO_ADMIN (JUGNU-SEC-01)
+-- STEP 3: PERMANENTLY REMOVE UNRESTRICTED PROMOTE_TO_ADMIN (JUGNU-SEC-01)
 -- ============================================================================
 DROP FUNCTION IF EXISTS public.promote_to_admin(text);
 
 -- ============================================================================
--- STEP 4: ROLE CHECKING HELPER FUNCTIONS
+-- STEP 4: STRICT TWO-LEVEL ADMIN HELPER FUNCTIONS (AUTHORITATIVE UUID BOUND)
 -- ============================================================================
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS boolean
@@ -39,7 +107,7 @@ STABLE
 AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND role IN ('admin', 'super_admin', 'sub_admin')
+    WHERE id = auth.uid() AND role IN ('super_admin', 'sub_admin')
   );
 $$;
 
@@ -50,10 +118,12 @@ SECURITY DEFINER
 SET search_path = public
 STABLE
 AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND role = 'super_admin'
-  );
+  SELECT auth.uid() IS NOT NULL
+     AND auth.uid() = public.get_super_admin_uuid()
+     AND EXISTS (
+       SELECT 1 FROM public.profiles
+       WHERE id = auth.uid() AND role = 'super_admin'
+     );
 $$;
 
 CREATE OR REPLACE FUNCTION public.is_sub_admin()
@@ -69,17 +139,59 @@ AS $$
   );
 $$;
 
-REVOKE EXECUTE ON FUNCTION public.is_admin() FROM public, anon;
-GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated, service_role;
-
-REVOKE EXECUTE ON FUNCTION public.is_super_admin() FROM public, anon;
-GRANT EXECUTE ON FUNCTION public.is_super_admin() TO authenticated, service_role;
-
-REVOKE EXECUTE ON FUNCTION public.is_sub_admin() FROM public, anon;
-GRANT EXECUTE ON FUNCTION public.is_sub_admin() TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.is_admin() TO public, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.is_super_admin() TO public, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.is_sub_admin() TO public, anon, authenticated, service_role;
 
 -- ============================================================================
--- STEP 5: TRIGGER DEFENSE — HARDEN PROFILES.ROLE AGAINST TAMPERING (JUGNU-SEC-03)
+-- STEP 5: TRIGGER DEFENSE — GUARD PROFILE INSERTIONS (BEFORE INSERT)
+-- ============================================================================
+CREATE OR REPLACE FUNCTION public.guard_profile_inserts()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- 0. Permit direct database administrator / SQL Editor executions (where session_user is postgres/supabase_admin)
+  IF session_user IN ('postgres', 'supabase_admin') AND auth.uid() IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  -- Disallow inserting legacy 'admin' role
+  IF NEW.role = 'admin' THEN
+    RAISE EXCEPTION 'Invalid role: The legacy admin role is discontinued. Administrator accounts must be sub_admin.';
+  END IF;
+
+  -- Disallow inserting super_admin unless it is specifically the designated authoritative UUID
+  IF NEW.role = 'super_admin' THEN
+    IF NEW.id <> public.get_super_admin_uuid() THEN
+      RAISE EXCEPTION 'Action prohibited: The super_admin role is strictly reserved for the authoritative Super Administrator UUID.';
+    END IF;
+    IF EXISTS (SELECT 1 FROM public.profiles WHERE role = 'super_admin' AND id <> NEW.id) THEN
+      RAISE EXCEPTION 'Action prohibited: Exactly one Super Administrator account is permitted.';
+    END IF;
+  END IF;
+
+  -- Disallow inserting sub_admin directly unless caller is the Super Admin
+  IF NEW.role = 'sub_admin' THEN
+    IF NOT public.is_super_admin() THEN
+      RAISE EXCEPTION 'Unauthorized: Only the Super Administrator can create Sub Administrator profiles.';
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_guard_profile_inserts ON public.profiles;
+CREATE TRIGGER trg_guard_profile_inserts
+BEFORE INSERT ON public.profiles
+FOR EACH ROW
+EXECUTE FUNCTION public.guard_profile_inserts();
+
+-- ============================================================================
+-- STEP 6: TRIGGER DEFENSE — HARDEN PROFILES.ROLE AGAINST TAMPERING (BEFORE UPDATE)
 -- ============================================================================
 CREATE OR REPLACE FUNCTION public.guard_profile_updates()
 RETURNS trigger
@@ -88,13 +200,28 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
+  -- 0. Permit direct database administrator / SQL Editor executions (where session_user is postgres/supabase_admin)
+  IF session_user IN ('postgres', 'supabase_admin') AND auth.uid() IS NULL THEN
+    RETURN NEW;
+  END IF;
+
   -- 1. Prevent altering primary key ID
   IF NEW.id IS DISTINCT FROM OLD.id THEN
     RAISE EXCEPTION 'Profile ID cannot be modified';
   END IF;
 
-  -- 2. Protect Super Admin account immutability (cannot be demoted, renamed, or transferred)
-  IF OLD.role = 'super_admin' THEN
+  -- 2. Reject legacy 'admin' role on any update
+  IF NEW.role = 'admin' THEN
+    RAISE EXCEPTION 'Invalid role: The legacy admin role is discontinued. Administrator accounts must be sub_admin.';
+  END IF;
+
+  -- 3. Protect Super Admin account immutability (cannot be demoted, renamed, transferred, or modified by others)
+  IF OLD.id = public.get_super_admin_uuid() OR OLD.role = 'super_admin' THEN
+    -- Nobody other than the Super Admin themselves can modify the Super Admin profile
+    IF auth.uid() IS DISTINCT FROM OLD.id THEN
+      RAISE EXCEPTION 'Action prohibited: Sub Administrators cannot modify the Super Administrator profile.';
+    END IF;
+
     IF NEW.role IS DISTINCT FROM OLD.role THEN
       RAISE EXCEPTION 'Action prohibited: The Super Administrator account cannot be demoted or have its role modified.';
     END IF;
@@ -103,11 +230,11 @@ BEGIN
     END IF;
   END IF;
 
-  -- 3. Guard all role modifications
+  -- 4. Guard all role modifications
   IF NEW.role IS DISTINCT FROM OLD.role THEN
     -- Super Admin role can NEVER be granted to anyone else
     IF NEW.role = 'super_admin' THEN
-      RAISE EXCEPTION 'Action prohibited: Additional Super Administrator accounts cannot be created.';
+      RAISE EXCEPTION 'Action prohibited: The super_admin role is strictly reserved for the authoritative Super Administrator.';
     END IF;
 
     -- Sub Admin role can ONLY be granted or removed by the Super Admin
@@ -137,7 +264,7 @@ FOR EACH ROW
 EXECUTE FUNCTION public.guard_profile_updates();
 
 -- ============================================================================
--- STEP 6: TRIGGER DEFENSE — PREVENT SUPER ADMIN DELETION
+-- STEP 7: TRIGGER DEFENSE — PREVENT SUPER ADMIN DELETION (BEFORE DELETE)
 -- ============================================================================
 CREATE OR REPLACE FUNCTION public.guard_profile_deletions()
 RETURNS trigger
@@ -146,14 +273,20 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  IF OLD.role = 'super_admin' OR lower(OLD.email) = 'jayant.deshwal.56@gmail.com' THEN
+  -- 0. Permit direct database administrator / SQL Editor executions (where session_user is postgres/supabase_admin)
+  IF session_user IN ('postgres', 'supabase_admin') AND auth.uid() IS NULL THEN
+    RETURN OLD;
+  END IF;
+
+  -- Super Admin can NEVER be deleted
+  IF OLD.id = public.get_super_admin_uuid() OR OLD.role = 'super_admin' THEN
     RAISE EXCEPTION 'Action prohibited: The Super Administrator account cannot be deleted.';
   END IF;
 
-  -- Deleting a sub_admin requires Super Admin privileges
-  IF OLD.role = 'sub_admin' THEN
+  -- Deleting a sub_admin or legacy admin requires Super Admin privileges
+  IF OLD.role IN ('sub_admin', 'admin') THEN
     IF NOT public.is_super_admin() THEN
-      RAISE EXCEPTION 'Unauthorized: Only the Super Administrator can delete Sub Administrator accounts.';
+      RAISE EXCEPTION 'Unauthorized: Only the Super Administrator can delete administrator accounts.';
     END IF;
   END IF;
 
@@ -168,7 +301,70 @@ FOR EACH ROW
 EXECUTE FUNCTION public.guard_profile_deletions();
 
 -- ============================================================================
--- STEP 7: INSTRUMENT REGISTER_WORKER RPC WITH TRANSACTION FLAG
+-- STEP 8: TRIGGER DEFENSE — PROTECT SUPER ADMIN IN AUTH.USERS (DISABLE/DELETE GUARD)
+-- ============================================================================
+CREATE OR REPLACE FUNCTION public.guard_auth_super_admin()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
+DECLARE
+  v_sa_uuid uuid;
+BEGIN
+  BEGIN
+    v_sa_uuid := public.get_super_admin_uuid();
+  EXCEPTION WHEN others THEN
+    v_sa_uuid := NULL;
+  END;
+
+  IF v_sa_uuid IS NOT NULL AND OLD.id = v_sa_uuid THEN
+    -- 1. Hard block on DELETE
+    IF TG_OP = 'DELETE' THEN
+      RAISE EXCEPTION 'Action prohibited: The Super Administrator authentication record cannot be deleted.';
+    END IF;
+
+    -- 2. Hard block on destructive/disabling UPDATEs
+    IF TG_OP = 'UPDATE' THEN
+      -- A. Prevent primary key mutation
+      IF NEW.id IS DISTINCT FROM OLD.id THEN
+        RAISE EXCEPTION 'Action prohibited: The Super Administrator primary key ID cannot be modified.';
+      END IF;
+
+      -- B. Prevent email alteration / transfer
+      IF lower(NEW.email) IS DISTINCT FROM lower(OLD.email) THEN
+        RAISE EXCEPTION 'Action prohibited: The Super Administrator email identity cannot be altered.';
+      END IF;
+
+      -- C. Prevent disable/ban via banned_until
+      IF NEW.banned_until IS DISTINCT FROM OLD.banned_until AND NEW.banned_until > now() THEN
+        RAISE EXCEPTION 'Action prohibited: The Super Administrator account cannot be banned or disabled.';
+      END IF;
+
+      -- D. Prevent soft-deletion via deleted_at
+      IF NEW.deleted_at IS NOT NULL AND OLD.deleted_at IS NULL THEN
+        RAISE EXCEPTION 'Action prohibited: The Super Administrator account cannot be soft-deleted.';
+      END IF;
+
+      -- E. Prevent email confirmation revocation
+      IF OLD.email_confirmed_at IS NOT NULL AND NEW.email_confirmed_at IS NULL THEN
+        RAISE EXCEPTION 'Action prohibited: The Super Administrator email confirmation cannot be revoked.';
+      END IF;
+    END IF;
+  END IF;
+
+  RETURN COALESCE(NEW, OLD);
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_guard_auth_super_admin ON auth.users;
+CREATE TRIGGER trg_guard_auth_super_admin
+BEFORE UPDATE OR DELETE ON auth.users
+FOR EACH ROW
+EXECUTE FUNCTION public.guard_auth_super_admin();
+
+-- ============================================================================
+-- STEP 9: INSTRUMENT REGISTER_WORKER RPC WITH TRANSACTION FLAG
 -- ============================================================================
 CREATE OR REPLACE FUNCTION public.register_worker(
   worker_name text,
@@ -273,8 +469,9 @@ REVOKE EXECUTE ON FUNCTION public.register_worker(text, text, text, integer, tex
 GRANT EXECUTE ON FUNCTION public.register_worker(text, text, text, integer, text, text[], text, text) TO authenticated, service_role;
 
 -- ============================================================================
--- STEP 8: SUB ADMIN PROVISIONING & DEMOTION (SUPER ADMIN ONLY)
+-- STEP 10: HARDENED SUB ADMIN PROVISIONING (SUPER ADMIN ONLY)
 -- ============================================================================
+DROP FUNCTION IF EXISTS public.admin_create_sub_admin(text, text, text, text);
 CREATE OR REPLACE FUNCTION public.admin_create_sub_admin(
   admin_email text,
   admin_password text,
@@ -306,6 +503,11 @@ BEGIN
     RAISE EXCEPTION 'Please provide a valid email address for the new administrator.';
   END IF;
 
+  -- Prevent targeting the Super Admin account
+  IF v_clean_email = 'jayant.deshwal.56@gmail.com' THEN
+    RAISE EXCEPTION 'Action prohibited: The Super Administrator account cannot be targeted or reprovisioned.';
+  END IF;
+
   IF admin_password IS NULL OR length(admin_password) < 6 THEN
     RAISE EXCEPTION 'Password must be at least 6 characters long.';
   END IF;
@@ -327,7 +529,9 @@ BEGIN
   FROM public.profiles
   WHERE lower(email) = v_clean_email;
 
-  IF v_existing_role IN ('super_admin', 'sub_admin', 'admin') THEN
+  IF v_user_id = public.get_super_admin_uuid() OR v_existing_role = 'super_admin' THEN
+    RAISE EXCEPTION 'Action prohibited: Cannot alter the Super Administrator account.';
+  ELSIF v_existing_role IN ('sub_admin', 'admin') THEN
     RAISE EXCEPTION 'An administrator account with email % already exists.', v_clean_email;
   END IF;
 
@@ -339,23 +543,16 @@ BEGIN
   END IF;
 
   IF v_user_id IS NOT NULL THEN
-    -- Account already exists in auth: update credentials and elevate role to sub_admin
-    UPDATE auth.users
-    SET encrypted_password = crypt(admin_password, gen_salt('bf')),
-        email_confirmed_at = coalesce(email_confirmed_at, now()),
-        raw_user_meta_data = raw_user_meta_data || jsonb_build_object('full_name', trim(admin_full_name)),
-        updated_at = now()
-    WHERE id = v_user_id;
-
+    -- Account already exists as customer/worker: elevate profile role to sub_admin WITHOUT touching auth credentials
     UPDATE public.profiles
     SET role = 'sub_admin',
         full_name = trim(admin_full_name),
         phone = v_clean_phone,
         email = v_clean_email,
-        updated_at = now()
+        updated_at = timezone('utc', now())
     WHERE id = v_user_id;
   ELSE
-    -- Create completely new auth user
+    -- Completely new user: Provision auth user and profile
     v_user_id := gen_random_uuid();
 
     INSERT INTO auth.users (
@@ -446,7 +643,10 @@ $$;
 REVOKE EXECUTE ON FUNCTION public.admin_create_sub_admin(text, text, text, text) FROM public, anon;
 GRANT EXECUTE ON FUNCTION public.admin_create_sub_admin(text, text, text, text) TO authenticated, service_role;
 
--- Sub-Admin Demotion RPC (Super Admin Only)
+-- ============================================================================
+-- STEP 11: SUB ADMIN DEMOTION RPC (SUPER ADMIN ONLY)
+-- ============================================================================
+DROP FUNCTION IF EXISTS public.admin_demote_sub_admin(uuid);
 CREATE OR REPLACE FUNCTION public.admin_demote_sub_admin(target_user_id uuid)
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -469,7 +669,7 @@ BEGIN
     RAISE EXCEPTION 'Profile not found.';
   END IF;
 
-  IF v_target_role = 'super_admin' OR lower(coalesce(v_target_email, '')) = 'jayant.deshwal.56@gmail.com' THEN
+  IF target_user_id = public.get_super_admin_uuid() OR v_target_role = 'super_admin' THEN
     RAISE EXCEPTION 'Action prohibited: The Super Administrator account cannot be demoted.';
   END IF;
 
@@ -506,7 +706,9 @@ $$;
 REVOKE EXECUTE ON FUNCTION public.admin_demote_sub_admin(uuid) FROM public, anon;
 GRANT EXECUTE ON FUNCTION public.admin_demote_sub_admin(uuid) TO authenticated, service_role;
 
--- Update get_admin_team to return role and order Super Admin first
+-- ============================================================================
+-- STEP 12: TEAM LISTING RPC (STRICTLY SUPER_ADMIN AND SUB_ADMIN)
+-- ============================================================================
 DROP FUNCTION IF EXISTS public.get_admin_team();
 CREATE OR REPLACE FUNCTION public.get_admin_team()
 RETURNS table (
@@ -535,9 +737,9 @@ BEGIN
     p.role::text,
     p.created_at
   FROM public.profiles p
-  WHERE p.role IN ('super_admin', 'sub_admin', 'admin')
+  WHERE p.role IN ('super_admin', 'sub_admin')
   ORDER BY 
-    CASE WHEN p.role = 'super_admin' THEN 1 WHEN p.role = 'admin' THEN 2 ELSE 3 END,
+    CASE WHEN p.role = 'super_admin' THEN 1 ELSE 2 END,
     p.created_at ASC;
 END;
 $$;
@@ -545,7 +747,11 @@ $$;
 REVOKE EXECUTE ON FUNCTION public.get_admin_team() FROM public, anon;
 GRANT EXECUTE ON FUNCTION public.get_admin_team() TO authenticated, service_role;
 
--- Update admin_delete_profile_permanently with immutable Super Admin checks
+-- ============================================================================
+-- STEP 13: HARDENED ACCOUNT DELETION RPC
+-- ============================================================================
+DROP FUNCTION IF EXISTS public.admin_delete_profile_permanently(text);
+DROP FUNCTION IF EXISTS public.admin_delete_profile_permanently(uuid);
 CREATE OR REPLACE FUNCTION public.admin_delete_profile_permanently(target_profile_id text)
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -579,14 +785,14 @@ BEGIN
     RAISE EXCEPTION 'Action prohibited: Administrators cannot delete their own profile from the admin console.';
   END IF;
 
-  -- 4. Verify target profile exists in public.profiles or auth.users
+  -- 4. Verify target profile exists in public.profiles
   SELECT role::text, full_name, phone, email
   INTO v_target_role, v_target_name, v_target_phone, v_target_email
   FROM public.profiles
   WHERE id = v_target_uuid;
 
   -- 5. IMMUTABLE SUPER ADMIN PROTECTION: Cannot be deleted by anyone
-  IF v_target_role = 'super_admin' OR lower(coalesce(v_target_email, '')) = 'jayant.deshwal.56@gmail.com' THEN
+  IF v_target_uuid = public.get_super_admin_uuid() OR v_target_role = 'super_admin' THEN
     RAISE EXCEPTION 'Action prohibited: The Super Administrator account cannot be deleted.';
   END IF;
 
@@ -620,7 +826,7 @@ REVOKE EXECUTE ON FUNCTION public.admin_delete_profile_permanently(text) FROM pu
 GRANT EXECUTE ON FUNCTION public.admin_delete_profile_permanently(text) TO authenticated, service_role;
 
 -- ============================================================================
--- STEP 9: HARDEN PROFILES RLS UPDATE POLICY
+-- STEP 14: PROFILES RLS UPDATE POLICY
 -- ============================================================================
 DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
 CREATE POLICY "Users can update their own profile"
@@ -629,7 +835,7 @@ USING (id = auth.uid() OR public.is_admin())
 WITH CHECK (id = auth.uid() OR public.is_admin());
 
 -- ============================================================================
--- STEP 10: AUDIT & HARDEN ALL REMAINING ADMIN RPC GRANTS
+-- STEP 15: AUDIT & HARDEN ALL REMAINING ADMIN RPC GRANTS
 -- ============================================================================
 REVOKE EXECUTE ON FUNCTION public.review_worker(uuid, public.worker_approval_status, text) FROM public, anon;
 GRANT EXECUTE ON FUNCTION public.review_worker(uuid, public.worker_approval_status, text) TO authenticated, service_role;

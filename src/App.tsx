@@ -24,6 +24,24 @@ import CategoryPage from './pages/CategoryPage'
 import { useState } from 'react'
 import { useAuth } from './context/AuthContext'
 
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading, isAdmin } = useAuth()
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-semantic-bg-primary flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" />
+      </div>
+    )
+  }
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
+  if (!isAdmin) {
+    return <Navigate to="/" replace />
+  }
+  return <>{children}</>
+}
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth()
   if (isLoading) {
@@ -99,7 +117,7 @@ function AppRoutes() {
         <Route path="notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
         <Route path="alerts" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
         <Route path="worker/dashboard" element={<ProtectedRoute><WorkerDashboard /></ProtectedRoute>} />
-        <Route path="admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+        <Route path="admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -32,6 +32,7 @@ import {
   Moon,
 } from 'lucide-react'
 import { checkPhoneRegistration } from '@/services/authCheck'
+import { sanitizeErrorMessage } from '@/utils/errors'
 import JugnuLogo from '@/components/common/JugnuLogo'
 
 export default function Login() {
@@ -110,7 +111,7 @@ export default function Login() {
   // Redirect based on role and active verification
   useEffect(() => {
     if (user) {
-      if (user.role === 'admin' || user.role === 'super_admin' || user.role === 'sub_admin') {
+      if (user.role === 'super_admin' || user.role === 'sub_admin') {
         const is2faVerified = typeof window !== 'undefined' && sessionStorage.getItem('admin_2fa_verified') === 'true'
         if (is2faVerified) {
           const timer = setTimeout(() => {
@@ -287,7 +288,7 @@ export default function Login() {
       setForgotModalOpen(false)
       navigate(verifiedUserInfo.role === 'worker' ? '/worker/dashboard' : '/')
     } catch (err) {
-      setForgotError(err instanceof Error ? err.message : 'Unable to update password. Please retry.')
+      setForgotError(sanitizeErrorMessage(err, 'Unable to update password. Please retry.'))
     } finally {
       setForgotLoading(false)
     }
@@ -306,7 +307,7 @@ export default function Login() {
       setForgotModalOpen(false)
       navigate(verifiedUserInfo.role === 'worker' ? '/worker/dashboard' : '/')
     } catch (err) {
-      setForgotError(err instanceof Error ? err.message : 'Login failed. Please retry.')
+      setForgotError(sanitizeErrorMessage(err, 'Login failed. Please retry.'))
     } finally {
       setForgotLoading(false)
     }
@@ -370,7 +371,7 @@ export default function Login() {
         throw firstErr
       }
     } catch (err) {
-      setCustomerError(err instanceof Error ? err.message : 'Invalid login credentials. Please check and retry.')
+      setCustomerError(sanitizeErrorMessage(err, 'Invalid login credentials. Please check and retry.'))
     } finally {
       setCustomerLoading(false)
     }
@@ -436,7 +437,7 @@ export default function Login() {
         throw firstErr
       }
     } catch (err) {
-      setWorkerError(err instanceof Error ? err.message : 'Invalid worker credentials. Please check and retry.')
+      setWorkerError(sanitizeErrorMessage(err, 'Invalid worker credentials. Please check and retry.'))
     } finally {
       setWorkerLoading(false)
     }
@@ -500,7 +501,7 @@ export default function Login() {
           .eq('id', sessionData.session.user.id)
           .maybeSingle()
 
-        if (profile?.role !== 'admin') {
+        if (profile?.role !== 'super_admin' && profile?.role !== 'sub_admin') {
           await logout()
           setAdminError('Access denied: This account is not authorized as a platform administrator.')
           return
@@ -518,7 +519,7 @@ export default function Login() {
         }
       }
     } catch (err) {
-      setAdminError(err instanceof Error ? err.message : 'Invalid administrator email or password')
+      setAdminError(sanitizeErrorMessage(err, 'Invalid administrator email or password'))
     } finally {
       setAdminLoading(false)
     }

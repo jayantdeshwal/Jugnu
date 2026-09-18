@@ -55,6 +55,7 @@ import { uploadAvatar, uploadIdProof, validateFile } from '@/services/storage'
 import { notifyAdminsOfWorkerRegistration } from '@/services/admin'
 import { openOtpWidget } from '@/services/otp'
 import { checkPhoneRegistration } from '@/services/authCheck'
+import { sanitizeErrorMessage } from '@/utils/errors'
 
 const categoryIconMap: Record<string, React.ElementType> = {
   home: HomeIcon,
@@ -429,7 +430,7 @@ export default function WorkerRegistration() {
 
       setSubmitted(true)
     } catch (submitErr) {
-      setErrors({ form: submitErr instanceof Error ? submitErr.message : 'Unable to complete registration' })
+      setErrors({ form: sanitizeErrorMessage(submitErr, 'Unable to complete registration. Please try again.') })
     } finally {
       setLoading(false)
       setUploadProgress('')

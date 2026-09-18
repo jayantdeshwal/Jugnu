@@ -1,5 +1,6 @@
 import { AssistantPersona, ChatAction, ChatMessage } from './types'
 import { MUZAFFARNAGAR_KNOWLEDGE } from './domainKnowledge'
+import { getSupabaseClient } from '@/lib/supabase'
 
 interface GenerateResponseParams {
   query: string
@@ -7,117 +8,68 @@ interface GenerateResponseParams {
   conversationHistory?: ChatMessage[]
 }
 
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions'
-const DEFAULT_GROQ_MODEL = 'llama-3.3-70b-versatile'
-
 export async function processAiQuery({
   query,
   persona,
   conversationHistory = [],
 }: GenerateResponseParams): Promise<ChatMessage> {
   const normalizedQuery = query.toLowerCase().trim()
-  const apiKey = import.meta.env.VITE_GROQ_API_KEY
 
-  // If Groq API Key is configured in .env, query Groq high-speed LLaMA inference
-  if (apiKey && apiKey.trim().length > 10) {
-    try {
-      const groqResponse = await callGroqCloud({
-        query,
-        persona,
-        apiKey: apiKey.trim(),
-        conversationHistory,
-      })
-      if (groqResponse) return groqResponse
-    } catch (err) {
-      console.warn('Groq API call failed, seamlessly falling back to local Jugnu domain engine:', err)
-    }
+  // Attempt server-side inference via secure Edge Function (Groq secret kept server-side)
+  try {
+    const serverResponse = await callServerAi({
+      query,
+      persona,
+      conversationHistory,
+    })
+    if (serverResponse) return serverResponse
+  } catch (err) {
+    console.warn('[AI] Server inference notice, activating local Jugnu domain engine:', err)
   }
 
-  // Instant Local Domain Intelligence Engine (0ms latency, high precision for Muzaffarnagar)
+  // Instant Local Domain Intelligence Engine (deterministic local logic for Muzaffarnagar)
   return resolveLocalQuery(normalizedQuery, persona)
 }
 
-// Call Groq LLaMA 3.3 API
-async function callGroqCloud({
+// Call server-side Supabase Edge Function 'chat-ai'
+async function callServerAi({
   query,
   persona,
-  apiKey,
   conversationHistory = [],
 }: {
   query: string
   persona: AssistantPersona
-  apiKey: string
   conversationHistory?: ChatMessage[]
 }): Promise<ChatMessage | null> {
-  const model = import.meta.env.VITE_GROQ_MODEL || DEFAULT_GROQ_MODEL
+  const supabase = getSupabaseClient()
 
-  const systemPrompts: Record<AssistantPersona, string> = {
-    customer_booking: `You are "Booking Mitra (बुकिंग मित्र)", an expert local service guide for Jugnu in Uttar Pradesh, India.
-Your mission:
-1. Help citizens of Muzaffarnagar diagnose household issues (electricity, plumbing, AC, cleaning, salon, carpentry, painting).
-2. Recommend the exact trade artisan they need.
-3. Quote standard visiting rates in Muzaffarnagar (Electrician/Plumber ₹149-₹249, AC ₹249-₹349, Deep Cleaning ₹399-₹1299, Salon ₹249-₹499).
-4. Emphasize that all artisans are Aadhaar-verified local residents covering PIN 251001 (New Mandi, Shiv Chowk, Gandhi Colony) and PIN 251002 (Civil Lines, Cantt, Circular Road).
-5. Always answer politely with clear headings, first in English and then in Hindi.`,
-
-    customer_care: `You are "Jugnu Care (जुगनू समाधान)", the customer support representative for Jugnu.
-Your mission:
-1. Help customers resolve issues with active bookings, artisan arrival delays, quality concerns, and pricing disputes.
-2. If an artisan is delayed, advise the customer to ping via WhatsApp/Call on their My Bookings page. If delayed past 15 minutes, offer immediate Admin escalation.
-3. If an artisan demands more than standard visiting fees without giving a formal bill, explain Jugnu's Fair Price Protection.
-4. Jugnu Admin helpline is +91 8077362606 (WhatsApp & Call).
-5. Answer politely and empathetically with clear guidance, first in English and then in Hindi.`,
-
-    worker_sarathi: `You are "Jugnu Sarathi (जुगनू सारथी)", the business coach and supportive companion for registered local artisans in Muzaffarnagar.
-Your mission:
-1. Help workers get more booking calls (tips: keep duty ONLINE, respond under 5 mins, earn 5-star ratings, get Aadhaar Verified Gold Badge).
-2. Explain the 0% Commission Policy: Jugnu takes ₹0 commission for the first 3 months. Workers keep 100% of customer payments directly via Cash or personal UPI.
-3. Generate polite Hindi WhatsApp message templates workers can copy-paste to customers (e.g. "नमस्ते, मैं जुगनू से...").
-4. Guide workers on handling difficult customer situations politely and connecting to the Artisan Support Desk (+91 8077362606).
-5. Always speak with deep respect for artisans, in a warm, encouraging tone (Hinglish / Hindi friendly).`,
-  }
-
-  // Format past history into Groq chat format (last 6 messages for context)
+  // Format past history for context (last 6 messages)
   const recentHistory = conversationHistory.slice(-6).map(m => ({
-    role: m.sender === 'user' ? ('user' as const) : ('assistant' as const),
-    content: m.textEn || m.textHi,
+    sender: m.sender,
+    textEn: m.textEn,
+    textHi: m.textHi,
   }))
 
-  const messagesPayload = [
-    { role: 'system', content: systemPrompts[persona] },
-    ...recentHistory,
-    { role: 'user', content: query },
-  ]
-
-  const response = await fetch(GROQ_API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
+  const { data, error } = await supabase.functions.invoke('chat-ai', {
+    body: {
+      query,
+      persona,
+      conversationHistory: recentHistory,
     },
-    body: JSON.stringify({
-      model,
-      messages: messagesPayload,
-      temperature: 0.3,
-      max_tokens: 650,
-    }),
   })
 
-  if (!response.ok) {
-    const errBody = await response.text()
-    console.warn(`Groq API error HTTP ${response.status}:`, errBody)
+  if (error || !data?.content) {
     return null
   }
 
-  const data = await response.json()
-  const textContent = data?.choices?.[0]?.message?.content?.trim()
+  const textContent = String(data.content).trim()
   if (!textContent) return null
 
   // Attach relevant action buttons based on persona and query content
   const actions = extractContextualActions(query, persona)
 
   return {
-    id: 'groq_' + Date.now(),
+    id: 'ai_' + Date.now(),
     sender: 'assistant',
     persona,
     timestamp: new Date(),

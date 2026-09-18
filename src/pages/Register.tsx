@@ -27,6 +27,7 @@ import { uploadIdProof, validateFile } from '@/services/storage'
 import { notifyAdminsOfWorkerRegistration } from '@/services/admin'
 import { openOtpWidget } from '@/services/otp'
 import { checkPhoneRegistration } from '@/services/authCheck'
+import { sanitizeErrorMessage } from '@/utils/errors'
 
 export default function Register() {
   const { t, i18n } = useTranslation()
@@ -155,7 +156,7 @@ export default function Register() {
             )
             navigate('/')
           } catch (err) {
-            const msg = err instanceof Error ? err.message : 'Registration failed after OTP verification'
+            const msg = sanitizeErrorMessage(err, 'Registration failed after OTP verification')
             if (msg.toLowerCase().includes('already registered')) {
               setAlreadyRegisteredNotice({
                 phone: cleanPhone,
@@ -293,7 +294,7 @@ export default function Register() {
 
             navigate('/worker/dashboard')
           } catch (err) {
-            const msg = err instanceof Error ? err.message : 'Worker registration failed. Please retry.'
+            const msg = sanitizeErrorMessage(err, 'Worker registration failed. Please retry.')
             if (msg.toLowerCase().includes('already registered')) {
               setAlreadyRegisteredNotice({
                 phone: cleanPhone,

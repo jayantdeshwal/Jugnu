@@ -11,10 +11,8 @@ declare global {
   }
 }
 
-const MSG91_WIDGET_ID =
-  import.meta.env.VITE_MSG91_WIDGET_ID || '36696b6b4232313630363837'
-const MSG91_TOKEN_AUTH =
-  import.meta.env.VITE_MSG91_TOKEN_AUTH || '569945Tz82Zg5V6aa3e785P1'
+const MSG91_WIDGET_ID = import.meta.env.VITE_MSG91_WIDGET_ID || ''
+const MSG91_TOKEN_AUTH = import.meta.env.VITE_MSG91_TOKEN_AUTH || ''
 
 const PRIMARY_CDN = 'https://verify.msg91.com/otp-provider.js'
 const BACKUP_CDN = 'https://verify.phone91.com/otp-provider.js'

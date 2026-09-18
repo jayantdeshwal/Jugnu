@@ -56,6 +56,7 @@ import {
   AdminNotificationItem,
   fetchAdminTeam,
   createSubAdmin,
+  demoteSubAdmin,
   AdminTeamMember,
 } from '@/services/admin'
 import { getIdProofSignedUrl } from '@/services/storage'
@@ -182,6 +183,7 @@ export default function AdminDashboard() {
   const [isSubmittingNewAdmin, setIsSubmittingNewAdmin] = useState(false)
   const [addAdminError, setAddAdminError] = useState('')
   const [addAdminSuccess, setAddAdminSuccess] = useState('')
+  const [isDemotingAdmin, setIsDemotingAdmin] = useState(false)
 
   // Filter & Search states
   const [workerSearch, setWorkerSearch] = useState('')
@@ -482,6 +484,21 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleDemoteAdmin = async (adminMember: AdminTeamMember) => {
+    if (!window.confirm(`Are you sure you want to demote Sub Administrator "${adminMember.full_name}" to a regular customer?`)) {
+      return
+    }
+    setIsDemotingAdmin(true)
+    try {
+      await demoteSubAdmin(adminMember.id)
+      await loadAdminTeamData()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to demote administrator.')
+    } finally {
+      setIsDemotingAdmin(false)
+    }
+  }
+
   const refreshAll = async () => {
     await Promise.all([
       loadWorkersData(),
@@ -662,17 +679,12 @@ export default function AdminDashboard() {
     }
 
     const realCountsSum = days.reduce((acc, curr) => acc + curr.count, 0)
-    const displayDays = realCountsSum > 0 ? days : days.map((d, idx) => ({
-      ...d,
-      count: [2, 4, 3, 5, 7, 6, 8, 5, 9, 11, 8, 12, 10, 14][idx] || 2,
-    }))
-
-    const maxCount = Math.max(...displayDays.map(d => d.count), 1)
+    const maxCount = Math.max(...days.map(d => d.count), 1)
     return {
-      days: displayDays,
+      days,
       maxCount,
-      totalCount: realCountsSum > 0 ? realCountsSum : displayDays.reduce((a, b) => a + b.count, 0),
-      isSimulated: realCountsSum === 0 && bookings.length === 0,
+      totalCount: realCountsSum,
+      isSimulated: false,
     }
   }, [bookings])
 
@@ -700,13 +712,7 @@ export default function AdminDashboard() {
     const colors = ['#F59E0B', '#10B981', '#6366F1', '#38BDF8', '#EC4899']
 
     if (sorted.length === 0) {
-      return [
-        { category: 'Electrician', count: 18, color: colors[0], pct: 35 },
-        { category: 'Plumber', count: 14, color: colors[1], pct: 27 },
-        { category: 'Carpenter', count: 9, color: colors[2], pct: 17 },
-        { category: 'AC Service', count: 7, color: colors[3], pct: 13 },
-        { category: 'Painter', count: 4, color: colors[4], pct: 8 },
-      ]
+      return []
     }
 
     const total = sorted.reduce((acc, curr) => acc + curr.count, 0) || 1
@@ -733,13 +739,7 @@ export default function AdminDashboard() {
       .slice(0, 5)
 
     if (sorted.length === 0) {
-      return [
-        { locality: '251001 (City Central)', count: 24, percentage: 100 },
-        { locality: '251002 (New Mandi)', count: 19, percentage: 79 },
-        { locality: '251201 (Khatauli)', count: 14, percentage: 58 },
-        { locality: '251306 (Budhana)', count: 9, percentage: 38 },
-        { locality: '251318 (Jansath)', count: 7, percentage: 29 },
-      ]
+      return []
     }
 
     const maxVal = Math.max(...sorted.map(s => s.count), 1)
@@ -1230,9 +1230,6 @@ export default function AdminDashboard() {
                       <h3 className="font-bold text-base text-slate-900 dark:text-white">
                         14-Day Booking Demand Trends
                       </h3>
-                      {bookingTrendsData.isSimulated && (
-                        <Badge variant="outline" className="text-[10px]">Active Activity</Badge>
-                      )}
                     </div>
                     <p className="text-xs text-semantic-text-secondary mt-0.5">
                       Daily customer bookings & service requests across Muzaffarnagar
@@ -1247,119 +1244,124 @@ export default function AdminDashboard() {
 
                 {/* SVG Area Chart Container */}
                 <div className="relative w-full h-44 sm:h-52 select-none">
-                  <svg
-                    viewBox="0 0 520 180"
-                    className="w-full h-full overflow-visible"
-                    preserveAspectRatio="none"
-                  >
-                    <defs>
-                      <linearGradient id="bookingTrendGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.45" />
-                        <stop offset="50%" stopColor="#F59E0B" stopOpacity="0.15" />
-                        <stop offset="100%" stopColor="#F59E0B" stopOpacity="0.0" />
-                      </linearGradient>
-                    </defs>
-
-                    {/* Horizontal Grid lines */}
-                    {[35, 75, 115, 155].map((yVal, idx) => (
-                      <line
-                        key={idx}
-                        x1="20"
-                        y1={yVal}
-                        x2="500"
-                        y2={yVal}
-                        stroke="currentColor"
-                        className="text-semantic-border-light"
-                        strokeDasharray="4 4"
-                        strokeWidth="1"
-                      />
-                    ))}
-
-                    {/* Generate SVG points */}
-                    {(() => {
-                      const points = bookingTrendsData.days.map((day, i) => {
-                        const x = 30 + (i / 13) * 460
-                        const y = 150 - (day.count / bookingTrendsData.maxCount) * 110
-                        return { x, y, day }
-                      })
-
-                      const pathD = points.reduce((acc, pt, i) => {
-                        return i === 0 ? `M ${pt.x},${pt.y}` : `${acc} L ${pt.x},${pt.y}`
-                      }, '')
-
-                      const areaD = `${pathD} L ${points[points.length - 1].x},160 L ${points[0].x},160 Z`
-
-                      return (
-                        <>
-                          {/* Shaded Area Fill */}
-                          <path d={areaD} fill="url(#bookingTrendGradient)" />
-                          {/* Main Line Stroke */}
-                          <path
-                            d={pathD}
-                            fill="none"
-                            stroke="#F59E0B"
-                            strokeWidth="3.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          {/* Data points */}
-                          {points.map((pt, i) => {
-                            const isHovered = hoveredTrendIdx === i
-                            return (
-                              <g key={i}>
-                                <circle
-                                  cx={pt.x}
-                                  cy={pt.y}
-                                  r={isHovered ? 6.5 : 4}
-                                  fill="#F59E0B"
-                                  stroke="#18181B"
-                                  strokeWidth="2.5"
-                                  className="transition-all cursor-pointer"
-                                  onMouseEnter={() => setHoveredTrendIdx(i)}
-                                  onMouseLeave={() => setHoveredTrendIdx(null)}
-                                />
-                                {isHovered && (
-                                  <circle
-                                    cx={pt.x}
-                                    cy={pt.y}
-                                    r={11}
-                                    fill="#F59E0B"
-                                    opacity="0.25"
-                                    className="animate-ping"
-                                  />
-                                )}
-                              </g>
-                            )
-                          })}
-                        </>
-                      )
-                    })()}
-                  </svg>
-
-                  {/* Active Tooltip overlay on hover */}
-                  {hoveredTrendIdx !== null && bookingTrendsData.days[hoveredTrendIdx] && (
-                    <div
-                      className="absolute -top-3 pointer-events-none transform -translate-x-1/2 bg-surface-950/95 border border-brand-500/50 text-white text-xs px-3 py-1.5 rounded-xl shadow-xl backdrop-blur-md transition-all flex items-center gap-2"
-                      style={{
-                        left: `${(30 + (hoveredTrendIdx / 13) * 460) / 5.2}%`,
-                      }}
-                    >
-                      <span className="font-bold text-brand-400">
-                        {bookingTrendsData.days[hoveredTrendIdx].count} Bookings
-                      </span>
-                      <span className="text-[10px] text-gray-400">
-                        {bookingTrendsData.days[hoveredTrendIdx].label}
-                      </span>
+                  {bookingTrendsData.totalCount === 0 ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 dark:text-zinc-500">
+                      <Activity className="w-8 h-8 mb-2 opacity-40" />
+                      <p className="text-sm font-medium">No activity recorded yet</p>
+                      <p className="text-xs text-slate-400 dark:text-zinc-600 mt-1">Bookings created in the last 14 days will appear here</p>
                     </div>
-                  )}
+                  ) : (
+                    <>
+                      <svg
+                        viewBox="0 0 520 180"
+                        className="w-full h-full overflow-visible"
+                        preserveAspectRatio="none"
+                      >
+                        <defs>
+                          <linearGradient id="bookingTrendGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.45" />
+                            <stop offset="50%" stopColor="#F59E0B" stopOpacity="0.15" />
+                            <stop offset="100%" stopColor="#F59E0B" stopOpacity="0.0" />
+                          </linearGradient>
+                        </defs>
 
-                  {/* Date labels row */}
-                  <div className="flex justify-between text-[10px] text-semantic-text-tertiary mt-2 px-3 font-mono">
-                    <span>{bookingTrendsData.days[0]?.label}</span>
-                    <span>{bookingTrendsData.days[4]?.label}</span>
-                    <span>{bookingTrendsData.days[9]?.label}</span>
-                    <span>{bookingTrendsData.days[13]?.label}</span>
-                  </div>
+                        {/* Horizontal Grid lines */}
+                        {[35, 75, 115, 155].map((yVal, idx) => (
+                          <line
+                            key={idx}
+                            x1="20"
+                            y1={yVal}
+                            x2="500"
+                            y2={yVal}
+                            stroke="currentColor"
+                            className="text-semantic-border-light"
+                            strokeDasharray="4 4"
+                            strokeWidth="1"
+                          />
+                        ))}
+
+                        {/* Generate SVG points */}
+                        {(() => {
+                          const points = bookingTrendsData.days.map((day, i) => {
+                            const x = 30 + (i / 13) * 460
+                            const y = 150 - (day.count / bookingTrendsData.maxCount) * 110
+                            return { x, y, day }
+                          })
+
+                          const pathD = points.reduce((acc, pt, i) => {
+                            return i === 0 ? `M ${pt.x},${pt.y}` : `${acc} L ${pt.x},${pt.y}`
+                          }, '')
+
+                          const areaD = `${pathD} L ${points[points.length - 1].x},160 L ${points[0].x},160 Z`
+
+                          return (
+                            <>
+                              {/* Shaded Area Fill */}
+                              <path d={areaD} fill="url(#bookingTrendGradient)" />
+                              {/* Main Line Stroke */}
+                              <path
+                                d={pathD}
+                                fill="none"
+                                stroke="#F59E0B"
+                                strokeWidth="3.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                              {/* Data Points */}
+                              {points.map((pt, i) => {
+                                const isHovered = hoveredTrendIdx === i
+                                return (
+                                  <g key={i} className="cursor-pointer">
+                                    <circle
+                                      cx={pt.x}
+                                      cy={pt.y}
+                                      r={isHovered ? 6 : 3.5}
+                                      className="fill-amber-400 stroke-white dark:stroke-zinc-900 transition-all duration-150"
+                                      strokeWidth={isHovered ? 2.5 : 2}
+                                    />
+                                    {/* Invisible hover target */}
+                                    <circle
+                                      cx={pt.x}
+                                      cy={pt.y}
+                                      r={16}
+                                      fill="transparent"
+                                      onMouseEnter={() => setHoveredTrendIdx(i)}
+                                      onMouseLeave={() => setHoveredTrendIdx(null)}
+                                    />
+                                  </g>
+                                )
+                              })}
+                            </>
+                          )
+                        })()}
+                      </svg>
+
+                      {/* Floating Tooltip */}
+                      {hoveredTrendIdx !== null && bookingTrendsData.days[hoveredTrendIdx] && (
+                        <div
+                          className="absolute pointer-events-none bg-slate-900/95 text-white dark:bg-zinc-800 border border-slate-700/80 rounded-xl px-2.5 py-1.5 shadow-xl text-xs z-10 -translate-x-1/2 -top-1 transition-all duration-100"
+                          style={{
+                            left: `${(30 + (hoveredTrendIdx / 13) * 460) / 5.2}%`,
+                          }}
+                        >
+                          <span className="font-bold text-amber-400 block font-mono">
+                            {bookingTrendsData.days[hoveredTrendIdx].count} Bookings
+                          </span>
+                          <span className="text-[10px] text-gray-400">
+                            {bookingTrendsData.days[hoveredTrendIdx].label}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Date labels row */}
+                      <div className="flex justify-between text-[10px] text-semantic-text-tertiary mt-2 px-3 font-mono">
+                        <span>{bookingTrendsData.days[0]?.label}</span>
+                        <span>{bookingTrendsData.days[4]?.label}</span>
+                        <span>{bookingTrendsData.days[9]?.label}</span>
+                        <span>{bookingTrendsData.days[13]?.label}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -1378,31 +1380,37 @@ export default function AdminDashboard() {
 
                   {/* Category Pills & Progress Bars */}
                   <div className="space-y-3">
-                    {categoryDistribution.map(cat => (
-                      <div key={cat.category} className="space-y-1">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="font-semibold text-semantic-text-primary capitalize flex items-center gap-1.5">
-                            <span
-                              className="w-2.5 h-2.5 rounded-full"
-                              style={{ backgroundColor: cat.color }}
-                            />
-                            {cat.category}
-                          </span>
-                          <span className="text-semantic-text-secondary font-mono">
-                            {cat.count} jobs ({cat.pct}%)
-                          </span>
-                        </div>
-                        <div className="h-2 w-full bg-surface-200 rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all duration-500"
-                            style={{
-                              width: `${cat.pct}%`,
-                              backgroundColor: cat.color,
-                            }}
-                          />
-                        </div>
+                    {categoryDistribution.length === 0 ? (
+                      <div className="py-6 text-center text-slate-400 dark:text-zinc-500">
+                        <p className="text-xs font-medium">No activity recorded yet</p>
                       </div>
-                    ))}
+                    ) : (
+                      categoryDistribution.map(cat => (
+                        <div key={cat.category} className="space-y-1">
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="font-semibold text-semantic-text-primary capitalize flex items-center gap-1.5">
+                              <span
+                                className="w-2.5 h-2.5 rounded-full"
+                                style={{ backgroundColor: cat.color }}
+                              />
+                              {cat.category}
+                            </span>
+                            <span className="text-semantic-text-secondary font-mono">
+                              {cat.count} jobs ({cat.pct}%)
+                            </span>
+                          </div>
+                          <div className="h-2 w-full bg-surface-200 rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{
+                                width: `${cat.pct}%`,
+                                backgroundColor: cat.color,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
 
@@ -1412,19 +1420,25 @@ export default function AdminDashboard() {
                     Top Locality Density (Muzaffarnagar)
                   </span>
                   <div className="grid grid-cols-2 gap-2">
-                    {localityDistribution.slice(0, 4).map(loc => (
-                      <div
-                        key={loc.locality}
-                        className="p-2 rounded-xl bg-surface-200/60 border border-semantic-border-light/60 text-xs flex justify-between items-center"
-                      >
-                        <span className="text-semantic-text-primary truncate font-medium">
-                          {loc.locality}
-                        </span>
-                        <span className="text-brand-400 font-mono font-bold shrink-0 ml-1">
-                          {loc.count}
-                        </span>
+                    {localityDistribution.length === 0 ? (
+                      <div className="col-span-2 py-4 text-center text-slate-400 dark:text-zinc-500">
+                        <p className="text-xs font-medium">No activity recorded yet</p>
                       </div>
-                    ))}
+                    ) : (
+                      localityDistribution.slice(0, 4).map(loc => (
+                        <div
+                          key={loc.locality}
+                          className="p-2 rounded-xl bg-surface-200/60 border border-semantic-border-light/60 text-xs flex justify-between items-center"
+                        >
+                          <span className="text-semantic-text-primary truncate font-medium">
+                            {loc.locality}
+                          </span>
+                          <span className="text-brand-400 font-mono font-bold shrink-0 ml-1">
+                            {loc.count}
+                          </span>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
@@ -2656,6 +2670,18 @@ export default function AdminDashboard() {
                             <Calendar className="w-3.5 h-3.5" />
                             <span>Joined {new Date(admin.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                           </div>
+
+                          {isSuperAdmin && !isCurrentUser && admin.role === 'sub_admin' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDemoteAdmin(admin)}
+                              disabled={isDemotingAdmin}
+                              className="text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 px-2 py-1 h-auto"
+                            >
+                              Demote to Customer
+                            </Button>
+                          )}
                         </div>
                       </div>
                     )

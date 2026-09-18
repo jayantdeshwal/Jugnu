@@ -343,7 +343,7 @@ export async function notifyAdminsOfWorkerRegistration(params: {
     const supabase = getSupabaseClient()
     const { data: admins } = await (supabase.from('profiles') as any)
       .select('id')
-      .in('role', ['admin', 'super_admin', 'sub_admin'])
+      .in('role', ['super_admin', 'sub_admin'])
 
     if (!admins || admins.length === 0) return
 
@@ -388,7 +388,7 @@ export interface AdminTeamMember {
   full_name: string
   email: string
   phone: string
-  role?: 'super_admin' | 'sub_admin' | 'admin'
+  role?: 'super_admin' | 'sub_admin'
   avatar_url?: string | null
   created_at: string
 }
@@ -448,7 +448,7 @@ export async function fetchAdminTeam(currentAdminUser?: {
   try {
     const { data: directData } = await (supabase.from('profiles') as any)
       .select('id, full_name, email, phone, avatar_url, role, created_at')
-      .in('role', ['admin', 'super_admin', 'sub_admin'])
+      .in('role', ['super_admin', 'sub_admin'])
       .order('created_at', { ascending: true })
 
     if (Array.isArray(directData) && directData.length > 0) {
@@ -474,7 +474,7 @@ export async function fetchAdminTeam(currentAdminUser?: {
       const cached = localStorage.getItem('kaamgar-user')
       if (cached) {
         const u = JSON.parse(cached)
-        if (['admin', 'super_admin', 'sub_admin'].includes(u?.role)) {
+        if (['super_admin', 'sub_admin'].includes(u?.role)) {
           adminMap.set(u.id || 'current_admin', {
             id: u.id || 'current_admin',
             full_name: u.name || 'Platform Administrator',

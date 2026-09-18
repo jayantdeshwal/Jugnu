@@ -77,7 +77,8 @@ const tests = [
     verify: () => {
       const indexCreated = allSql.includes('CREATE UNIQUE INDEX IF NOT EXISTS uq_profiles_single_super_admin') &&
                            allSql.includes("WHERE role = 'super_admin'");
-      const blocksExtraSuperAdmin = allSql.includes("Additional Super Administrator accounts cannot be created");
+      const blocksExtraSuperAdmin = allSql.includes("The super_admin role is strictly reserved for the authoritative Super Administrator") ||
+                                   allSql.includes("The super_admin role is strictly reserved for the designated Super Administrator");
       return indexCreated && blocksExtraSuperAdmin;
     },
     details: 'Database partial unique index uq_profiles_single_super_admin guarantees <= 1 super_admin row, and guard_profile_updates trigger forbids assigning super_admin to another profile.',
@@ -92,7 +93,7 @@ const tests = [
                            allSql.includes('The Super Administrator account cannot be deleted');
       return blocksDemote && blocksRename && blocksDelete;
     },
-    details: 'guard_profile_updates and guard_profile_deletions enforce that jayant.deshwal.56@gmail.com / super_admin role and email cannot be altered or deleted.',
+    details: 'guard_profile_updates and guard_profile_deletions enforce that Super Admin role, email, and identity cannot be altered, demoted, or deleted.',
   },
   {
     id: 'HIER-04',
@@ -109,13 +110,36 @@ const tests = [
     details: 'admin_create_sub_admin, admin_demote_sub_admin, and admin_delete_profile_permanently require is_super_admin(), preventing Sub Admins from altering admin team members.',
   },
   {
-    id: 'RPC-AUDIT',
-    title: 'Admin RPC Security Audit: public and anon execution revoked on all admin endpoints',
+    id: 'HIER-05',
+    title: 'Authoritative Super Admin UUID Binding: Runtime authorization bound to founder UUID',
     verify: () => {
-      const rpcs = [
-        'is_admin',
-        'is_super_admin',
-        'is_sub_admin',
+      const helperDef = allSql.includes('CREATE OR REPLACE FUNCTION public.get_super_admin_uuid()');
+      const isSuperAdminUsesUuid = allSql.includes('auth.uid() = public.get_super_admin_uuid()');
+      return helperDef && isSuperAdminUsesUuid;
+    },
+    details: 'Authoritative founder UUID resolved at migration time and bound via get_super_admin_uuid(); public.is_super_admin() authorizes via auth.uid() matching that UUID without runtime email dependency.',
+  },
+  {
+    id: 'AUTH-01',
+    title: 'auth.users Disable & Delete Protection: Guard against ban, deletion, and identity transfer',
+    verify: () => {
+      const authTrigger = allSql.includes('CREATE TRIGGER trg_guard_auth_super_admin') &&
+                          allSql.includes('BEFORE UPDATE OR DELETE ON auth.users');
+      const protectsDelete = allSql.includes('The Super Administrator authentication record cannot be deleted');
+      const protectsEmail = allSql.includes('The Super Administrator email identity cannot be altered');
+      const protectsBan = allSql.includes('The Super Administrator account cannot be banned or disabled') ||
+                          allSql.includes('NEW.banned_until > now()');
+      const protectsSoftDelete = allSql.includes('The Super Administrator account cannot be soft-deleted') ||
+                                 allSql.includes('NEW.deleted_at IS NOT NULL');
+      return authTrigger && protectsDelete && protectsEmail && protectsBan && protectsSoftDelete;
+    },
+    details: 'trg_guard_auth_super_admin guards the Super Admin auth.users record against DELETE, id/email modifications, banned_until lockout, and soft-delete, while permitting routine sign-in timestamps.',
+  },
+  {
+    id: 'RPC-AUDIT',
+    title: 'Admin RPC Security Audit: public and anon execution revoked on administrative action endpoints',
+    verify: () => {
+      const adminActionRpcs = [
         'register_worker',
         'admin_create_sub_admin',
         'admin_demote_sub_admin',
@@ -126,10 +150,14 @@ const tests = [
         'get_admin_customers',
         'get_admin_notifications'
       ];
-      return rpcs.every(rpc => allSql.includes(`REVOKE EXECUTE ON FUNCTION public.${rpc}`) &&
-                               allSql.includes(`FROM public, anon`));
+      const rpcsRevoked = adminActionRpcs.every(rpc => allSql.includes(`REVOKE EXECUTE ON FUNCTION public.${rpc}`) &&
+                                                       allSql.includes(`FROM public, anon`));
+      const helpersGranted = ['is_admin', 'is_super_admin', 'is_sub_admin'].every(fn =>
+        allSql.includes(`GRANT EXECUTE ON FUNCTION public.${fn}() TO public, anon, authenticated, service_role`)
+      );
+      return rpcsRevoked && helpersGranted;
     },
-    details: 'All administrative RPCs have execute privileges explicitly REVOKED from public and anon.',
+    details: 'All administrative action RPCs have execute privileges explicitly REVOKED from public and anon, while auth helper functions are granted to anon to permit unauthenticated RLS evaluation.',
   },
 ];
 

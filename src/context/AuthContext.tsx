@@ -54,36 +54,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (data.session && isMounted) {
           await loadSupabaseUser(data.session.user)
         } else if (isMounted) {
-          const cached = localStorage.getItem('kaamgar-user')
-          if (cached) {
-            try {
-              setUser(JSON.parse(cached))
-            } catch {
-              localStorage.removeItem('kaamgar-user')
-            }
-          }
+          setUser(null)
+          localStorage.removeItem('kaamgar-user')
         }
 
         const authState = supabase.auth.onAuthStateChange((_event, session) => {
           if (!isMounted) return
           if (!session) {
-            const cached = localStorage.getItem('kaamgar-user')
-            if (!cached) {
-              setUser(null)
-            }
+            setUser(null)
+            localStorage.removeItem('kaamgar-user')
             return
           }
           void loadSupabaseUser(session.user)
         })
         subscription = authState.data.subscription
       } catch {
-        const cached = localStorage.getItem('kaamgar-user')
-        if (cached && isMounted) {
-          try {
-            setUser(JSON.parse(cached))
-          } catch {
-            localStorage.removeItem('kaamgar-user')
-          }
+        if (isMounted) {
+          setUser(null)
+          localStorage.removeItem('kaamgar-user')
         }
       } finally {
         if (isMounted) setIsLoading(false)
@@ -115,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let role = profile?.role as UserRole | undefined
 
-    if (role !== 'worker' && role !== 'admin' && role !== 'super_admin' && role !== 'sub_admin') {
+    if (role !== 'worker' && role !== 'super_admin' && role !== 'sub_admin') {
       const { data: workerCheck } = (await supabase
         .from('worker_profiles' as any)
         .select('id')
@@ -434,7 +422,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         updateEmail,
         isAuthenticated: !!user,
         isWorker: user?.role === 'worker',
-        isAdmin: user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'sub_admin',
+        isAdmin: user?.role === 'super_admin' || user?.role === 'sub_admin',
         isSuperAdmin: user?.role === 'super_admin',
         isSubAdmin: user?.role === 'sub_admin',
         needsPhoneVerification,
