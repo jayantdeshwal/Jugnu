@@ -1,5 +1,5 @@
 export type Language = 'en' | 'hi'
-export type UserRole = 'customer' | 'worker' | 'admin'
+export type UserRole = 'customer' | 'worker' | 'admin' | 'super_admin' | 'sub_admin'
 
 export interface User {
   id: string

@@ -9,6 +9,7 @@ import {
   JUGNU_CATEGORIES,
   ALL_SERVICES,
   getServiceById,
+  UserRole,
 } from '@kaamgar/shared'
 import {
   ArrowLeft,
@@ -112,7 +113,7 @@ export default function WorkerRegistration() {
   const [verifyingOtp, setVerifyingOtp] = useState(false)
   const [alreadyRegisteredNotice, setAlreadyRegisteredNotice] = useState<{
     phone: string
-    role: 'customer' | 'worker' | 'admin'
+    role: UserRole
     message?: string
   } | null>(null)
 

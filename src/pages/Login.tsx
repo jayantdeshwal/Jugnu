@@ -110,7 +110,7 @@ export default function Login() {
   // Redirect based on role and active verification
   useEffect(() => {
     if (user) {
-      if (user.role === 'admin') {
+      if (user.role === 'admin' || user.role === 'super_admin' || user.role === 'sub_admin') {
         const is2faVerified = typeof window !== 'undefined' && sessionStorage.getItem('admin_2fa_verified') === 'true'
         if (is2faVerified) {
           const timer = setTimeout(() => {

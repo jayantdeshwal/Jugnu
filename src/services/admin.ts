@@ -343,7 +343,7 @@ export async function notifyAdminsOfWorkerRegistration(params: {
     const supabase = getSupabaseClient()
     const { data: admins } = await (supabase.from('profiles') as any)
       .select('id')
-      .eq('role', 'admin')
+      .in('role', ['admin', 'super_admin', 'sub_admin'])
 
     if (!admins || admins.length === 0) return
 
@@ -388,6 +388,7 @@ export interface AdminTeamMember {
   full_name: string
   email: string
   phone: string
+  role?: 'super_admin' | 'sub_admin' | 'admin'
   avatar_url?: string | null
   created_at: string
 }
@@ -404,6 +405,7 @@ export async function fetchAdminTeam(currentAdminUser?: {
   name?: string
   email?: string | null
   phone?: string | null
+  role?: string
 }): Promise<AdminTeamMember[]> {
   const supabase = getSupabaseClient()
   const adminMap = new Map<string, AdminTeamMember>()
@@ -415,6 +417,7 @@ export async function fetchAdminTeam(currentAdminUser?: {
       full_name: currentAdminUser.name || 'Platform Administrator (You)',
       email: currentAdminUser.email || 'jayant.deshwal.56@gmail.com',
       phone: (currentAdminUser.phone || '').replace(/\D/g, '').slice(-10),
+      role: (currentAdminUser.role as any) || 'super_admin',
       avatar_url: null,
       created_at: new Date().toISOString(),
     })
@@ -430,6 +433,7 @@ export async function fetchAdminTeam(currentAdminUser?: {
           full_name: adm.full_name || 'Administrator',
           email: adm.email || 'No email',
           phone: (adm.phone || '').replace(/\D/g, '').slice(-10),
+          role: adm.role || 'sub_admin',
           avatar_url: adm.avatar_url || null,
           created_at: adm.created_at || new Date().toISOString(),
         })
@@ -440,11 +444,11 @@ export async function fetchAdminTeam(currentAdminUser?: {
     console.warn('get_admin_team RPC notice:', err)
   }
 
-  // 3. Fallback: Query profiles table directly for role = 'admin'
+  // 3. Fallback: Query profiles table directly for admin roles
   try {
     const { data: directData } = await (supabase.from('profiles') as any)
-      .select('id, full_name, email, phone, avatar_url, created_at')
-      .eq('role', 'admin')
+      .select('id, full_name, email, phone, avatar_url, role, created_at')
+      .in('role', ['admin', 'super_admin', 'sub_admin'])
       .order('created_at', { ascending: true })
 
     if (Array.isArray(directData) && directData.length > 0) {
@@ -454,6 +458,7 @@ export async function fetchAdminTeam(currentAdminUser?: {
           full_name: adm.full_name || 'Administrator',
           email: adm.email || 'No email',
           phone: (adm.phone || '').replace(/\D/g, '').slice(-10),
+          role: adm.role || 'sub_admin',
           avatar_url: adm.avatar_url || null,
           created_at: adm.created_at || new Date().toISOString(),
         })
@@ -469,12 +474,13 @@ export async function fetchAdminTeam(currentAdminUser?: {
       const cached = localStorage.getItem('kaamgar-user')
       if (cached) {
         const u = JSON.parse(cached)
-        if (u?.role === 'admin') {
+        if (['admin', 'super_admin', 'sub_admin'].includes(u?.role)) {
           adminMap.set(u.id || 'current_admin', {
             id: u.id || 'current_admin',
             full_name: u.name || 'Platform Administrator',
             email: u.email || 'jayant.deshwal.56@gmail.com',
             phone: (u.phone || '').replace(/\D/g, '').slice(-10),
+            role: u.role || 'super_admin',
             avatar_url: u.avatar_url || null,
             created_at: u.created_at || new Date().toISOString(),
           })
@@ -492,6 +498,7 @@ export async function fetchAdminTeam(currentAdminUser?: {
       full_name: 'Platform Administrator (Jayant Deshwal)',
       email: 'jayant.deshwal.56@gmail.com',
       phone: '9876543210',
+      role: 'super_admin',
       avatar_url: null,
       created_at: new Date().toISOString(),
     })
@@ -510,6 +517,17 @@ export async function createSubAdmin(params: CreateAdminParams): Promise<{ succe
   })
   if (error) {
     throw new Error(error.message || 'Failed to create administrator account.')
+  }
+  return data || { success: true }
+}
+
+export async function demoteSubAdmin(targetUserId: string): Promise<{ success: boolean; message?: string }> {
+  const supabase = getSupabaseClient()
+  const { data, error } = await (supabase as any).rpc('admin_demote_sub_admin', {
+    target_user_id: targetUserId,
+  })
+  if (error) {
+    throw new Error(error.message || 'Failed to demote administrator.')
   }
   return data || { success: true }
 }

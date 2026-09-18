@@ -90,7 +90,7 @@ interface AdminStats {
 export default function AdminDashboard() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { user, isAdmin } = useAuth()
+  const { user, isAdmin, isSuperAdmin } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
 
   type AdminTabType = 'dashboard' | 'overview' | 'workers' | 'customers' | 'bookings' | 'notifications' | 'admins'
@@ -412,12 +412,13 @@ export default function AdminDashboard() {
     setAdminTeamError('')
     try {
       const data = await fetchAdminTeam(
-        user?.role === 'admin'
+        isAdmin
           ? {
-              id: user.id,
-              name: user.name,
-              email: user.email,
-              phone: user.phone,
+              id: user?.id,
+              name: user?.name,
+              email: user?.email,
+              phone: user?.phone,
+              role: user?.role,
             }
           : undefined
       )
@@ -2542,18 +2543,20 @@ export default function AdminDashboard() {
                   Only existing platform administrators can create and manage platform administrator privileges.
                 </p>
               </div>
-              <Button
-                variant="primary"
-                onClick={() => {
-                  setAddAdminError('')
-                  setAddAdminSuccess('')
-                  setShowAddAdminModal(true)
-                }}
-                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold flex items-center gap-2 self-start sm:self-auto shadow-md shadow-amber-500/20"
-              >
-                <UserPlus className="w-4 h-4" />
-                Add Administrator
-              </Button>
+              {isSuperAdmin && (
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    setAddAdminError('')
+                    setAddAdminSuccess('')
+                    setShowAddAdminModal(true)
+                  }}
+                  className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold flex items-center gap-2 self-start sm:self-auto shadow-md shadow-amber-500/20"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Add Sub Administrator
+                </Button>
+              )}
             </div>
 
             {/* Security Notice Card */}
@@ -2626,9 +2629,15 @@ export default function AdminDashboard() {
                                   You
                                 </Badge>
                               )}
-                              <Badge variant="outline" size="sm" className="text-[10px] border-amber-500/30 text-amber-400">
-                                Administrator
-                              </Badge>
+                              {admin.role === 'super_admin' ? (
+                                <Badge variant="primary" size="sm" className="text-[10px] bg-purple-500/20 text-purple-400 border-purple-500/30">
+                                  Super Admin
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" size="sm" className="text-[10px] border-amber-500/30 text-amber-400">
+                                  Sub Admin
+                                </Badge>
+                              )}
                             </div>
                             <p className="text-xs text-semantic-text-tertiary mt-0.5">
                               {admin.email || 'No email set'}

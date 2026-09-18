@@ -1,8 +1,9 @@
 import { getSupabaseClient } from '@/lib/supabase'
+import { UserRole } from '@kaamgar/shared'
 
 export interface PhoneCheckResult {
   isRegistered: boolean
-  role?: 'customer' | 'worker' | 'admin'
+  role?: UserRole
   fullName?: string
   isWorker?: boolean
   email?: string
@@ -23,7 +24,7 @@ function getLocalCache(): Record<string, { role?: string; name?: string; email?:
 
 export function recordPhoneRegistered(
   cleanPhone: string,
-  role: 'customer' | 'worker' | 'admin' = 'customer',
+  role: UserRole = 'customer',
   name?: string,
   email?: string
 ) {

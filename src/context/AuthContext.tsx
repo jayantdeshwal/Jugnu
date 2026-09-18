@@ -19,6 +19,8 @@ interface AuthContextType {
   isAuthenticated: boolean
   isWorker: boolean
   isAdmin: boolean
+  isSuperAdmin: boolean
+  isSubAdmin: boolean
   needsPhoneVerification: boolean
 }
 
@@ -113,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let role = profile?.role as UserRole | undefined
 
-    if (role !== 'worker' && role !== 'admin') {
+    if (role !== 'worker' && role !== 'admin' && role !== 'super_admin' && role !== 'sub_admin') {
       const { data: workerCheck } = (await supabase
         .from('worker_profiles' as any)
         .select('id')
@@ -432,7 +434,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         updateEmail,
         isAuthenticated: !!user,
         isWorker: user?.role === 'worker',
-        isAdmin: user?.role === 'admin',
+        isAdmin: user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'sub_admin',
+        isSuperAdmin: user?.role === 'super_admin',
+        isSubAdmin: user?.role === 'sub_admin',
         needsPhoneVerification,
       }}
     >

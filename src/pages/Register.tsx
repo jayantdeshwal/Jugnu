@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Card, Button, Input, Badge } from '@kaamgar/ui'
-import { CATEGORIES, MUZAFFARNAGAR_PINCODES, getCategoryName, JUGNU_CATEGORIES } from '@kaamgar/shared'
+import { CATEGORIES, MUZAFFARNAGAR_PINCODES, getCategoryName, JUGNU_CATEGORIES, UserRole } from '@kaamgar/shared'
 import {
   User,
   Truck,
@@ -68,7 +68,7 @@ export default function Register() {
   // ---------------- Already Registered Warning ----------------
   const [alreadyRegisteredNotice, setAlreadyRegisteredNotice] = useState<{
     phone: string
-    role: 'customer' | 'worker' | 'admin'
+    role: UserRole
     message?: string
   } | null>(null)
 
