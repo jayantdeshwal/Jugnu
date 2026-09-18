@@ -127,15 +127,20 @@ export default function WorkerRegistration() {
   const [uploadProgress, setUploadProgress] = useState('')
   const [submitted, setSubmitted] = useState(false)
 
-  // 5-Category selection state (Two-level selection flow)
+  // Category & multi-service selection state (Strict max 2 services within 1 parent category)
+  const initialParentCategory = formData.category
+    ? JUGNU_CATEGORIES.find(c => c.services.some(s => s.id === formData.category))?.id || null
+    : null
+
   const [selectedServices, setSelectedServices] = useState<string[]>(
     formData.category ? [formData.category] : []
   )
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
-  const [selectedParentCategory, setSelectedParentCategory] = useState<string | null>(null)
+  const [selectedParentCategory, setSelectedParentCategory] = useState<string | null>(initialParentCategory)
   const [serviceLimitMessage, setServiceLimitMessage] = useState<string | null>(null)
+  const [categorySwitchedNotice, setCategorySwitchedNotice] = useState<string | null>(null)
 
   const toggleServiceSelection = (serviceId: string) => {
+    setCategorySwitchedNotice(null)
     setSelectedServices(prev => {
       const exists = prev.includes(serviceId)
       if (exists) {
@@ -174,6 +179,15 @@ export default function WorkerRegistration() {
 
   const handleSelectParentCategory = (categoryId: string) => {
     if (selectedParentCategory && selectedParentCategory !== categoryId) {
+      if (selectedServices.length > 0) {
+        const prevCat = JUGNU_CATEGORIES.find(c => c.id === selectedParentCategory)
+        const newCat = JUGNU_CATEGORIES.find(c => c.id === categoryId)
+        const prevName = prevCat?.name_en || selectedParentCategory
+        const newName = newCat?.name_en || categoryId
+        setCategorySwitchedNotice(
+          `Switched trade to ${newName}. Previously selected services from ${prevName} were cleared.`
+        )
+      }
       // Worker changed parent category: clear previously selected services
       setSelectedServices([])
       setFormData(f => ({ ...f, category: '' }))
@@ -184,7 +198,6 @@ export default function WorkerRegistration() {
       })
     }
     setSelectedParentCategory(categoryId)
-    setSelectedCategoryId(categoryId)
     setServiceLimitMessage(null)
   }
 
@@ -772,153 +785,139 @@ export default function WorkerRegistration() {
             {/* STEP 2: WORK DETAILS */}
             {currentStepKey === 'work' && (
               <div className="space-y-6">
-                {/* STEP 2: TWO-LEVEL CATEGORY & SERVICE SELECTION */}
+                {/* UNIFIED CATEGORY & MULTI-SERVICE SELECTION */}
                 <div>
-                  {/* LEVEL 1: When no category is selected, show ONLY the 5 canonical categories */}
-                  {selectedCategoryId === null ? (
-                    <div>
-                      <div className="mb-4">
-                        <label className="label text-semantic-text-secondary block font-bold text-sm">
-                          {t('auth.workerRegistration.selectTradeCategory', 'Select Your Trade / Service Category')} *
-                        </label>
-                        <p className="text-xs text-semantic-text-tertiary mt-0.5">
-                          {t(
-                            'auth.workerRegistration.selectCategorySubtitle',
-                            'Choose your trade category to see available services.'
-                          )}
-                        </p>
-                      </div>
-
-                      {/* 5 Categories List - Strictly 0 services shown here */}
-                      <div className="space-y-3">
-                        {JUGNU_CATEGORIES.map(category => {
-                          const CatIcon = categoryIconMap[category.icon] || Wrench
-                          const isHindiLang = i18n.language === 'hi'
-                          const primaryName = isHindiLang ? category.name_hi : category.name_en
-                          const secondaryName = isHindiLang ? category.name_en : category.name_hi
-                          const selectedCountInCategory = selectedParentCategory === category.id ? selectedServices.length : 0
-
-                          return (
-                            <div
-                              key={category.id}
-                              onClick={() => handleSelectParentCategory(category.id)}
-                              className="p-4 rounded-2xl border border-semantic-border-light bg-surface-200/50 hover:bg-surface-200 hover:border-brand-500/50 cursor-pointer transition-all flex items-center justify-between group shadow-sm active:scale-[0.99] select-none"
-                              role="button"
-                              tabIndex={0}
-                            >
-                              <div className="flex items-center gap-3.5 min-w-0">
-                                <div className="w-11 h-11 rounded-2xl bg-brand-500/10 border border-brand-500/25 flex items-center justify-center text-brand-400 shrink-0 group-hover:scale-105 group-hover:bg-brand-500 group-hover:text-surface-950 transition-all">
-                                  <CatIcon className="w-5 h-5" />
-                                </div>
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <h4 className="text-sm font-bold text-semantic-text-primary truncate group-hover:text-brand-400 transition-colors">
-                                      {primaryName}
-                                    </h4>
-                                    {selectedCountInCategory > 0 && (
-                                      <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                                        {selectedCountInCategory} / 2 services selected
-                                      </span>
-                                    )}
-                                  </div>
-                                  <p className="text-xs text-semantic-text-tertiary truncate mt-0.5">
-                                    {secondaryName}
-                                  </p>
-                                </div>
-                              </div>
-                              <ArrowRight className="w-5 h-5 text-semantic-text-tertiary group-hover:text-brand-400 group-hover:translate-x-1 transition-all shrink-0 ml-2" />
-                            </div>
-                          )
-                        })}
-                      </div>
-
-                      {/* Selected Services Summary if worker previously selected any services */}
-                      {selectedServices.length > 0 && (
-                        <div className="mt-4 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
-                          <div className="flex items-center justify-between gap-2 mb-1.5">
-                            <span className="text-xs font-bold text-emerald-400">
-                              ✓ {selectedServices.length} / 2 {t('common.services', 'services')} selected:
-                            </span>
-                            <span className="text-[11px] text-emerald-300/80">
-                              {selectedServices.length === 1 ? '1 more service allowed' : 'Maximum 2 services selected'}
-                            </span>
-                          </div>
-                          <div className="flex flex-wrap gap-1.5">
-                            {selectedServices.map((svcId, idx) => {
-                              const svc = getServiceById(svcId)
-                              const isHindiLang = i18n.language === 'hi'
-                              const name = svc ? (isHindiLang ? svc.name_hi : svc.name_en) : svcId
-                              return (
-                                <span
-                                  key={svcId}
-                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-medium border border-emerald-500/30"
-                                >
-                                  <span className="text-[10px] bg-emerald-500/40 text-white px-1 rounded font-bold">
-                                    {idx + 1}
-                                  </span>
-                                  <span>{name}</span>
-                                </span>
-                              )
-                            })}
-                          </div>
-                        </div>
+                  <div className="mb-3">
+                    <label className="label text-semantic-text-secondary block font-bold text-sm">
+                      {t('auth.workerRegistration.selectTradeCategory', 'Select Your Primary Trade Category')} *
+                    </label>
+                    <p className="text-xs text-semantic-text-tertiary mt-0.5">
+                      {t(
+                        'auth.workerRegistration.selectCategorySubtitle',
+                        'Choose 1 trade category below. You can then select 1 or 2 services within this category.'
                       )}
-                    </div>
-                  ) : (
-                    /* LEVEL 2: Show ONLY the services of the chosen category with a Back button */
-                    (() => {
-                      const activeCategory = JUGNU_CATEGORIES.find(c => c.id === selectedCategoryId)!
-                      const CatIcon = categoryIconMap[activeCategory.icon] || Wrench
+                    </p>
+                  </div>
+
+                  {/* 5 Parent Categories Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4">
+                    {JUGNU_CATEGORIES.map(category => {
+                      const CatIcon = categoryIconMap[category.icon] || Wrench
                       const isHindiLang = i18n.language === 'hi'
-                      const categoryPrimary = isHindiLang ? activeCategory.name_hi : activeCategory.name_en
-                      const categorySecondary = isHindiLang ? activeCategory.name_en : activeCategory.name_hi
-                      const selectedCount = selectedServices.length
+                      const primaryName = isHindiLang ? category.name_hi : category.name_en
+                      const secondaryName = isHindiLang ? category.name_en : category.name_hi
+                      const isCategoryActive = selectedParentCategory === category.id
+                      const selectedCount = isCategoryActive ? selectedServices.length : 0
 
                       return (
-                        <div className="space-y-4">
-                          {/* Back to Categories Button */}
-                          <div>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelectedCategoryId(null)
-                                setServiceLimitMessage(null)
-                              }}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-200 hover:bg-surface-300 text-xs font-semibold text-semantic-text-secondary hover:text-white border border-semantic-border-light transition-all active:scale-95 cursor-pointer"
+                        <div
+                          key={category.id}
+                          onClick={() => handleSelectParentCategory(category.id)}
+                          className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between cursor-pointer select-none group ${
+                            isCategoryActive
+                              ? 'border-brand-500 bg-brand-500/15 ring-2 ring-brand-500/30 shadow-md'
+                              : 'border-semantic-border-light bg-surface-200/50 hover:bg-surface-200 hover:border-brand-500/40 shadow-xs'
+                          }`}
+                          role="button"
+                          tabIndex={0}
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div
+                              className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition-all ${
+                                isCategoryActive
+                                  ? 'bg-brand-500 text-surface-950 font-bold border-brand-500 shadow-sm'
+                                  : 'bg-brand-500/10 text-brand-400 border-brand-500/25 group-hover:scale-105'
+                              }`}
                             >
-                              <ArrowLeft className="w-3.5 h-3.5 text-brand-400" />
-                              <span>{t('auth.workerRegistration.backToCategories', '← Back to Categories')}</span>
-                            </button>
+                              <CatIcon className="w-5 h-5" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <h4 className="text-sm font-bold text-semantic-text-primary truncate">
+                                  {primaryName}
+                                </h4>
+                                {isCategoryActive && (
+                                  <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded bg-brand-500/30 text-brand-300 border border-brand-500/40">
+                                    Selected
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-semantic-text-tertiary truncate mt-0.5">
+                                {secondaryName}
+                              </p>
+                            </div>
                           </div>
 
-                          {/* Selected Category Header Banner */}
-                          <div className="p-4 rounded-2xl bg-surface-200/60 border border-brand-500/40 flex items-center justify-between gap-3.5">
-                            <div className="flex items-center gap-3.5 min-w-0">
-                              <div className="w-11 h-11 rounded-2xl bg-brand-500 text-surface-950 font-bold flex items-center justify-center shrink-0 shadow-md">
-                                <CatIcon className="w-5 h-5" />
-                              </div>
-                              <div className="min-w-0">
-                                <h3 className="text-base font-bold text-semantic-text-primary truncate">
-                                  {categoryPrimary}
-                                </h3>
-                                <p className="text-xs text-semantic-text-tertiary truncate">
-                                  {categorySecondary}
-                                </p>
-                              </div>
+                          {selectedCount > 0 ? (
+                            <span className="text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0 ml-2">
+                              {selectedCount} / 2
+                            </span>
+                          ) : (
+                            <ArrowRight
+                              className={`w-4 h-4 shrink-0 ml-2 transition-transform ${
+                                isCategoryActive
+                                  ? 'text-brand-400 translate-x-0.5'
+                                  : 'text-semantic-text-tertiary group-hover:text-brand-400'
+                              }`}
+                            />
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Category Switched Notice Banner */}
+                  {categorySwitchedNotice && (
+                    <div className="mb-4 p-3 bg-blue-500/15 border border-blue-500/30 rounded-xl flex items-start gap-2.5 text-blue-300 text-xs">
+                      <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+                      <div className="flex-1 font-medium">{categorySwitchedNotice}</div>
+                      <button
+                        type="button"
+                        onClick={() => setCategorySwitchedNotice(null)}
+                        className="text-blue-400 hover:text-white cursor-pointer"
+                        aria-label="Dismiss notice"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Services Selection Box */}
+                  {selectedParentCategory ? (
+                    (() => {
+                      const activeCategory = JUGNU_CATEGORIES.find(c => c.id === selectedParentCategory)!
+                      const isHindiLang = i18n.language === 'hi'
+                      const categoryPrimary = isHindiLang ? activeCategory.name_hi : activeCategory.name_en
+
+                      return (
+                        <div className="p-4 sm:p-5 rounded-2xl bg-surface-200/60 border border-brand-500/30 space-y-4">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-semantic-border-light">
+                            <div>
+                              <h4 className="text-sm font-bold text-semantic-text-primary flex items-center gap-2">
+                                <span>Services in {categoryPrimary}:</span>
+                                <span className="text-xs font-extrabold px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30">
+                                  {selectedServices.length} / 2 Selected
+                                </span>
+                              </h4>
+                              <p className="text-xs text-semantic-text-tertiary mt-0.5">
+                                {selectedServices.length === 0
+                                  ? 'Select 1 or 2 services you provide (Maximum 2)'
+                                  : selectedServices.length === 1
+                                  ? '✓ 1 service selected. You can select 1 more service from this list.'
+                                  : '✓ Maximum 2 services selected.'}
+                              </p>
                             </div>
 
-                            <span className="text-xs font-extrabold px-2.5 py-1 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30 shrink-0">
-                              {selectedCount} / 2 selected
+                            <span className="text-[11px] font-semibold text-amber-400/90 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20 self-start sm:self-auto">
+                              Max 2 services allowed
                             </span>
                           </div>
 
-                          {/* 3rd Service Limit Warning Banner */}
+                          {/* 3rd Service Limit Warning */}
                           {serviceLimitMessage && (
                             <div className="p-3 bg-amber-500/15 border border-amber-500/40 rounded-xl flex items-start gap-2.5 text-amber-300 text-xs">
                               <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                              <div className="flex-1">
-                                <p className="font-semibold">{serviceLimitMessage}</p>
-                              </div>
+                              <div className="flex-1 font-semibold">{serviceLimitMessage}</div>
                               <button
                                 type="button"
                                 onClick={() => setServiceLimitMessage(null)}
@@ -932,55 +931,39 @@ export default function WorkerRegistration() {
 
                           {/* Selected Services Chips Bar */}
                           {selectedServices.length > 0 && (
-                            <div className="p-3 bg-surface-200/50 rounded-xl border border-semantic-border-light">
-                              <div className="flex items-center justify-between gap-2 mb-2">
-                                <span className="text-xs font-bold text-semantic-text-secondary">
-                                  Selected Services ({selectedServices.length}/2):
-                                </span>
-                                <span className="text-[11px] text-semantic-text-tertiary">
-                                  {selectedServices.length === 1 ? 'You can select 1 more service' : 'Maximum 2 services reached'}
-                                </span>
-                              </div>
-                              <div className="flex flex-wrap gap-1.5">
-                                {selectedServices.map((svcId, idx) => {
-                                  const svc = getServiceById(svcId)
-                                  const name = svc ? (isHindiLang ? svc.name_hi : svc.name_en) : svcId
-                                  return (
-                                    <span
-                                      key={svcId}
-                                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-500/20 text-brand-300 text-xs font-semibold border border-brand-500/40 shadow-xs"
-                                    >
-                                      <span className="text-[10px] bg-brand-500 text-surface-950 px-1 py-0.2 rounded font-bold">
-                                        {idx === 0 ? '1' : '2'}
-                                      </span>
-                                      <span>{name}</span>
-                                      <button
-                                        type="button"
-                                        onClick={() => toggleServiceSelection(svcId)}
-                                        className="hover:text-white cursor-pointer ml-0.5 text-brand-400 hover:text-white transition-colors"
-                                        title={`Remove ${name}`}
-                                        aria-label={`Remove ${name}`}
-                                      >
-                                        <X className="w-3.5 h-3.5" />
-                                      </button>
+                            <div className="flex flex-wrap items-center gap-2 p-2.5 rounded-xl bg-surface-150/70 border border-semantic-border-light">
+                              <span className="text-xs font-bold text-semantic-text-secondary mr-1">
+                                Selected:
+                              </span>
+                              {selectedServices.map((svcId, idx) => {
+                                const svc = getServiceById(svcId)
+                                const name = svc ? (isHindiLang ? svc.name_hi : svc.name_en) : svcId
+                                return (
+                                  <span
+                                    key={svcId}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/40 shadow-xs"
+                                  >
+                                    <span className="text-[10px] bg-emerald-500 text-surface-950 px-1.5 py-0.2 rounded font-black">
+                                      Service {idx + 1}
                                     </span>
-                                  )
-                                })}
-                              </div>
+                                    <span>{name}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleServiceSelection(svcId)}
+                                      className="hover:text-white cursor-pointer ml-1 text-emerald-400 transition-colors"
+                                      title={`Remove ${name}`}
+                                      aria-label={`Remove ${name}`}
+                                    >
+                                      <X className="w-3.5 h-3.5" />
+                                    </button>
+                                  </span>
+                                )
+                              })}
                             </div>
                           )}
 
-                          <div className="flex items-center justify-between pt-1">
-                            <label className="text-xs font-bold text-semantic-text-secondary">
-                              {t('auth.workerRegistration.selectServicePrompt', 'Select 1 or 2 services you provide:')}
-                            </label>
-                            <span className="text-[11px] font-semibold text-semantic-text-tertiary">
-                              {selectedCount} / 2 selected (Max 2)
-                            </span>
-                          </div>
-
-                          {/* Services Checklist - Strictly ONLY activeCategory.services */}
-                          <div className="space-y-2.5">
+                          {/* Services Checklist */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                             {activeCategory.services.map(service => {
                               const isSelected = selectedServices.includes(service.id)
                               const selectedIndex = selectedServices.indexOf(service.id)
@@ -994,36 +977,37 @@ export default function WorkerRegistration() {
                                   onClick={() => toggleServiceSelection(service.id)}
                                   className={`p-3.5 rounded-xl border flex items-center gap-3 cursor-pointer transition-all select-none ${
                                     isSelected
-                                      ? 'border-brand-500 bg-brand-500/15 text-brand-300 ring-1 ring-brand-500/30 font-semibold shadow-sm'
+                                      ? 'border-emerald-500 bg-emerald-500/15 text-emerald-300 ring-2 ring-emerald-500/30 font-semibold shadow-sm'
                                       : selectedServices.length >= 2
-                                      ? 'border-semantic-border-light bg-surface-150/40 opacity-75 hover:opacity-100 hover:border-amber-500/50 text-semantic-text-secondary'
-                                      : 'border-semantic-border-light bg-surface-150/60 hover:bg-surface-200/60 hover:border-brand-500/40 text-semantic-text-secondary'
+                                      ? 'border-semantic-border-light bg-surface-150/40 opacity-60 hover:opacity-100 hover:border-amber-500/50 text-semantic-text-secondary'
+                                      : 'border-semantic-border-light bg-surface-150/80 hover:bg-surface-200 hover:border-brand-500/50 text-semantic-text-secondary'
                                   }`}
+                                  role="checkbox"
+                                  aria-checked={isSelected}
+                                  tabIndex={0}
                                 >
                                   <div
-                                    className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
+                                    className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-colors ${
                                       isSelected
-                                        ? 'bg-brand-500 border-brand-500 text-surface-950'
+                                        ? 'bg-emerald-500 border-emerald-500 text-surface-950 font-bold'
                                         : 'border-slate-500 dark:border-zinc-500 bg-transparent'
                                     }`}
                                   >
-                                    {isSelected && (
-                                      <Check className="w-3.5 h-3.5 stroke-[3]" />
-                                    )}
+                                    {isSelected ? <Check className="w-4 h-4 stroke-[3]" /> : null}
                                   </div>
 
-                                  <div className="w-8 h-8 rounded-lg bg-surface-200 border border-semantic-border-light flex items-center justify-center text-semantic-text-secondary shrink-0">
+                                  <div className="w-8 h-8 rounded-lg bg-surface-200/80 border border-semantic-border-light flex items-center justify-center text-semantic-text-secondary shrink-0">
                                     <ServiceIcon className="w-4 h-4" />
                                   </div>
 
                                   <div className="min-w-0 flex-1">
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-1.5">
                                       <p className="text-sm font-bold text-semantic-text-primary truncate">
                                         {servicePrimary}
                                       </p>
                                       {isSelected && (
-                                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-brand-500/20 text-brand-300 border border-brand-500/30">
-                                          {selectedIndex === 0 ? 'Service 1' : 'Service 2'}
+                                        <span className="text-[10px] font-black px-1.5 py-0.2 rounded bg-emerald-500/30 text-emerald-300 border border-emerald-500/40">
+                                          Service {selectedIndex + 1}
                                         </span>
                                       )}
                                     </div>
@@ -1036,20 +1020,21 @@ export default function WorkerRegistration() {
                             })}
                           </div>
 
-                          {/* Done / Return to Categories Button */}
-                          <div className="pt-2">
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              className="w-full py-2.5 text-xs font-semibold"
-                              onClick={() => setSelectedCategoryId(null)}
-                            >
-                              {t('auth.workerRegistration.doneCategorySelection', 'Done / View All Categories')}
-                            </Button>
+                          <div className="pt-2 flex items-start gap-2 text-[11px] text-semantic-text-tertiary leading-relaxed">
+                            <Info className="w-3.5 h-3.5 text-brand-400 shrink-0 mt-0.5" />
+                            <span>
+                              <strong>Category Rule:</strong> You can select 1 or 2 services. All services must belong to the selected trade category. To switch to another category, click it above (previous selections will be reset).
+                            </span>
                           </div>
                         </div>
                       )
                     })()
+                  ) : (
+                    <div className="p-6 rounded-2xl bg-surface-200/40 border border-dashed border-semantic-border-light text-center">
+                      <p className="text-xs font-semibold text-semantic-text-secondary">
+                        👆 Tap a trade category above to view and select up to 2 services.
+                      </p>
+                    </div>
                   )}
 
                   {errors.category && (
