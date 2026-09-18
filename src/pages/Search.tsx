@@ -3,7 +3,7 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import { Button, Card, Avatar, Badge, RatingStars, Chip, Input } from '@/ui'
-import { getCategoryName } from '@kaamgar/shared'
+import { getCategoryName, getServicesByCategoryId, getServiceById, getCategoryById, LEGACY_CATEGORY_MAP } from '@kaamgar/shared'
 import { usePublicCatalog } from '@/hooks/usePublicCatalog'
 import { Search as SearchIcon, Filter, MapPin, Star, Clock, CheckCircle, Truck, X, ChevronDown, ArrowRight, ArrowLeft, Power } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -96,6 +96,10 @@ function FilterPanel({ filtersOpen, setFiltersOpen, selectedCategory, setSelecte
 }
 
 function ResultsHeader({ filteredWorkers, selectedCategory, t, getCategoryName, CATEGORIES, i18n }: any) {
+  const currentItem = selectedCategory
+    ? getServiceById(selectedCategory) || getCategoryById(selectedCategory) || CATEGORIES.find((c: any) => c.id === selectedCategory)
+    : null
+
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="mb-6">
       <div className="flex items-center justify-between mb-6">
@@ -103,7 +107,7 @@ function ResultsHeader({ filteredWorkers, selectedCategory, t, getCategoryName, 
           <h1 className="text-2xl font-bold text-semantic-text-primary">{t('nav.search')}</h1>
           <p className="text-semantic-text-secondary mt-1">
             {filteredWorkers.length} {t('common.workersFound') || 'workers found'}
-            {selectedCategory && ` - ${getCategoryName(CATEGORIES.find((c: typeof CATEGORIES[0]) => c.id === selectedCategory)!, i18n.language === 'hi' ? 'hi' : 'en')}`}
+            {selectedCategory && currentItem && ` - ${getCategoryName(currentItem, i18n.language === 'hi' ? 'hi' : 'en')}`}
           </p>
         </div>
       </div>
@@ -260,7 +264,22 @@ export default function Search() {
 
   const filteredWorkers = useMemo(() => {
     let workers = [...workerData]
-    if (selectedCategory) workers = workers.filter(w => w.category === selectedCategory)
+    if (selectedCategory) {
+      const childServices = getServicesByCategoryId(selectedCategory)
+      const targetIds = new Set<string>([selectedCategory])
+      if (LEGACY_CATEGORY_MAP[selectedCategory]) targetIds.add(LEGACY_CATEGORY_MAP[selectedCategory])
+      for (const [legacyKey, newId] of Object.entries(LEGACY_CATEGORY_MAP)) {
+        if (newId === selectedCategory) targetIds.add(legacyKey)
+      }
+      childServices.forEach(s => {
+        targetIds.add(s.id)
+        for (const [legacyKey, newId] of Object.entries(LEGACY_CATEGORY_MAP)) {
+          if (newId === s.id) targetIds.add(legacyKey)
+        }
+      })
+
+      workers = workers.filter(w => targetIds.has(w.category) || (w.categories && w.categories.some((c: string) => targetIds.has(c))))
+    }
     if (selectedArea) workers = workers.filter(w => w.areas.includes(selectedArea))
     if (searchQuery) {
       const query = searchQuery.toLowerCase()

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Card, Button, Input, Badge } from '@kaamgar/ui'
-import { CATEGORIES, MUZAFFARNAGAR_PINCODES, getCategoryName } from '@kaamgar/shared'
+import { CATEGORIES, MUZAFFARNAGAR_PINCODES, getCategoryName, JUGNU_CATEGORIES } from '@kaamgar/shared'
 import {
   User,
   Truck,
@@ -628,10 +628,17 @@ export default function Register() {
                     className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors"
                   >
                     <option value="">{t('registerPage.selectCategory', '-- Select Your Trade / Category --')}</option>
-                    {CATEGORIES.map(cat => (
-                      <option key={cat.id} value={cat.id}>
-                        {getCategoryName(cat, 'en')} ({getCategoryName(cat, 'hi')})
-                      </option>
+                    {JUGNU_CATEGORIES.map(category => (
+                      <optgroup
+                        key={category.id}
+                        label={`${getCategoryName(category, 'en')} (${getCategoryName(category, 'hi')})`}
+                      >
+                        {category.services.map(svc => (
+                          <option key={svc.id} value={svc.id}>
+                            {getCategoryName(svc, 'en')} ({getCategoryName(svc, 'hi')})
+                          </option>
+                        ))}
+                      </optgroup>
                     ))}
                   </select>
                 </div>

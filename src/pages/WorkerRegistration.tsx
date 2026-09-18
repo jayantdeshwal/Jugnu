@@ -2,7 +2,14 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, Link } from 'react-router-dom'
 import { Button, Input, Card, Badge } from '@kaamgar/ui'
-import { CATEGORIES, MUZAFFARNAGAR_PINCODES, getCategoryName } from '@kaamgar/shared'
+import {
+  CATEGORIES,
+  MUZAFFARNAGAR_PINCODES,
+  getCategoryName,
+  JUGNU_CATEGORIES,
+  ALL_SERVICES,
+  getServiceById,
+} from '@kaamgar/shared'
 import {
   ArrowLeft,
   ArrowRight,
@@ -20,13 +27,56 @@ import {
   ShieldCheck,
   Mail,
   Lock,
+  Plus,
+  Minus,
+  Home as HomeIcon,
+  Wrench,
+  Sparkles,
+  Truck,
+  Zap,
+  Hammer,
+  Paintbrush,
+  Snowflake,
+  Settings,
+  Droplets,
+  Flame,
+  Scissors,
+  Palette,
+  Shirt,
+  Car,
+  ShieldAlert,
+  HardHat,
 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/context/AuthContext'
 import { getSupabaseClient } from '@/lib/supabase'
 import { uploadAvatar, uploadIdProof, validateFile } from '@/services/storage'
 import { notifyAdminsOfWorkerRegistration } from '@/services/admin'
 import { openOtpWidget } from '@/services/otp'
 import { checkPhoneRegistration } from '@/services/authCheck'
+
+const categoryIconMap: Record<string, React.ElementType> = {
+  home: HomeIcon,
+  wrench: Wrench,
+  sparkles: Sparkles,
+  truck: Truck,
+  zap: Zap,
+  hammer: Hammer,
+  brush: Paintbrush,
+  paintbrush: Paintbrush,
+  'hard-hat': HardHat,
+  'brick-wall': Wrench,
+  snowflake: Snowflake,
+  cog: Settings,
+  droplets: Droplets,
+  flame: Flame,
+  scissors: Scissors,
+  palette: Palette,
+  user: User,
+  shirt: Shirt,
+  car: Car,
+  'shield-alert': ShieldAlert,
+}
 
 const STEPS = [
   { key: 'personal', labelKey: 'auth.workerRegistration.step1', fallback: 'Personal Info', icon: User },
@@ -74,6 +124,37 @@ export default function WorkerRegistration() {
   const [loading, setLoading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState('')
   const [submitted, setSubmitted] = useState(false)
+
+  // 5-Category selection state
+  const [selectedServices, setSelectedServices] = useState<string[]>(
+    formData.category ? [formData.category] : []
+  )
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
+    home_repair: true,
+  })
+
+  const toggleCategoryAccordion = (categoryId: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [categoryId]: !prev[categoryId],
+    }))
+  }
+
+  const toggleServiceSelection = (serviceId: string) => {
+    setSelectedServices(prev => {
+      const exists = prev.includes(serviceId)
+      const next = exists ? prev.filter(id => id !== serviceId) : [...prev, serviceId]
+      setFormData(f => ({ ...f, category: next[0] || '' }))
+      if (next.length > 0) {
+        setErrors(err => {
+          const updated = { ...err }
+          delete updated.category
+          return updated
+        })
+      }
+      return next
+    })
+  }
 
   // Sync with user if logged in via Google OAuth redirect
   useEffect(() => {
@@ -251,7 +332,9 @@ export default function WorkerRegistration() {
     }
 
     if (currentStep === 1) {
-      if (!formData.category) newErrors.category = 'Select a work category'
+      if (selectedServices.length === 0 && !formData.category) {
+        newErrors.category = t('auth.workerRegistration.selectAtLeastOneService', 'Please select at least one work service')
+      }
       if (!formData.experience) newErrors.experience = 'Experience is required'
       if (formData.areas.length === 0) newErrors.areas = 'Select at least one service area'
     }
@@ -298,13 +381,14 @@ export default function WorkerRegistration() {
       // 3. Register worker details via RPC
       setUploadProgress('Registering worker profile...')
       const supabase = getSupabaseClient()
+      const primaryCategory = selectedServices[0] || formData.category
 
       const { error: rpcError } = await (supabase as any).rpc('register_worker', {
         worker_name: formData.name,
         worker_phone: `+91${cleanPhone}`,
         worker_bio: formData.bio,
         worker_experience: Number(formData.experience),
-        worker_category_id: formData.category,
+        worker_category_id: primaryCategory,
         worker_area_pincodes: formData.areas,
         worker_avatar_url: avatarUrl || null,
         worker_id_proof_url: idProofPath || null,
@@ -317,7 +401,7 @@ export default function WorkerRegistration() {
           worker_phone: `+91${cleanPhone}`,
           worker_bio: formData.bio,
           worker_experience: Number(formData.experience),
-          worker_category_id: formData.category,
+          worker_category_id: primaryCategory,
           worker_area_pincodes: formData.areas,
         })
 
@@ -331,11 +415,24 @@ export default function WorkerRegistration() {
         }
       }
 
+      // If worker selected multiple services, record additional services in worker_categories
+      if (selectedServices.length > 1) {
+        const additional = selectedServices.slice(1).map(catId => ({
+          worker_id: activeUser.id,
+          category_id: catId,
+        }))
+        try {
+          await (supabase.from('worker_categories') as any).upsert(additional, { onConflict: 'worker_id,category_id' })
+        } catch (multiErr) {
+          console.warn('Additional services registration note:', multiErr)
+        }
+      }
+
       // Notify platform administrators immediately
       await notifyAdminsOfWorkerRegistration({
         workerId: activeUser.id,
         workerName: formData.name,
-        category: formData.category,
+        category: primaryCategory,
       })
 
       setSubmitted(true)
@@ -376,7 +473,7 @@ export default function WorkerRegistration() {
             <p className="font-semibold text-semantic-text-primary">{t('auth.workerRegistration.submissionSummary', 'Submission Summary:')}</p>
             <p>• {t('auth.workerRegistration.summaryName', 'Full Name')}: {formData.name}</p>
             <p>• {t('auth.workerRegistration.summaryMobile', 'Mobile Number')}: +91{formData.phone} ({t('auth.phoneVerified', 'Verified')})</p>
-            <p>• {t('auth.workerRegistration.summaryCategory', 'Work Category')}: {formData.category}</p>
+            <p>• {t('auth.workerRegistration.summaryCategory', 'Work Category')}: {selectedServices.length > 0 ? selectedServices.map(sId => getCategoryName(getServiceById(sId), i18n.language === 'hi' ? 'hi' : 'en') || sId).join(', ') : formData.category}</p>
             <p>• {t('auth.workerRegistration.summaryExperience', 'Experience')}: {formData.experience} {t('common.years', 'years')}</p>
             <p>• {t('auth.workerRegistration.summaryAreas', 'Service Areas')}: {formData.areas.join(', ')}</p>
             <p>• {t('auth.workerRegistration.summaryIdProof', 'ID Proof: Securely uploaded for verification')}</p>
@@ -619,31 +716,171 @@ export default function WorkerRegistration() {
             {/* STEP 2: WORK DETAILS */}
             {currentStepKey === 'work' && (
               <div className="space-y-6">
+                {/* 5-Category Accordions with + / - controls */}
                 <div>
-                  <label className="label text-semantic-text-secondary mb-2 block">
-                    {t('auth.workerRegistration.category', 'Work Category')}
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {CATEGORIES.map(cat => {
-                      const isSelected = formData.category === cat.id
+                  <div className="mb-3">
+                    <label className="label text-semantic-text-secondary block font-bold text-sm">
+                      {t('auth.workerRegistration.selectServicesTitle', 'Work Category & Services')} *
+                    </label>
+                    <p className="text-xs text-semantic-text-tertiary mt-0.5">
+                      {t(
+                        'auth.workerRegistration.selectServicesSubtitle',
+                        'Expand a category using (+) to choose the service(s) you provide.'
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    {JUGNU_CATEGORIES.map(category => {
+                      const isExpanded = !!expandedCategories[category.id]
+                      const CatIcon = categoryIconMap[category.icon] || Wrench
+                      const isHindiLang = i18n.language === 'hi'
+                      const primaryName = isHindiLang ? category.name_hi : category.name_en
+                      const secondaryName = isHindiLang ? category.name_en : category.name_hi
+                      const selectedCountInCategory = category.services.filter(s =>
+                        selectedServices.includes(s.id)
+                      ).length
+
                       return (
                         <div
-                          key={cat.id}
-                          onClick={() => setFormData(prev => ({ ...prev, category: cat.id }))}
-                          className={`p-4 rounded-xl border text-center cursor-pointer transition-all ${
-                            isSelected
-                              ? 'border-brand-500 bg-brand-500/10 text-brand-400 ring-2 ring-brand-500/20 font-bold'
-                              : 'border-semantic-border-light bg-surface-200/50 text-semantic-text-secondary hover:border-brand-500/50'
+                          key={category.id}
+                          className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
+                            isExpanded
+                              ? 'border-brand-500/60 bg-surface-150/90 shadow-md ring-1 ring-brand-500/20'
+                              : 'border-semantic-border-light bg-surface-200/40 hover:border-semantic-border-medium'
                           }`}
                         >
-                          <p className="font-medium text-sm text-semantic-text-primary capitalize">
-                            {getCategoryName(cat, i18n.language === 'hi' ? 'hi' : 'en')}
-                          </p>
+                          {/* Category Header with (+) / (-) button */}
+                          <div
+                            onClick={() => toggleCategoryAccordion(category.id)}
+                            className="p-3.5 sm:p-4 flex items-center justify-between cursor-pointer hover:bg-surface-200/70 transition-colors select-none"
+                            role="button"
+                            tabIndex={0}
+                            aria-expanded={isExpanded}
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div
+                                className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all ${
+                                  isExpanded
+                                    ? 'bg-brand-500 text-surface-950 font-bold shadow-sm'
+                                    : 'bg-brand-500/10 text-brand-400 border border-brand-500/25'
+                                }`}
+                              >
+                                <CatIcon className="w-4 h-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="text-sm font-bold text-semantic-text-primary truncate">
+                                    {primaryName}
+                                  </h4>
+                                  {selectedCountInCategory > 0 && (
+                                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                      {t('auth.workerRegistration.selectedCount', {
+                                        count: selectedCountInCategory,
+                                      })}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-[11px] text-semantic-text-tertiary truncate">
+                                  {secondaryName}
+                                </p>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={e => {
+                                e.stopPropagation()
+                                toggleCategoryAccordion(category.id)
+                              }}
+                              className={`w-7 h-7 rounded-full flex items-center justify-center border transition-all ${
+                                isExpanded
+                                  ? 'bg-brand-500 text-surface-950 border-brand-400 shadow-xs'
+                                  : 'bg-surface-300/80 text-semantic-text-secondary border-semantic-border-light hover:border-brand-500/50'
+                              }`}
+                              aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                            >
+                              {isExpanded ? (
+                                <Minus className="w-3.5 h-3.5 stroke-[2.5]" />
+                              ) : (
+                                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                              )}
+                            </button>
+                          </div>
+
+                          {/* Expanded Service Checkbox Options */}
+                          <AnimatePresence initial={false}>
+                            {isExpanded && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.22, ease: 'easeInOut' }}
+                                className="overflow-hidden border-t border-semantic-border-light bg-surface-200/20"
+                              >
+                                <div className="p-3 sm:p-4 space-y-2">
+                                  {category.services.map(service => {
+                                    const isSelected = selectedServices.includes(service.id)
+                                    const ServiceIcon = categoryIconMap[service.icon] || Wrench
+                                    const servicePrimary = isHindiLang
+                                      ? service.name_hi
+                                      : service.name_en
+                                    const serviceSecondary = isHindiLang
+                                      ? service.name_en
+                                      : service.name_hi
+
+                                    return (
+                                      <div
+                                        key={service.id}
+                                        onClick={() => toggleServiceSelection(service.id)}
+                                        className={`p-3 rounded-xl border flex items-center gap-3 cursor-pointer transition-all ${
+                                          isSelected
+                                            ? 'border-brand-500 bg-brand-500/10 text-brand-300 ring-1 ring-brand-500/30 font-semibold'
+                                            : 'border-semantic-border-light bg-surface-150/60 hover:bg-surface-200/60 hover:border-brand-500/40 text-semantic-text-secondary'
+                                        }`}
+                                      >
+                                        <div
+                                          className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
+                                            isSelected
+                                              ? 'bg-brand-500 border-brand-500 text-surface-950'
+                                              : 'border-slate-500 dark:border-zinc-500 bg-transparent'
+                                          }`}
+                                        >
+                                          {isSelected && (
+                                            <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                          )}
+                                        </div>
+
+                                        <div className="w-7 h-7 rounded-lg bg-surface-200 border border-semantic-border-light flex items-center justify-center text-semantic-text-secondary shrink-0">
+                                          <ServiceIcon className="w-3.5 h-3.5" />
+                                        </div>
+
+                                        <div className="min-w-0 flex-1">
+                                          <p className="text-xs sm:text-sm font-bold text-semantic-text-primary truncate">
+                                            {servicePrimary}
+                                          </p>
+                                          <p className="text-[10px] text-semantic-text-tertiary truncate">
+                                            {serviceSecondary}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
                       )
                     })}
                   </div>
-                  {errors.category && <p className="mt-1 text-xs text-red-400">{errors.category}</p>}
+
+                  {errors.category && (
+                    <p className="mt-2 text-xs text-red-400 font-medium flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5" />
+                      <span>{errors.category}</span>
+                    </p>
+                  )}
                 </div>
 
                 <Input

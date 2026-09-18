@@ -109,11 +109,11 @@ export default function Layout() {
     action?: () => void
   }
 
-  // 1. Customer: Home, Services, Search, Bookings, Account
+  // 1. Customer: Home, Category, Alerts, Bookings, Account
   const customerBottomTabs: BottomTabItem[] = [
     { id: 'home', label: t('nav.home', 'Home'), path: '/', icon: Home },
-    { id: 'services', label: t('nav.categories', 'Services'), path: '/search?view=services', icon: Grid },
-    { id: 'search', label: t('nav.search', 'Search'), path: '/search', icon: Search },
+    { id: 'categories', label: t('nav.category', 'Category'), path: '/categories', icon: Grid },
+    { id: 'alerts', label: t('nav.alerts', 'Alerts'), path: '/notifications', icon: Bell, badge: unreadCount },
     { id: 'bookings', label: t('nav.bookings', 'Bookings'), path: '/bookings', icon: ClipboardList, badge: unreadCount },
     { id: 'account', label: t('nav.account', 'Account'), path: '/profile', icon: User },
   ]
@@ -136,11 +136,11 @@ export default function Layout() {
     { id: 'account', label: t('nav.account', 'Account'), path: '/profile', icon: User },
   ]
 
-  // 4. Guest Mode: Home, Services, Search, AI Help, Account
+  // 4. Guest Mode: Home, Category, Alerts, AI Help, Account
   const guestBottomTabs: BottomTabItem[] = [
     { id: 'home', label: t('nav.home', 'Home'), path: '/', icon: Home },
-    { id: 'services', label: t('nav.categories', 'Services'), path: '/search?view=services', icon: Grid },
-    { id: 'search', label: t('nav.search', 'Search'), path: '/search', icon: Search },
+    { id: 'categories', label: t('nav.category', 'Category'), path: '/categories', icon: Grid },
+    { id: 'alerts', label: t('nav.alerts', 'Alerts'), path: '/login', icon: Bell },
     { id: 'ai', label: 'AI Help', icon: Bot, action: () => openAssistant('customer_booking') },
     { id: 'account', label: t('nav.login', 'Account'), path: '/login', icon: LogIn },
   ]

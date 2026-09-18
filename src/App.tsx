@@ -19,6 +19,7 @@ import Profile from './pages/Profile'
 import AdminDashboard from './pages/AdminDashboard'
 import Notifications from './pages/Notifications'
 import WorkerDashboard from './pages/WorkerDashboard'
+import CategoryPage from './pages/CategoryPage'
 
 import { useState } from 'react'
 import { useAuth } from './context/AuthContext'
@@ -92,7 +93,10 @@ function AppRoutes() {
         <Route path="signup" element={<Navigate to="/register" replace />} />
         <Route path="register/worker" element={<WorkerRegistration />} />
         <Route path="profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="categories" element={<GuestOrAuthRoute><CategoryPage /></GuestOrAuthRoute>} />
+        <Route path="category" element={<Navigate to="/categories" replace />} />
         <Route path="notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+        <Route path="alerts" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
         <Route path="worker/dashboard" element={<ProtectedRoute><WorkerDashboard /></ProtectedRoute>} />
         <Route path="admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
       </Route>

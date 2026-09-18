@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useNotifications } from '@/context/NotificationContext'
 import { useAuth } from '@/context/AuthContext'
 import { Card, Badge, Button } from '@kaamgar/ui'
@@ -17,6 +17,7 @@ import {
   Check,
   UserCheck,
   FileText,
+  ArrowLeft,
 } from 'lucide-react'
 import { DbNotification } from '@/services/notifications'
 
@@ -181,11 +182,21 @@ export default function Notifications() {
   return (
     <div className="min-h-screen bg-semantic-bg-primary text-semantic-text-primary">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-4">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-200 hover:bg-surface-300 text-xs font-semibold text-semantic-text-secondary hover:text-white border border-semantic-border-light transition-all active:scale-95 cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 text-brand-400" />
+            <span>{t('categoryPage.backToHome', 'Back to Home')}</span>
+          </Link>
+        </div>
+
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl font-bold text-semantic-text-primary flex items-center gap-2.5">
               <Bell className="w-6 h-6 text-brand-400" />
-              <span>{t('notifications.title', 'Notifications')}</span>
+              <span>{isAdmin ? t('notifications.title', 'Notifications') : t('notifications.alertsTitle', 'Your Alerts')}</span>
               {unreadCount > 0 && <Badge variant="danger">{unreadCount}</Badge>}
             </h1>
             <p className="text-semantic-text-secondary mt-1">
