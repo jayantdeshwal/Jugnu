@@ -252,35 +252,6 @@ export async function fetchAdminCustomers(): Promise<AdminCustomerRow[]> {
       }
     }
 
-    // Also inspect local device registered phone cache for customer accounts registered on this browser
-    if (typeof window !== 'undefined') {
-      try {
-        const raw = localStorage.getItem('kaamgar_registered_phones_cache')
-        if (raw) {
-          const cache = JSON.parse(raw)
-          for (const [phone, info] of Object.entries(cache) as [string, any][]) {
-            if (info?.role === 'customer' || !info?.role) {
-              const existing = Array.from(customerMap.values()).find(c => c.phone.includes(phone))
-              if (!existing) {
-                const custId = `cust_${phone}`
-                customerMap.set(custId, {
-                  id: custId,
-                  name: info?.name || 'Customer (' + phone.slice(-4) + ')',
-                  phone: '+91' + phone,
-                  avatar_url: null,
-                  created_at: new Date().toISOString(),
-                  total_bookings: 0,
-                  completed_bookings: 0,
-                  active_bookings: 0,
-                })
-              }
-            }
-          }
-        }
-      } catch {
-        // ignore storage parse issues
-      }
-    }
 
     return Array.from(customerMap.values())
   } catch (err) {
@@ -466,29 +437,6 @@ export async function fetchAdminTeam(currentAdminUser?: {
     }
   } catch (err) {
     console.warn('Profiles admin direct query notice:', err)
-  }
-
-  // 4. Inspect local browser cached session if adminMap is empty
-  if (adminMap.size === 0 && typeof window !== 'undefined') {
-    try {
-      const cached = localStorage.getItem('kaamgar-user')
-      if (cached) {
-        const u = JSON.parse(cached)
-        if (['super_admin', 'sub_admin'].includes(u?.role)) {
-          adminMap.set(u.id || 'current_admin', {
-            id: u.id || 'current_admin',
-            full_name: u.name || 'Platform Administrator',
-            email: u.email || 'jayant.deshwal.56@gmail.com',
-            phone: (u.phone || '').replace(/\D/g, '').slice(-10),
-            role: u.role || 'super_admin',
-            avatar_url: u.avatar_url || null,
-            created_at: u.created_at || new Date().toISOString(),
-          })
-        }
-      }
-    } catch {
-      // ignore JSON parse
-    }
   }
 
   // 5. Default platform administrator fallback so 0 administrators is NEVER shown

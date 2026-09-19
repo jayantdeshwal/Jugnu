@@ -130,7 +130,7 @@ export default function AuthChoice() {
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>{t('authChoice.registerPoint3', 'Simple mobile OTP verification & password setup')}</span>
+                  <span>{t('authChoice.registerPoint3', 'Instant mobile OTP verification — 100% passwordless')}</span>
                 </div>
               </div>
             </div>

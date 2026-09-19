@@ -1,7 +1,12 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { User, UserRole } from '@kaamgar/shared'
 import { getSupabaseClient } from '@/lib/supabase'
-import { checkPhoneRegistration, recordPhoneRegistered } from '@/services/authCheck'
+
+export interface PhoneAuthResult {
+  user: User
+  isNewUser: boolean
+  role: UserRole
+}
 
 interface AuthContextType {
   user: User | null
@@ -12,8 +17,7 @@ interface AuthContextType {
   signInWithEmail: (email: string, password: string) => Promise<void>
   signUpWithEmail: (email: string, password: string, fullName: string) => Promise<{ needsConfirmation: boolean }>
   signInWithGoogle: (redirectTo?: string) => Promise<void>
-  loginWithVerifiedPhone: (name: string, phone: string, role?: UserRole, email?: string, customPassword?: string) => Promise<User>
-  registerWithPhone: (name: string, phone: string, role?: UserRole, email?: string, customPassword?: string) => Promise<User>
+  verifyAndLoginWithOtp: (phone: string, accessToken: string, fullName?: string, email?: string) => Promise<PhoneAuthResult>
   updatePhone: (phone: string) => Promise<void>
   updateEmail: (email: string) => Promise<void>
   isAuthenticated: boolean
@@ -55,14 +59,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await loadSupabaseUser(data.session.user)
         } else if (isMounted) {
           setUser(null)
-          localStorage.removeItem('kaamgar-user')
         }
 
         const authState = supabase.auth.onAuthStateChange((_event, session) => {
           if (!isMounted) return
           if (!session) {
             setUser(null)
-            localStorage.removeItem('kaamgar-user')
             return
           }
           void loadSupabaseUser(session.user)
@@ -71,7 +73,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch {
         if (isMounted) {
           setUser(null)
-          localStorage.removeItem('kaamgar-user')
         }
       } finally {
         if (isMounted) setIsLoading(false)
@@ -114,9 +115,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Determine clean email (ignore internal phone dummy domain)
+    // Filter out internal synthetic email domains from personal email display
     const rawEmail = profile?.email || authUser.email || ''
-    const cleanEmail = rawEmail.includes('@phone.kaamgar.local') ? null : rawEmail || null
+    const isSyntheticEmail =
+      rawEmail.includes('@phone.kaamgar.local') || rawEmail.includes('@phone.jugnu.in')
+    const cleanEmail = isSyntheticEmail ? null : rawEmail || null
 
     const resolvedUser: User = {
       id: authUser.id,
@@ -131,17 +134,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       created_at: profile?.created_at ?? authUser.created_at,
     }
     setUser(resolvedUser)
-    localStorage.setItem('kaamgar-user', JSON.stringify(resolvedUser))
   }
 
   const login = (userData: User) => {
     setUser(userData)
-    localStorage.setItem('kaamgar-user', JSON.stringify(userData))
   }
 
   const logout = async () => {
     setUser(null)
-    localStorage.removeItem('kaamgar-user')
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('admin_2fa_verified')
       sessionStorage.removeItem('admin_2fa_timestamp')
@@ -187,167 +187,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error
   }
 
-  const loginWithVerifiedPhone = async (
-    name: string,
+  /**
+   * Authoritative passwordless login / registration with MSG91 OTP token.
+   * Invokes the server-side verify-phone-auth Edge Function, installs the legitimate Supabase session,
+   * loads the authoritative database profile, and synchronizes React state.
+   */
+  const verifyAndLoginWithOtp = async (
     rawPhone: string,
-    role: UserRole = 'customer',
-    optionalEmail?: string,
-    customPassword?: string
-  ): Promise<User> => {
+    accessToken: string,
+    fullName?: string,
+    optionalEmail?: string
+  ): Promise<PhoneAuthResult> => {
     const cleanPhone = rawPhone.replace(/\D/g, '').slice(-10)
     const formattedPhone = `+91${cleanPhone}`
-    const cleanEmail = optionalEmail?.trim() || undefined
     const supabase = getSupabaseClient()
 
-    // 1. Verify user is already registered. Block if not found!
-    const check = await checkPhoneRegistration(cleanPhone)
-    if (!check.isRegistered) {
-      throw new Error('No account found with this mobile number. Please sign up to create your Jugnu account first.')
+    const { data, error } = await supabase.functions.invoke('verify-phone-auth', {
+      body: {
+        phone: formattedPhone,
+        accessToken,
+        fullName: fullName?.trim() || undefined,
+        email: optionalEmail?.trim() || undefined,
+      },
+    })
+
+    if (error || !data || !data.session) {
+      const errorMsg =
+        data?.error || error?.message || 'OTP verification failed on server. Please check and retry.'
+      throw new Error(errorMsg)
     }
 
-    // Role mismatch verification for Worker portal
-    if (role === 'worker' && check.role === 'customer' && !check.isWorker) {
-      throw new Error('This mobile number is registered as a Customer. Please sign in under Customer Login or register as a Worker.')
+    // Install genuine Supabase GoTrue session
+    const { data: sessionData, error: sessionErr } = await supabase.auth.setSession({
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token,
+    })
+
+    if (sessionErr || !sessionData.user) {
+      throw new Error(sessionErr?.message || 'Failed to install authenticated session. Please retry.')
     }
 
-    // 2. Check if Supabase session already exists
-    const { data: sessionData } = await supabase.auth.getSession()
-    let authUser = sessionData.session?.user
+    // Load authoritative profile
+    await loadSupabaseUser(sessionData.user)
 
-    // 3. If no session, sign into existing account. DO NOT auto-signup unregistered users!
-    if (!authUser) {
-      const phoneEmail = cleanEmail || `${cleanPhone}@phone.kaamgar.local`
-      const phonePassword = customPassword || `kaamgar_phone_${cleanPhone}_secure`
-
-      try {
-        const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
-          email: phoneEmail,
-          password: phonePassword,
-        })
-
-        if (signInData?.user) {
-          authUser = signInData.user
-        } else if (signInErr) {
-          console.warn('Supabase phone sign-in notice:', signInErr.message)
-        }
-      } catch (e) {
-        console.warn('Supabase phone-credential auth notice:', e)
-      }
-    }
-
-    const resolvedRole = check.role || role
-    const resolvedName = check.fullName || name || authUser?.user_metadata?.full_name || 'User'
-
-    // 4. Construct and save resolved user
     const resolvedUser: User = {
-      id: authUser?.id || `user_${cleanPhone}`,
-      name: resolvedName,
-      phone: formattedPhone,
-      email: cleanEmail || null,
-      role: resolvedRole,
+      id: data.user.id,
+      name: data.user.name || fullName || 'User',
+      phone: data.user.phone || formattedPhone,
+      email: data.user.email || (optionalEmail?.trim() ?? null),
+      role: (data.role as UserRole) || 'customer',
       language: 'en',
-      avatar_url: (authUser?.user_metadata?.avatar_url as string) || null,
+      avatar_url: null,
       created_at: new Date().toISOString(),
     }
 
-    login(resolvedUser)
-    return resolvedUser
-  }
-
-  const registerWithPhone = async (
-    name: string,
-    rawPhone: string,
-    role: UserRole = 'customer',
-    optionalEmail?: string,
-    customPassword?: string
-  ): Promise<User> => {
-    const cleanPhone = rawPhone.replace(/\D/g, '').slice(-10)
-    const formattedPhone = `+91${cleanPhone}`
-    const cleanEmail = optionalEmail?.trim() || undefined
-    const supabase = getSupabaseClient()
-
-    // 1. Verify user is NOT already registered. Block if already exists!
-    const check = await checkPhoneRegistration(cleanPhone)
-    if (check.isRegistered) {
-      throw new Error('An account with this mobile number is already registered. Please log in instead.')
+    return {
+      user: resolvedUser,
+      isNewUser: Boolean(data.isNewUser),
+      role: (data.role as UserRole) || 'customer',
     }
-
-    const phoneEmail = cleanEmail || `${cleanPhone}@phone.kaamgar.local`
-    const phonePassword = customPassword || `kaamgar_phone_${cleanPhone}_secure`
-
-    // 2. Perform SignUp in Supabase Auth
-    let authUser: any = null
-    try {
-      const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
-        email: phoneEmail,
-        password: phonePassword,
-        options: {
-          data: {
-            full_name: name || 'User',
-            phone: formattedPhone,
-            role: role,
-          },
-        },
-      })
-
-      if (signUpErr) {
-        if (
-          signUpErr.message?.toLowerCase().includes('already') ||
-          (signUpErr as any).code === 'user_already_exists'
-        ) {
-          throw new Error('An account with this mobile number is already registered. Please log in instead.')
-        }
-        throw signUpErr
-      }
-
-      authUser = signUpData?.user || null
-    } catch (err: any) {
-      if (err.message?.toLowerCase().includes('already')) {
-        throw new Error('An account with this mobile number is already registered. Please log in instead.')
-      }
-      throw err
-    }
-
-    if (!authUser) {
-      const { data: signInData } = await supabase.auth.signInWithPassword({
-        email: phoneEmail,
-        password: phonePassword,
-      })
-      authUser = signInData?.user || null
-    }
-
-    // 3. Record in local device cache
-    recordPhoneRegistered(cleanPhone, role, name)
-
-    // 4. Upsert profile row in Supabase
-    if (authUser) {
-      try {
-        await (supabase.from('profiles') as any).upsert({
-          id: authUser.id,
-          full_name: name || authUser.user_metadata?.full_name || 'User',
-          phone: formattedPhone,
-          email: cleanEmail || authUser.email || null,
-          role: role,
-        })
-      } catch (e) {
-        console.warn('Profile upsert notice:', e)
-      }
-    }
-
-    // 5. Construct and save resolved user
-    const resolvedUser: User = {
-      id: authUser?.id || `user_${cleanPhone}`,
-      name: name || authUser?.user_metadata?.full_name || 'User',
-      phone: formattedPhone,
-      email: cleanEmail || null,
-      role: role,
-      language: 'en',
-      avatar_url: (authUser?.user_metadata?.avatar_url as string) || null,
-      created_at: new Date().toISOString(),
-    }
-
-    login(resolvedUser)
-    return resolvedUser
   }
 
   const updatePhone = async (rawPhone: string) => {
@@ -358,7 +256,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) {
       const updated = { ...user, phone: formattedPhone }
       setUser(updated)
-      localStorage.setItem('kaamgar-user', JSON.stringify(updated))
 
       try {
         const { data: sessionData } = await supabase.auth.getSession()
@@ -380,7 +277,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) {
       const updated = { ...user, email: cleanEmail || null }
       setUser(updated)
-      localStorage.setItem('kaamgar-user', JSON.stringify(updated))
 
       try {
         const { data: sessionData } = await supabase.auth.getSession()
@@ -401,7 +297,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) {
       const updated = { ...user, ...updates }
       setUser(updated)
-      localStorage.setItem('kaamgar-user', JSON.stringify(updated))
     }
   }
 
@@ -416,8 +311,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signInWithEmail,
         signUpWithEmail,
         signInWithGoogle,
-        loginWithVerifiedPhone,
-        registerWithPhone,
+        verifyAndLoginWithOtp,
         updatePhone,
         updateEmail,
         isAuthenticated: !!user,

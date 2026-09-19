@@ -102,7 +102,7 @@ export async function loadMsg91Script(): Promise<boolean> {
 
 export interface OtpWidgetOptions {
   identifier?: string // 10-digit mobile number
-  onSuccess: (data: unknown) => void
+  onSuccess: (accessToken: string) => void
   onFailure: (error: unknown) => void
 }
 
@@ -127,8 +127,31 @@ export async function openOtpWidget(options: OtpWidgetOptions): Promise<boolean>
         identifier: cleanPhone || undefined,
         exposeMethods: false,
         success: (data: unknown) => {
-          console.log('[MSG91 OTP Success]', data)
-          options.onSuccess(data)
+          // Normalize possible callback shapes to extract the access token
+          let token = ''
+          if (typeof data === 'string' && data.trim().length > 0) {
+            token = data.trim()
+          } else if (data && typeof data === 'object') {
+            const obj = data as Record<string, unknown>
+            if (typeof obj.message === 'string' && obj.message.trim().length > 0) {
+              token = obj.message.trim()
+            } else if (typeof obj['access-token'] === 'string' && obj['access-token'].trim().length > 0) {
+              token = obj['access-token'].trim()
+            } else if (typeof obj.token === 'string' && obj.token.trim().length > 0) {
+              token = obj.token.trim()
+            } else if (typeof obj.data === 'string' && obj.data.trim().length > 0) {
+              token = obj.data.trim()
+            }
+          }
+
+          if (!token) {
+            console.error('[MSG91 OTP Success] Missing access token in widget callback payload:', data)
+            options.onFailure('Verification succeeded but verification token was missing. Please retry.')
+            return
+          }
+
+          console.log('[MSG91 OTP Success] Verified with access token (length):', token.length)
+          options.onSuccess(token)
         },
         failure: (error: unknown) => {
           console.warn('[MSG91 OTP Failure]', error)

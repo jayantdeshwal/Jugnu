@@ -89,7 +89,7 @@ const STEPS = [
 export default function WorkerRegistration() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
-  const { user, registerWithPhone, signInWithGoogle } = useAuth()
+  const { user, verifyAndLoginWithOtp, signInWithGoogle } = useAuth()
   const [currentStep, setCurrentStep] = useState(0)
 
   // Initialize form state
@@ -97,14 +97,12 @@ export default function WorkerRegistration() {
     name: user?.name || '',
     phone: user?.phone ? user.phone.replace(/\D/g, '').slice(-10) : '',
     email: user?.email || '',
-    password: '',
-    confirmPassword: '',
     category: '',
     experience: '',
     bio: '',
+    avatar: null as File | null | undefined,
+    idProof: null as File | null | undefined,
     areas: [] as string[],
-    avatar: null as File | null,
-    idProof: null as File | null,
   })
 
   // Track phone verification status
@@ -238,53 +236,34 @@ export default function WorkerRegistration() {
       setErrors(prev => ({ ...prev, phone: 'Please enter a valid 10-digit mobile number' }))
       return
     }
-    if (!formData.password || formData.password.length < 6) {
-      setErrors(prev => ({ ...prev, password: 'Password must be at least 6 characters long' }))
-      return
-    }
-    if (formData.password !== formData.confirmPassword) {
-      setErrors(prev => ({ ...prev, confirmPassword: 'Passwords do not match' }))
-      return
-    }
 
     setVerifyingOtp(true)
     try {
-      // 1. Strict pre-check: verify worker phone is NOT already registered
-      const check = await checkPhoneRegistration(cleanPhone)
-      if (check.isRegistered) {
-        setVerifyingOtp(false)
-        setAlreadyRegisteredNotice({
-          phone: cleanPhone,
-          role: check.role || 'worker',
-          message: `An account is already registered with mobile number +91 ${cleanPhone}. You cannot register again with this number. Please log in instead.`
-        })
-        return
-      }
-
       const launched = await openOtpWidget({
         identifier: cleanPhone,
-        onSuccess: async () => {
-          setPhoneVerified(true)
-          setVerifyingOtp(false)
-          setErrors({})
+        onSuccess: async (accessToken: string) => {
           try {
-            await registerWithPhone(
-              formData.name.trim(),
+            const authResult = await verifyAndLoginWithOtp(
               cleanPhone,
-              'worker',
-              formData.email.trim() || undefined,
-              formData.password
+              accessToken,
+              formData.name.trim(),
+              formData.email.trim() || undefined
             )
-          } catch (e: any) {
-            if (e.message?.toLowerCase().includes('already registered')) {
-              setAlreadyRegisteredNotice({
-                phone: cleanPhone,
-                role: 'worker',
-                message: e.message
-              })
-            } else {
-              console.warn('Session init warning:', e)
+            setPhoneVerified(true)
+            setVerifyingOtp(false)
+            setErrors({})
+            if (authResult.role === 'worker') {
+              navigate('/worker/dashboard')
+              return
             }
+            // Auto-advance to Step 2: Work Details
+            setCurrentStep(1)
+          } catch (e: any) {
+            setVerifyingOtp(false)
+            setErrors(prev => ({
+              ...prev,
+              phone: sanitizeErrorMessage(e, 'Verification failed. Please retry.'),
+            }))
           }
         },
         onFailure: (err) => {
@@ -372,8 +351,6 @@ export default function WorkerRegistration() {
       if (!formData.phone.trim()) newErrors.phone = 'Mobile number is required'
       else if (!/^\d{10}$/.test(formData.phone)) newErrors.phone = 'Enter a valid 10-digit number'
       else if (!phoneVerified) newErrors.phone = 'Please verify your mobile number with OTP before continuing'
-      if (!formData.password || formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters long'
-      if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match'
     }
 
     if (currentStep === 1) {
@@ -410,11 +387,11 @@ export default function WorkerRegistration() {
     setUploadProgress('Uploading documents to secure storage...')
 
     try {
-      // Ensure user session exists
+      // Ensure user session exists from Step 1 OTP verification
       const cleanPhone = formData.phone.replace(/\D/g, '').slice(-10)
-      let activeUser = user
+      const activeUser = user
       if (!activeUser || !activeUser.id) {
-        activeUser = await registerWithPhone(formData.name.trim(), cleanPhone, 'worker')
+        throw new Error('Please verify your mobile number with OTP before submitting registration.')
       }
 
       let avatarUrl: string | undefined = undefined
@@ -723,29 +700,6 @@ export default function WorkerRegistration() {
                   </p>
                 </div>
 
-                {/* Password & Confirm Password */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Input
-                    label="Create Password *"
-                    type="password"
-                    value={formData.password}
-                    onChange={e => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                    placeholder="Min 6 characters"
-                    leftIcon={<Lock className="w-4 h-4 text-semantic-text-tertiary" />}
-                    error={errors.password}
-                    required
-                  />
-                  <Input
-                    label="Confirm Password *"
-                    type="password"
-                    value={formData.confirmPassword}
-                    onChange={e => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                    placeholder="Repeat password"
-                    leftIcon={<Lock className="w-4 h-4 text-semantic-text-tertiary" />}
-                    error={errors.confirmPassword}
-                    required
-                  />
-                </div>
 
                 {/* Verification Trigger or Verified Badge */}
                 {phoneVerified ? (
