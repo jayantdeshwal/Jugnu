@@ -56,6 +56,7 @@ import { notifyAdminsOfWorkerRegistration } from '@/services/admin'
 import { openOtpWidget } from '@/services/otp'
 import { checkPhoneRegistration } from '@/services/authCheck'
 import { sanitizeErrorMessage } from '@/utils/errors'
+import { normalizeIndianPhone, tryNormalizeIndianPhone, sanitizePhoneInput } from '@/utils/phone'
 
 const categoryIconMap: Record<string, React.ElementType> = {
   home: HomeIcon,
@@ -95,7 +96,7 @@ export default function WorkerRegistration() {
   // Initialize form state
   const [formData, setFormData] = useState({
     name: user?.name || '',
-    phone: user?.phone ? user.phone.replace(/\D/g, '').slice(-10) : '',
+    phone: user?.phone ? (tryNormalizeIndianPhone(user.phone) ?? '') : '',
     email: user?.email || '',
     category: '',
     experience: '',
@@ -205,7 +206,7 @@ export default function WorkerRegistration() {
       setFormData(prev => ({
         ...prev,
         name: prev.name || user.name || '',
-        phone: prev.phone || (user.phone ? user.phone.replace(/\D/g, '').slice(-10) : ''),
+        phone: prev.phone || (user.phone ? (tryNormalizeIndianPhone(user.phone) ?? '') : ''),
         email: prev.email || user.email || '',
       }))
       if (user.phone && user.phone.trim().length >= 10) {
@@ -226,16 +227,17 @@ export default function WorkerRegistration() {
   const handleVerifyWorkerPhone = async () => {
     setErrors({})
     setAlreadyRegisteredNotice(null)
-    const cleanPhone = formData.phone.replace(/\D/g, '').slice(-10)
+    const normalizeResult = normalizeIndianPhone(formData.phone)
 
     if (!formData.name.trim() || formData.name.trim().length < 2) {
       setErrors(prev => ({ ...prev, name: 'Please enter your full name (minimum 2 characters)' }))
       return
     }
-    if (cleanPhone.length !== 10) {
-      setErrors(prev => ({ ...prev, phone: 'Please enter a valid 10-digit mobile number' }))
+    if (!normalizeResult.ok) {
+      setErrors(prev => ({ ...prev, phone: normalizeResult.error }))
       return
     }
+    const cleanPhone = normalizeResult.digits
 
     setVerifyingOtp(true)
     try {
@@ -388,7 +390,7 @@ export default function WorkerRegistration() {
 
     try {
       // Ensure user session exists from Step 1 OTP verification
-      const cleanPhone = formData.phone.replace(/\D/g, '').slice(-10)
+      const cleanPhone = tryNormalizeIndianPhone(formData.phone) ?? formData.phone.replace(/\D/g, '').slice(-10)
       const activeUser = user
       if (!activeUser || !activeUser.id) {
         throw new Error('Please verify your mobile number with OTP before submitting registration.')
@@ -670,7 +672,7 @@ export default function WorkerRegistration() {
                     onChange={e => {
                       setFormData(prev => ({
                         ...prev,
-                        phone: e.target.value.replace(/\D/g, '').slice(0, 10),
+                        phone: sanitizePhoneInput(e.target.value),
                       }))
                       setPhoneVerified(false)
                       if (alreadyRegisteredNotice) setAlreadyRegisteredNotice(null)

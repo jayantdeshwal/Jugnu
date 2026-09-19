@@ -9,6 +9,7 @@ import { getSupabaseClient } from '@/lib/supabase'
 import { useLanguage } from '../context/LanguageContext'
 import { useTheme } from '../context/ThemeContext'
 import { triggerPWAInstall } from '@/components/PWAInstallPrompt'
+import { normalizeIndianPhone, tryNormalizeIndianPhone, sanitizePhoneInput } from '@/utils/phone'
 import {
   Phone,
   AlertCircle,
@@ -50,7 +51,7 @@ export default function Login() {
     updatePhone,
   } = useAuth()
 
-  const queryPhone = (searchParams.get('phone') || '').replace(/\D/g, '').slice(-10)
+  const queryPhone = tryNormalizeIndianPhone(searchParams.get('phone') || '') ?? ''
 
   // ---------------- Customer State ----------------
   const [customerPhone, setCustomerPhone] = useState(queryPhone)
@@ -80,8 +81,8 @@ export default function Login() {
     }
     const phoneParam = searchParams.get('phone')
     if (phoneParam) {
-      const clean = phoneParam.replace(/\D/g, '').slice(-10)
-      if (clean.length === 10) {
+      const clean = tryNormalizeIndianPhone(phoneParam)
+      if (clean) {
         setCustomerPhone(clean)
         setWorkerPhone(clean)
       }
@@ -100,7 +101,7 @@ export default function Login() {
           return () => clearTimeout(timer)
         } else {
           setLoginRole('admin')
-          const clean = (user.phone || '').replace(/\D/g, '').slice(-10)
+          const clean = tryNormalizeIndianPhone(user.phone || '') ?? ''
           if (clean.length === 10) {
             setAdminPhone(clean)
             setAdmin2faStep('otp_challenge')
@@ -127,11 +128,12 @@ export default function Login() {
     e.preventDefault()
     setCustomerError('')
 
-    const cleanPhone = customerPhone.replace(/\D/g, '').slice(-10)
-    if (cleanPhone.length !== 10) {
-      setCustomerError('Please enter a valid 10-digit Indian mobile number')
+    const normalizeResult = normalizeIndianPhone(customerPhone)
+    if (!normalizeResult.ok) {
+      setCustomerError(normalizeResult.error)
       return
     }
+    const cleanPhone = normalizeResult.digits
 
     setCustomerLoading(true)
     try {
@@ -177,11 +179,12 @@ export default function Login() {
     e.preventDefault()
     setWorkerError('')
 
-    const cleanPhone = workerPhone.replace(/\D/g, '').slice(-10)
-    if (cleanPhone.length !== 10) {
-      setWorkerError('Please enter a valid 10-digit Indian mobile number')
+    const normalizeResult = normalizeIndianPhone(workerPhone)
+    if (!normalizeResult.ok) {
+      setWorkerError(normalizeResult.error)
       return
     }
+    const cleanPhone = normalizeResult.digits
 
     setWorkerLoading(true)
     try {
@@ -292,7 +295,7 @@ export default function Login() {
         }
 
         const rawPhone = profile?.phone || ''
-        const cleanPhone = rawPhone.replace(/\D/g, '').slice(-10)
+        const cleanPhone = tryNormalizeIndianPhone(rawPhone) ?? ''
 
         if (cleanPhone.length === 10) {
           setAdminPhone(cleanPhone)
@@ -312,11 +315,12 @@ export default function Login() {
   const handleAdminPhoneSetupSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setAdminError('')
-    const cleanPhone = adminSetupPhone.replace(/\D/g, '').slice(-10)
-    if (cleanPhone.length !== 10) {
-      setAdminError('Please enter a valid 10-digit Indian mobile number for 2FA')
+    const normalizeResult = normalizeIndianPhone(adminSetupPhone)
+    if (!normalizeResult.ok) {
+      setAdminError(normalizeResult.error)
       return
     }
+    const cleanPhone = normalizeResult.digits
 
     setAdminLoading(true)
     try {
@@ -492,7 +496,7 @@ export default function Login() {
                   {customerError.toLowerCase().includes('register') && (
                     <div className="pl-6 pt-1">
                       <Link
-                        to={`/register?phone=${customerPhone.replace(/\D/g, '').slice(0, 10)}&role=customer`}
+                        to={`/register?phone=${tryNormalizeIndianPhone(customerPhone) ?? customerPhone.replace(/\D/g, '').slice(0, 10)}&role=customer`}
                         className="font-semibold text-amber-500 hover:text-amber-400 underline inline-flex items-center gap-1"
                       >
                         <span>Register now with this number</span>
@@ -519,7 +523,7 @@ export default function Login() {
                     label={t('loginPage.identifierLabel', 'Mobile Number (10 digits) *')}
                     value={customerPhone}
                     onChange={e => {
-                      setCustomerPhone(e.target.value.replace(/\D/g, '').slice(0, 10))
+                      setCustomerPhone(sanitizePhoneInput(e.target.value))
                       if (customerError) setCustomerError('')
                     }}
                     placeholder="9876543210"
@@ -569,7 +573,7 @@ export default function Login() {
                   {workerError.toLowerCase().includes('register') && (
                     <div className="pl-6 pt-1">
                       <Link
-                        to={`/worker/register?phone=${workerPhone.replace(/\D/g, '').slice(0, 10)}`}
+                        to={`/worker/register?phone=${tryNormalizeIndianPhone(workerPhone) ?? workerPhone.replace(/\D/g, '').slice(0, 10)}`}
                         className="font-semibold text-emerald-400 hover:text-emerald-300 underline inline-flex items-center gap-1"
                       >
                         <span>Register as a worker now</span>
@@ -596,7 +600,7 @@ export default function Login() {
                     label={t('loginPage.workerIdentifierLabel', 'Worker Mobile Number (10 digits) *')}
                     value={workerPhone}
                     onChange={e => {
-                      setWorkerPhone(e.target.value.replace(/\D/g, '').slice(0, 10))
+                      setWorkerPhone(sanitizePhoneInput(e.target.value))
                       if (workerError) setWorkerError('')
                     }}
                     placeholder="9876543210"
@@ -769,7 +773,7 @@ export default function Login() {
                     label="Administrator Mobile Number (10 digits) *"
                     value={adminSetupPhone}
                     onChange={e => {
-                      setAdminSetupPhone(e.target.value.replace(/\D/g, '').slice(0, 10))
+                      setAdminSetupPhone(sanitizePhoneInput(e.target.value))
                       if (adminError) setAdminError('')
                     }}
                     placeholder="9876543210"

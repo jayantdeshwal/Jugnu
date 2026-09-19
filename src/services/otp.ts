@@ -1,7 +1,12 @@
 /**
  * MSG91 OTP Widget Integration Service
  * Manages script loading, polling for initialization, and triggering the SendOTP / Verify widget.
+ *
+ * PHONE CONTRACT: This module expects the `identifier` option to be a canonical
+ * 10-digit Indian mobile number (e.g. "9876543210"), produced by normalizeIndianPhone()
+ * from src/utils/phone.ts. It prepends "91" exactly once to produce the MSG91 identifier.
  */
+import { normalizeIndianPhone } from '@/utils/phone'
 
 declare global {
   interface Window {
@@ -112,11 +117,20 @@ export interface OtpWidgetOptions {
 export async function openOtpWidget(options: OtpWidgetOptions): Promise<boolean> {
   const isLoaded = await loadMsg91Script()
 
-  // Format identifier: 10-digit Indian phone number => '919876543210'
-  // Inside MSG91 SDK, it prepends '+' if not present, creating '+919876543210'
-  let cleanPhone = options.identifier ? options.identifier.replace(/\D/g, '') : ''
-  if (cleanPhone.length === 10) {
-    cleanPhone = `91${cleanPhone}`
+  // Normalize and validate using the canonical helper.
+  // Callers MUST supply a canonical 10-digit number (from normalizeIndianPhone),
+  // but we run it through the helper here as a defensive check.
+  // MSG91 widget expects '91XXXXXXXXXX' (12 digits, no '+').
+  let cleanPhone = ''
+  if (options.identifier) {
+    const normalized = normalizeIndianPhone(options.identifier)
+    if (!normalized.ok) {
+      console.error('[MSG91] openOtpWidget received invalid identifier:', normalized.error)
+      options.onFailure(normalized.error)
+      return false
+    }
+    // Prepend country code exactly once — result is always 12 digits, e.g. '919876543210'
+    cleanPhone = `91${normalized.digits}`
   }
 
   if (isLoaded && typeof window.initSendOTP === 'function') {

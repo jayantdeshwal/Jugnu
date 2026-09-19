@@ -18,6 +18,7 @@ import { useAuth } from '@/context/AuthContext'
 import { openOtpWidget } from '@/services/otp'
 import { checkPhoneRegistration } from '@/services/authCheck'
 import { sanitizeErrorMessage } from '@/utils/errors'
+import { normalizeIndianPhone, tryNormalizeIndianPhone, sanitizePhoneInput } from '@/utils/phone'
 
 export default function Register() {
   const { t } = useTranslation()
@@ -28,7 +29,7 @@ export default function Register() {
 
   const { verifyAndLoginWithOtp } = useAuth()
 
-  const queryPhone = (searchParams.get('phone') || '').replace(/\D/g, '').slice(-10)
+  const queryPhone = tryNormalizeIndianPhone(searchParams.get('phone') || '') ?? ''
 
   // ---------------- Customer State ----------------
   const [customerName, setCustomerName] = useState('')
@@ -50,16 +51,16 @@ export default function Register() {
     setAlreadyRegisteredNotice(null)
 
     const cleanName = customerName.trim()
-    const cleanPhone = customerPhone.replace(/\D/g, '').slice(-10)
-
     if (!cleanName || cleanName.length < 2) {
       setCustomerError('Full Name is mandatory (minimum 2 characters)')
       return
     }
-    if (cleanPhone.length !== 10) {
-      setCustomerError('Please enter a valid 10-digit Indian mobile number')
+    const normalizeResult = normalizeIndianPhone(customerPhone)
+    if (!normalizeResult.ok) {
+      setCustomerError(normalizeResult.error)
       return
     }
+    const cleanPhone = normalizeResult.digits
 
     setCustomerLoading(true)
     try {
@@ -240,7 +241,7 @@ export default function Register() {
                   <Input
                     label={t('registerPage.phone', 'Mobile Number (10 digits) *')}
                     value={customerPhone}
-                    onChange={e => setCustomerPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    onChange={e => setCustomerPhone(sanitizePhoneInput(e.target.value))}
                     placeholder="9876543210"
                     leftIcon={<span className="text-sm font-semibold text-slate-500 dark:text-zinc-400">+91</span>}
                     required
