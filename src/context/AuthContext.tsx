@@ -212,8 +212,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
 
     if (error || !data || !data.session) {
+      let serverErrorMsg = data?.error
+      if (!serverErrorMsg && error) {
+        try {
+          const errorBody = await (error as any).context?.json()
+          if (errorBody?.error) {
+            serverErrorMsg = errorBody.error
+          } else if (errorBody?.message) {
+            serverErrorMsg = errorBody.message
+          }
+        } catch {
+          // Ignore context JSON parse errors
+        }
+      }
       const errorMsg =
-        data?.error || error?.message || 'OTP verification failed on server. Please check and retry.'
+        serverErrorMsg || error?.message || 'OTP verification failed on server. Please check and retry.'
+      console.error('[verifyAndLoginWithOtp] Edge Function error:', { errorMsg, error, data })
       throw new Error(errorMsg)
     }
 

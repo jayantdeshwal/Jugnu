@@ -90,9 +90,19 @@ serve(async (req: Request) => {
     })
 
     const msg91Data = await msg91Res.json().catch(() => ({}))
-    console.log('[verify-phone-auth] MSG91 response status:', msg91Res.status, 'data type:', msg91Data?.type)
+    console.log('[verify-phone-auth] MSG91 response status:', msg91Res.status, 'data type:', msg91Data?.type, 'message:', msg91Data?.message)
 
-    if (!msg91Res.ok || (msg91Data.type && msg91Data.type !== 'success' && !msg91Data.message?.toLowerCase().includes('success'))) {
+    // Robust MSG91 error detection:
+    // On failure: HTTP non-200, type === 'error', code === '201', or message indicates failure/AuthenticationFailure.
+    // On success: MSG91 returns HTTP 200 with { "mobile": "91...", "type": "mobile" }.
+    const isMsg91Error =
+      !msg91Res.ok ||
+      msg91Data.type === 'error' ||
+      String(msg91Data.code) === '201' ||
+      Boolean(msg91Data.message && /fail|invalid|expired|unauthorized/i.test(String(msg91Data.message)))
+
+    if (isMsg91Error) {
+      console.warn('[verify-phone-auth] MSG91 verification rejected:', msg91Data)
       return new Response(
         JSON.stringify({ error: msg91Data.message || 'OTP verification failed or expired. Please retry.' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

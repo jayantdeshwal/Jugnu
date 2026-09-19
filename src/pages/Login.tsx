@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Button, Input, Card } from '@kaamgar/ui'
 import { useAuth } from '../context/AuthContext'
 import { openOtpWidget } from '@/services/otp'
+import { checkPhoneRegistration } from '@/services/authCheck'
 import { getSupabaseClient } from '@/lib/supabase'
 import { useLanguage } from '../context/LanguageContext'
 import { useTheme } from '../context/ThemeContext'
@@ -134,6 +135,15 @@ export default function Login() {
 
     setCustomerLoading(true)
     try {
+      // 1. Verify account exists before opening OTP
+      const check = await checkPhoneRegistration(cleanPhone)
+      if (!check.isRegistered) {
+        setCustomerLoading(false)
+        setCustomerError('No account found for this mobile number. Please register first.')
+        return
+      }
+
+      // 2. Account exists: launch MSG91 OTP widget
       const launched = await openOtpWidget({
         identifier: cleanPhone,
         onSuccess: async (accessToken: string) => {
@@ -158,7 +168,7 @@ export default function Login() {
       }
     } catch (err) {
       setCustomerLoading(false)
-      setCustomerError('Unable to launch OTP verification.')
+      setCustomerError('Unable to verify mobile number.')
     }
   }
 
@@ -175,6 +185,15 @@ export default function Login() {
 
     setWorkerLoading(true)
     try {
+      // 1. Verify account exists before opening OTP
+      const check = await checkPhoneRegistration(cleanPhone)
+      if (!check.isRegistered) {
+        setWorkerLoading(false)
+        setWorkerError('No account found for this mobile number. Please register as a worker first.')
+        return
+      }
+
+      // 2. Account exists: launch MSG91 OTP widget
       const launched = await openOtpWidget({
         identifier: cleanPhone,
         onSuccess: async (accessToken: string) => {
@@ -204,7 +223,7 @@ export default function Login() {
       }
     } catch (err) {
       setWorkerLoading(false)
-      setWorkerError('Unable to launch OTP verification.')
+      setWorkerError('Unable to verify mobile number.')
     }
   }
 
@@ -470,6 +489,17 @@ export default function Login() {
                     <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                     <span className="leading-relaxed">{customerError}</span>
                   </div>
+                  {customerError.toLowerCase().includes('register') && (
+                    <div className="pl-6 pt-1">
+                      <Link
+                        to={`/register?phone=${customerPhone.replace(/\D/g, '').slice(0, 10)}&role=customer`}
+                        className="font-semibold text-amber-500 hover:text-amber-400 underline inline-flex items-center gap-1"
+                      >
+                        <span>Register now with this number</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </Link>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -536,6 +566,17 @@ export default function Login() {
                     <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                     <span className="leading-relaxed">{workerError}</span>
                   </div>
+                  {workerError.toLowerCase().includes('register') && (
+                    <div className="pl-6 pt-1">
+                      <Link
+                        to={`/worker/register?phone=${workerPhone.replace(/\D/g, '').slice(0, 10)}`}
+                        className="font-semibold text-emerald-400 hover:text-emerald-300 underline inline-flex items-center gap-1"
+                      >
+                        <span>Register as a worker now</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </Link>
+                    </div>
+                  )}
                 </div>
               )}
 
