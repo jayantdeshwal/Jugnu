@@ -20,9 +20,6 @@ DECLARE
   clean_digits text;
   formatted_phone text;
   v_exists boolean := false;
-  v_role text := null;
-  v_name text := null;
-  v_email text := null;
 BEGIN
   -- Extract trailing 10 digits
   clean_digits := right(regexp_replace(coalesce(lookup_phone, ''), '\D', '', 'g'), 10);
@@ -37,42 +34,22 @@ BEGIN
   formatted_phone := '+91' || clean_digits;
 
   -- 1. Check in public.profiles table
-  SELECT p.role::text, p.full_name, p.email
-  INTO v_role, v_name, v_email
-  FROM public.profiles p
-  WHERE p.phone = formatted_phone
-  LIMIT 1;
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE phone = formatted_phone
+  ) INTO v_exists;
 
-  IF v_role IS NOT NULL THEN
-    RETURN jsonb_build_object(
-      'registered', true,
-      'role', v_role,
-      'fullName', coalesce(v_name, ''),
-      'email', coalesce(v_email, ''),
-      'isWorker', v_role = 'worker'
-    );
+  IF v_exists THEN
+    RETURN jsonb_build_object('registered', true);
   END IF;
 
   -- 2. Fallback check in auth.users
-  SELECT u.email
-  INTO v_email
-  FROM auth.users u
-  WHERE u.phone = formatted_phone
-  LIMIT 1;
+  SELECT EXISTS (
+    SELECT 1 FROM auth.users
+    WHERE phone = formatted_phone
+  ) INTO v_exists;
 
-  IF v_email IS NOT NULL THEN
-    RETURN jsonb_build_object(
-      'registered', true,
-      'role', 'customer',
-      'fullName', '',
-      'email', v_email,
-      'isWorker', false
-    );
-  END IF;
-
-  RETURN jsonb_build_object(
-    'registered', false
-  );
+  RETURN jsonb_build_object('registered', v_exists);
 END;
 $$;
 
