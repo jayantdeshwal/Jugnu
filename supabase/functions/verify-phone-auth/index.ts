@@ -157,11 +157,12 @@ serve(async (req: Request) => {
       }
     }
 
-    // If not found by profile, look up by canonical email (deterministic, no pagination)
+    // If not found by profile, look up by canonical email
     if (!authUser) {
-      const { data: userByEmail } = await adminClient.auth.admin.getUserByEmail(canonicalEmail)
-      if (userByEmail?.user) {
-        authUser = userByEmail.user
+      const { data: usersData } = await adminClient.auth.admin.listUsers({ page: 1, perPage: 1000 })
+      const userByEmail = usersData?.users.find((user) => user.email?.toLowerCase() === canonicalEmail)
+      if (userByEmail) {
+        authUser = userByEmail
       }
     }
 
@@ -183,9 +184,10 @@ serve(async (req: Request) => {
       if (createErr) {
         // Handle concurrent OTP race: another request may have just created the same user
         if (createErr.message?.toLowerCase().includes('already') || createErr.message?.toLowerCase().includes('duplicate')) {
-          const { data: retryUser } = await adminClient.auth.admin.getUserByEmail(canonicalEmail)
-          if (retryUser?.user) {
-            authUser = retryUser.user
+          const { data: retryUsersData } = await adminClient.auth.admin.listUsers({ page: 1, perPage: 1000 })
+          const retryUser = retryUsersData?.users.find((user) => user.email?.toLowerCase() === canonicalEmail)
+          if (retryUser) {
+            authUser = retryUser
             isNewUser = false
           } else {
             console.error('[verify-phone-auth] createUser error (no retry match):', createErr)
