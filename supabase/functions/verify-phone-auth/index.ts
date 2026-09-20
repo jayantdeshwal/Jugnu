@@ -143,10 +143,10 @@ serve(async (req: Request) => {
       .maybeSingle()
 
     if (existingProfile) {
-      // Reject admin accounts from phone OTP path
+      // Reject admin accounts from the customer/worker OTP path
       if (existingProfile.role === 'super_admin' || existingProfile.role === 'sub_admin') {
         return new Response(
-          JSON.stringify({ error: 'Administrator accounts must sign in using Email + Password + SMS 2FA.' }),
+          JSON.stringify({ error: 'Administrator accounts must sign in through the Administrator portal.' }),
           { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }

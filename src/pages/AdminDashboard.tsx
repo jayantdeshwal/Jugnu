@@ -179,7 +179,6 @@ export default function AdminDashboard() {
   const [newAdminFullName, setNewAdminFullName] = useState('')
   const [newAdminEmail, setNewAdminEmail] = useState('')
   const [newAdminPhone, setNewAdminPhone] = useState('')
-  const [newAdminPassword, setNewAdminPassword] = useState('')
   const [isSubmittingNewAdmin, setIsSubmittingNewAdmin] = useState(false)
   const [addAdminError, setAddAdminError] = useState('')
   const [addAdminSuccess, setAddAdminSuccess] = useState('')
@@ -451,11 +450,7 @@ export default function AdminDashboard() {
       return
     }
     if (trimmedPhone.length !== 10) {
-      setAddAdminError('A valid 10-digit mobile number is mandatory for 2FA security OTP verification.')
-      return
-    }
-    if (!newAdminPassword || newAdminPassword.length < 6) {
-      setAddAdminError('Temporary password must be at least 6 characters long.')
+      setAddAdminError('A valid 10-digit mobile number is mandatory for OTP sign-in. Administrators authenticate passwordlessly via MSG91 OTP.')
       return
     }
 
@@ -463,7 +458,6 @@ export default function AdminDashboard() {
     try {
       await createSubAdmin({
         email: trimmedEmail,
-        password: newAdminPassword,
         fullName: trimmedName,
         phone: trimmedPhone,
       })
@@ -471,7 +465,6 @@ export default function AdminDashboard() {
       setNewAdminFullName('')
       setNewAdminEmail('')
       setNewAdminPhone('')
-      setNewAdminPassword('')
       await loadAdminTeamData()
       setTimeout(() => {
         setShowAddAdminModal(false)
@@ -826,21 +819,33 @@ export default function AdminDashboard() {
 
   const [is2faVerified, setIs2faVerified] = useState<boolean | null>(null)
 
-  // Check server-side 2FA status on mount — sessionStorage is NOT the security boundary
+  // Check server-side 2FA authorization status.
+  // The server (admin_2fa_sessions + require_admin_2fa) is the security boundary — NOT sessionStorage.
+  // Re-polls every 30s so that an expired 30-minute authorization locks the console on its own
+  // and prompts re-verification, without relying on client state.
   useEffect(() => {
     if (!isAdmin) {
       setIs2faVerified(false)
       return
     }
     const supabase = getSupabaseClient()
-    void (async () => {
+    let cancelled = false
+
+    const check2fa = async () => {
       try {
         const { data } = await supabase.rpc('is_admin_2fa_active')
-        setIs2faVerified(data === true)
+        if (!cancelled) setIs2faVerified(data === true)
       } catch {
-        setIs2faVerified(false)
+        if (!cancelled) setIs2faVerified(false)
       }
-    })()
+    }
+
+    void check2fa()
+    const interval = setInterval(() => { void check2fa() }, 30_000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
   }, [isAdmin])
 
   if (is2faVerified === null) return null
@@ -859,7 +864,7 @@ export default function AdminDashboard() {
             Two-Factor Authentication Required
           </h1>
           <p className="mt-2 text-sm text-semantic-text-secondary">
-            Access to the Jugnu Administrator Console is locked. You must sign in with your administrator credentials and complete mobile OTP 2FA.
+            Your 30-minute administrative authorization has expired (or is not yet active). You remain signed in — re-verify with a mobile OTP to unlock the console.
           </p>
           <div className="mt-6">
             <Button
@@ -867,7 +872,7 @@ export default function AdminDashboard() {
               className="w-full bg-amber-600 hover:bg-amber-500 text-white border-none py-2.5 shadow-lg shadow-amber-600/20"
               onClick={() => navigate('/login')}
             >
-              Sign In & Verify 2FA OTP
+              Re-verify with Mobile OTP
             </Button>
           </div>
         </Card>
@@ -3340,7 +3345,7 @@ export default function AdminDashboard() {
 
           <div>
             <label className="block text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider mb-1">
-              2FA Mobile Number (10 digits) *
+              Administrator Mobile Number (10 digits) *
             </label>
             <div className="relative">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-semantic-text-tertiary text-sm font-medium">
@@ -3357,23 +3362,8 @@ export default function AdminDashboard() {
               />
             </div>
             <p className="mt-1 text-[11px] text-semantic-text-tertiary">
-              Mandatory: A 6-digit OTP will be dispatched to this mobile number via MSG91 every time they sign in.
+              Mandatory: Every administrator signs in passwordlessly via a 6-digit MSG91 OTP sent to this number. The number is protected and cannot be changed through the standard profile path.
             </p>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-semantic-text-secondary uppercase tracking-wider mb-1">
-              Initial Password *
-            </label>
-            <input
-              type="password"
-              required
-              minLength={6}
-              value={newAdminPassword}
-              onChange={e => setNewAdminPassword(e.target.value)}
-              placeholder="Minimum 6 characters"
-              className="w-full px-3.5 py-2.5 bg-surface-200/80 border border-semantic-border-light rounded-xl text-semantic-text-primary text-sm focus:outline-none focus:border-brand-500 transition-colors"
-            />
           </div>
 
           <div className="flex justify-end gap-2.5 pt-3 border-t border-semantic-border-light">

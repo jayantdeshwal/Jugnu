@@ -366,7 +366,6 @@ export interface AdminTeamMember {
 
 export interface CreateAdminParams {
   email: string
-  password: string
   fullName: string
   phone: string
 }
@@ -458,10 +457,9 @@ export async function fetchAdminTeam(currentAdminUser?: {
 export async function createSubAdmin(params: CreateAdminParams): Promise<{ success: boolean; message?: string }> {
   const supabase = getSupabaseClient()
   const { data, error } = await (supabase as any).rpc('admin_create_sub_admin', {
-    admin_email: params.email.trim(),
-    admin_password: params.password,
+    admin_email:     params.email.trim(),
     admin_full_name: params.fullName.trim(),
-    admin_phone: params.phone.trim(),
+    admin_phone:     params.phone.trim(),
   })
   if (error) {
     throw new Error(error.message || 'Failed to create administrator account.')

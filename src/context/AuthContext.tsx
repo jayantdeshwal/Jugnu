@@ -14,11 +14,8 @@ interface AuthContextType {
   login: (user: User) => void
   logout: () => Promise<void>
   updateUser: (updates: Partial<User>) => void
-  signInWithEmail: (email: string, password: string) => Promise<void>
-  signUpWithEmail: (email: string, password: string, fullName: string) => Promise<{ needsConfirmation: boolean }>
   signInWithGoogle: (redirectTo?: string) => Promise<void>
   verifyAndLoginWithOtp: (phone: string, accessToken: string, fullName?: string, email?: string) => Promise<PhoneAuthResult>
-  updatePhone: (phone: string) => Promise<void>
   updateEmail: (email: string) => Promise<void>
   isAuthenticated: boolean
   isWorker: boolean
@@ -166,25 +163,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }
 
-  const signInWithEmail = async (email: string, password: string) => {
-    const supabase = getSupabaseClient()
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) throw error
-    if (data?.user) {
-      await loadSupabaseUser(data.user)
-    }
-  }
-
-  const signUpWithEmail = async (email: string, password: string, fullName: string) => {
-    const { data, error } = await getSupabaseClient().auth.signUp({
-      email,
-      password,
-      options: { data: { full_name: fullName } },
-    })
-    if (error) throw error
-    return { needsConfirmation: !data.session }
-  }
-
   const signInWithGoogle = async (redirectTo?: string) => {
     const supabase = getSupabaseClient()
     const redirectUrl =
@@ -273,28 +251,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const updatePhone = async (rawPhone: string) => {
-    const cleanPhone = rawPhone.replace(/\D/g, '').slice(-10)
-    const formattedPhone = `+91${cleanPhone}`
-    const supabase = getSupabaseClient()
-
-    if (user) {
-      const updated = { ...user, phone: formattedPhone }
-      setUser(updated)
-
-      try {
-        const { data: sessionData } = await supabase.auth.getSession()
-        if (sessionData.session?.user) {
-          await (supabase.from('profiles') as any)
-            .update({ phone: formattedPhone })
-            .eq('id', sessionData.session.user.id)
-        }
-      } catch (err) {
-        console.warn('Error persisting updated phone:', err)
-      }
-    }
-  }
-
   const updateEmail = async (rawEmail: string) => {
     const cleanEmail = rawEmail.trim()
     const supabase = getSupabaseClient()
@@ -333,11 +289,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         logout,
         updateUser,
-        signInWithEmail,
-        signUpWithEmail,
         signInWithGoogle,
         verifyAndLoginWithOtp,
-        updatePhone,
         updateEmail,
         isAuthenticated: !!user,
         isWorker: user?.role === 'worker',
