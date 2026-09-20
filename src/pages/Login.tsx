@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button, Input, Card } from '@kaamgar/ui'
@@ -89,26 +89,31 @@ export default function Login() {
     }
   }, [searchParams])
 
-  // Redirect based on role and active verification
+  // Redirect based on role and active 2FA status (server-checked)
   useEffect(() => {
     if (user) {
       if (user.role === 'super_admin' || user.role === 'sub_admin') {
-        const is2faVerified = typeof window !== 'undefined' && sessionStorage.getItem('admin_2fa_verified') === 'true'
-        if (is2faVerified) {
-          const timer = setTimeout(() => {
-            navigate('/admin')
-          }, 300)
-          return () => clearTimeout(timer)
-        } else {
-          setLoginRole('admin')
-          const clean = tryNormalizeIndianPhone(user.phone || '') ?? ''
-          if (clean.length === 10) {
-            setAdminPhone(clean)
-            setAdmin2faStep('otp_challenge')
-          } else {
-            setAdmin2faStep('phone_setup')
+        // Check server-side 2FA status — sessionStorage is NOT the security boundary
+        const supabase = getSupabaseClient()
+        void (async () => {
+          try {
+            const { data: active } = await supabase.rpc('is_admin_2fa_active')
+            if (active === true) {
+              navigate('/admin')
+            } else {
+              setLoginRole('admin')
+              const clean = tryNormalizeIndianPhone(user.phone || '') ?? ''
+              if (clean.length === 10) {
+                setAdminPhone(clean)
+                setAdmin2faStep('otp_challenge')
+              } else {
+                setAdmin2faStep('phone_setup')
+              }
+            }
+          } catch {
+            setLoginRole('admin')
           }
-        }
+        })()
       } else if (user.role === 'worker') {
         const timer = setTimeout(() => {
           navigate('/worker/dashboard')
@@ -238,11 +243,32 @@ export default function Login() {
     try {
       const widgetOpened = await openOtpWidget({
         identifier: cleanPhone,
-        onSuccess: async () => {
-          sessionStorage.setItem('admin_2fa_verified', 'true')
-          sessionStorage.setItem('admin_2fa_timestamp', Date.now().toString())
-          setAdminLoading(false)
-          navigate('/admin')
+        onSuccess: async (accessToken: string) => {
+          try {
+            // Send accessToken to server — server verifies MSG91, checks phone, writes 2FA record
+            const supabase = getSupabaseClient()
+            const { data: sessionData } = await supabase.auth.getSession()
+            const jwt = sessionData.session?.access_token
+            if (!jwt) throw new Error('No active session. Please sign in again.')
+
+            const { data, error } = await supabase.functions.invoke('verify-admin-2fa', {
+              body: { accessToken },
+            })
+
+            if (error || !data?.success) {
+              let msg = data?.error
+              if (!msg && error) {
+                try { msg = (await (error as any).context?.json())?.error } catch { /* ignore */ }
+              }
+              throw new Error(msg || 'Server-side 2FA verification failed. Please retry.')
+            }
+
+            setAdminLoading(false)
+            navigate('/admin')
+          } catch (err) {
+            setAdminLoading(false)
+            setAdminError(sanitizeErrorMessage(err, '2FA verification failed. Please retry.'))
+          }
         },
         onFailure: (err) => {
           setAdminLoading(false)
@@ -326,14 +352,28 @@ export default function Login() {
     try {
       const widgetOpened = await openOtpWidget({
         identifier: cleanPhone,
-        onSuccess: async () => {
+        onSuccess: async (accessToken: string) => {
           try {
+            // First persist the phone to the profile so the server can bind it
             await updatePhone(cleanPhone)
-            sessionStorage.setItem('admin_2fa_verified', 'true')
-            sessionStorage.setItem('admin_2fa_timestamp', Date.now().toString())
+
+            // Then verify 2FA server-side
+            const supabase = getSupabaseClient()
+            const { data, error } = await supabase.functions.invoke('verify-admin-2fa', {
+              body: { accessToken },
+            })
+
+            if (error || !data?.success) {
+              let msg = data?.error
+              if (!msg && error) {
+                try { msg = (await (error as any).context?.json())?.error } catch { /* ignore */ }
+              }
+              throw new Error(msg || 'Server-side 2FA verification failed. Please retry.')
+            }
+
             navigate('/admin')
           } catch (err) {
-            setAdminError('Mobile verified, but saving to profile failed. Please try again.')
+            setAdminError(sanitizeErrorMessage(err, 'Phone setup or 2FA verification failed. Please try again.'))
           } finally {
             setAdminLoading(false)
           }

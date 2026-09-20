@@ -157,16 +157,12 @@ serve(async (req: Request) => {
       }
     }
 
-    // If not found by profile, check by canonical email in auth.users
+    // If not found by profile, look up by canonical email (deterministic, no pagination)
     if (!authUser) {
-      // List users or query by phone
-      const { data: userByPhone } = await adminClient.auth.admin.listUsers({
-        page: 1,
-        perPage: 10,
-      })
-      authUser = userByPhone?.users?.find(
-        (u: any) => u.phone === formattedPhone || u.email?.toLowerCase() === canonicalEmail.toLowerCase()
-      )
+      const { data: userByEmail } = await adminClient.auth.admin.getUserByEmail(canonicalEmail)
+      if (userByEmail?.user) {
+        authUser = userByEmail.user
+      }
     }
 
     // 6. Create user if new
@@ -185,13 +181,29 @@ serve(async (req: Request) => {
       })
 
       if (createErr) {
-        console.error('[verify-phone-auth] createUser error:', createErr)
-        return new Response(
-          JSON.stringify({ error: 'Could not provision account. Please retry.' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
+        // Handle concurrent OTP race: another request may have just created the same user
+        if (createErr.message?.toLowerCase().includes('already') || createErr.message?.toLowerCase().includes('duplicate')) {
+          const { data: retryUser } = await adminClient.auth.admin.getUserByEmail(canonicalEmail)
+          if (retryUser?.user) {
+            authUser = retryUser.user
+            isNewUser = false
+          } else {
+            console.error('[verify-phone-auth] createUser error (no retry match):', createErr)
+            return new Response(
+              JSON.stringify({ error: 'Could not provision account. Please retry.' }),
+              { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+          }
+        } else {
+          console.error('[verify-phone-auth] createUser error:', createErr)
+          return new Response(
+            JSON.stringify({ error: 'Could not provision account. Please retry.' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+      } else {
+        authUser = createdData.user
       }
-      authUser = createdData.user
 
       // Ensure profile row exists
       await adminClient.from('profiles').upsert({

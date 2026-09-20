@@ -95,11 +95,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     created_at?: string
   }) => {
     const supabase = getSupabaseClient()
-    const { data: profileData } = await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('id, full_name, phone, email, role, language, avatar_url, created_at')
       .eq('id', authUser.id)
       .maybeSingle()
+
+    // Successful query with no row = account deleted. Sign out immediately.
+    // A query error (network/DB failure) is NOT treated as deletion — fall through normally.
+    if (!profileError && profileData === null) {
+      console.warn('[AuthContext] Profile not found for authenticated user — account deleted. Signing out.')
+      setUser(null)
+      void supabase.auth.signOut()
+      return
+    }
+
     const profile = profileData as ProfileRow | null
 
     let role = profile?.role as UserRole | undefined
@@ -141,18 +151,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const logout = async () => {
-    setUser(null)
     if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('admin_2fa_verified')
-      sessionStorage.removeItem('admin_2fa_timestamp')
       sessionStorage.removeItem('kaamgar_guest_mode')
     }
     try {
-      const { error } = await getSupabaseClient().auth.signOut()
+      const supabase = getSupabaseClient()
+      // Revoke server-side 2FA authorization before signing out
+      try { await supabase.rpc('revoke_admin_2fa') } catch { /* non-admin sessions have no record */ }
+      const { error } = await supabase.auth.signOut()
       if (error) console.warn('Supabase sign-out notice:', error.message)
     } catch (err) {
       console.warn('Sign out notice:', err)
     }
+    setUser(null)
   }
 
   const signInWithEmail = async (email: string, password: string) => {

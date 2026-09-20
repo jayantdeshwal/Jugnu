@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+﻿import { useEffect, useState, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -824,7 +824,26 @@ export default function AdminDashboard() {
     void fetchFreshMedia()
   }, [inspectWorker?.id])
 
-  const is2faVerified = typeof window !== 'undefined' && sessionStorage.getItem('admin_2fa_verified') === 'true'
+  const [is2faVerified, setIs2faVerified] = useState<boolean | null>(null)
+
+  // Check server-side 2FA status on mount — sessionStorage is NOT the security boundary
+  useEffect(() => {
+    if (!isAdmin) {
+      setIs2faVerified(false)
+      return
+    }
+    const supabase = getSupabaseClient()
+    void (async () => {
+      try {
+        const { data } = await supabase.rpc('is_admin_2fa_active')
+        setIs2faVerified(data === true)
+      } catch {
+        setIs2faVerified(false)
+      }
+    })()
+  }, [isAdmin])
+
+  if (is2faVerified === null) return null
 
   if (!isAdmin || !is2faVerified) {
     return (
