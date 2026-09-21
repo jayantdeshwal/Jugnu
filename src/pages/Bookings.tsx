@@ -124,6 +124,13 @@ export default function Bookings() {
   const [quoteWorkers, setQuoteWorkers] = useState<Map<string, { name: string; avatar: string | null; rating: number; reviews: number; experience: number }>>(new Map())
   const [quoteActionId, setQuoteActionId] = useState('')
 
+  useEffect(() => {
+    const target = window.location.hash.slice(1)
+    if (!target) return
+    const timer = window.setTimeout(() => document.getElementById(target)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150)
+    return () => window.clearTimeout(timer)
+  }, [])
+
   // Contact modal state
   const [contactModalData, setContactModalData] = useState<{
     isOpen: boolean
@@ -466,6 +473,7 @@ export default function Bookings() {
     return (
       <div
         key={booking.id}
+        id={`booking-${booking.id}`}
         className={`bg-white dark:bg-zinc-900 border rounded-2xl p-5 shadow-sm transition-all ${
           booking.status === 'in_progress'
             ? 'border-indigo-500/50 shadow-indigo-500/5 ring-1 ring-indigo-500/20'
@@ -798,7 +806,7 @@ export default function Bookings() {
         )}
 
         {quoteRequests.length > 0 && (
-          <section className="mb-6 space-y-3">
+          <section id="quote-requests" className="mb-6 space-y-3 scroll-mt-24">
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4 text-amber-500" />
               <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">Quote Requests</h2>

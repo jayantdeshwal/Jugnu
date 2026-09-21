@@ -98,6 +98,13 @@ export default function WorkerDashboard() {
   const [quoteDetails, setQuoteDetails] = useState('')
   const [quoteError, setQuoteError] = useState('')
   const [isSubmittingQuote, setIsSubmittingQuote] = useState(false)
+
+  useEffect(() => {
+    const target = window.location.hash.slice(1)
+    if (!target) return
+    const timer = window.setTimeout(() => document.getElementById(target)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150)
+    return () => window.clearTimeout(timer)
+  }, [])
   
   const tabParam = searchParams.get('tab')
   const [activeTab, setActiveTab] = useState<TabFilter>(
@@ -729,8 +736,8 @@ export default function WorkerDashboard() {
         {/* ===================================================================== */}
         {/* PROVIDER QUOTE REQUESTS                                                */}
         {/* ===================================================================== */}
-        {quoteRequests.some(request => request.status === 'pending') && (
-          <section className="mb-6 rounded-2xl border border-amber-500/25 bg-amber-500/5 p-4">
+        {quoteRequests.length > 0 && (
+          <section id="quote-requests" className="mb-6 rounded-2xl border border-amber-500/25 bg-amber-500/5 p-4 scroll-mt-24">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <FileText className="w-4 h-4 text-amber-500" />
@@ -873,6 +880,7 @@ export default function WorkerDashboard() {
               return (
                 <div
                   key={booking.id}
+                  id={`booking-${booking.id}`}
                   className="p-4 rounded-2xl bg-surface-100 border border-semantic-border-light shadow-sm hover:border-brand-500/30 transition-all space-y-3"
                 >
                   {/* Top line: Customer name + status badge */}

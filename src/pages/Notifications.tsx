@@ -161,19 +161,19 @@ export default function Notifications() {
     ]
     if (quoteNotificationTypes.includes(item.notification_type)) {
       return isWorker
-        ? { label: t('notifications.viewDashboard', 'Worker Dashboard'), url: '/worker/dashboard' }
-        : { label: t('notifications.viewBookings', 'View My Bookings'), url: '/bookings' }
+        ? { label: t('notifications.viewQuoteRequests', 'View Quote Requests'), url: '/worker/dashboard#quote-requests' }
+        : { label: t('notifications.viewQuotes', 'View Quote Requests'), url: '/bookings#quote-requests' }
     }
     if (item.notification_type === 'booking_created' && isWorker) {
       return {
         label: t('notifications.viewDashboard', 'Worker Dashboard'),
-        url: '/worker/dashboard',
+        url: `/worker/dashboard#booking-${encodeURIComponent(item.booking_id!)}`,
       }
     }
     if (item.booking_id) {
       return {
         label: t('notifications.viewBooking', 'My Bookings'),
-        url: '/bookings',
+        url: `/bookings#booking-${encodeURIComponent(item.booking_id!)}`,
       }
     }
     if (item.notification_type === 'profile_approved' || item.notification_type === 'profile_rejected') {

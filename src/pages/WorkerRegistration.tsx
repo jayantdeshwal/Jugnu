@@ -551,7 +551,10 @@ export default function WorkerRegistration() {
             {t('common.back', 'Back')}
           </Link>
           <h1 className="text-2xl font-bold text-semantic-text-primary">
-            {t('auth.workerRegistration.title', 'Worker Registration')}
+            <span className="block">{t('auth.workerRegistration.title', 'Register as Worker')}</span>
+            <span className="block text-base sm:text-lg font-semibold text-brand-400 mt-1">
+              {t('auth.workerRegistration.titleHi', 'कामगार के रूप में पंजीकरण करें')}
+            </span>
           </h1>
           <p className="text-semantic-text-secondary mt-1">
             {t('auth.workerRegistration.subtitle', 'Register as a verified artisan or service professional in Muzaffarnagar.')}

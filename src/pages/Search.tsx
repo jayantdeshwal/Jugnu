@@ -81,7 +81,7 @@ function FilterPanel({ filtersOpen, setFiltersOpen, selectedCategory, setSelecte
   )
 }
 
-function ResultsHeader({ filteredWorkers, selectedCategory, t, getCategoryName, CATEGORIES, i18n }: any) {
+function ResultsHeader({ filteredWorkers, selectedCategory, t, getCategoryName, CATEGORIES, i18n, serviceDiscovery }: any) {
   const currentItem = selectedCategory
     ? getServiceById(selectedCategory) || getCategoryById(selectedCategory) || CATEGORIES.find((c: any) => c.id === selectedCategory)
     : null
@@ -90,10 +90,16 @@ function ResultsHeader({ filteredWorkers, selectedCategory, t, getCategoryName, 
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="mb-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-semantic-text-primary">{t('nav.search')}</h1>
+          <h1 className="text-2xl font-bold text-semantic-text-primary">
+            {serviceDiscovery && currentItem
+              ? getCategoryName(currentItem, i18n.language === 'hi' ? 'hi' : 'en')
+              : t('nav.search')}
+          </h1>
           <p className="text-semantic-text-secondary mt-1">
             {filteredWorkers.length} {t('common.workersFound') || 'workers found'}
-            {selectedCategory && currentItem && ` - ${getCategoryName(currentItem, i18n.language === 'hi' ? 'hi' : 'en')}`}
+            {serviceDiscovery
+              ? ` — ${t('categoryPage.availableWorkers', 'Available Workers')}`
+              : selectedCategory && currentItem && ` - ${getCategoryName(currentItem, i18n.language === 'hi' ? 'hi' : 'en')}`}
           </p>
         </div>
       </div>
@@ -192,10 +198,10 @@ function WorkerGrid({ filteredWorkers, t, iconComponents, CATEGORIES, getCategor
   )
 }
 
-function SearchResults({ filteredWorkers, selectedCategory, isLoadingWorkers, t, getCategoryName, CATEGORIES, iconComponents, EmptyState, WorkerGrid, i18n, quoteServiceRequestId }: any) {
+function SearchResults({ filteredWorkers, selectedCategory, isLoadingWorkers, t, getCategoryName, CATEGORIES, iconComponents, EmptyState, WorkerGrid, i18n, quoteServiceRequestId, serviceDiscovery }: any) {
   return (
     <>
-      <ResultsHeader filteredWorkers={filteredWorkers} selectedCategory={selectedCategory} t={t} getCategoryName={getCategoryName} CATEGORIES={CATEGORIES} i18n={i18n} />
+      <ResultsHeader filteredWorkers={filteredWorkers} selectedCategory={selectedCategory} t={t} getCategoryName={getCategoryName} CATEGORIES={CATEGORIES} i18n={i18n} serviceDiscovery={serviceDiscovery} />
       {isLoadingWorkers ? (
         <div className="py-16 text-center text-semantic-text-tertiary">
           <div className="w-8 h-8 mx-auto mb-3 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
@@ -303,10 +309,19 @@ export default function Search() {
     if (searchQuery) params.q = searchQuery
     if (selectedCategory) params.category = selectedCategory
     if (selectedArea) params.area = selectedArea
+    if (serviceDiscovery) params.source = 'category'
     setSearchParams(params)
   }
 
-  const clearFilters = () => { setSelectedCategory(''); setSelectedArea(''); setSearchQuery(''); setSearchParams({}) }
+  const clearFilters = () => {
+    if (serviceDiscovery) {
+      setSelectedArea('')
+      setSearchQuery('')
+      setSearchParams({ category: selectedCategory, source: 'category' })
+      return
+    }
+    setSelectedCategory(''); setSelectedArea(''); setSearchQuery(''); setSearchParams({})
+  }
   const hasFilters = selectedCategory || selectedArea || searchQuery
 
   return (
@@ -351,7 +366,7 @@ export default function Search() {
       </motion.div>
 
       <div className="container-app py-8">
-        <SearchResults filteredWorkers={filteredWorkers} selectedCategory={selectedCategory} isLoadingWorkers={isLoadingWorkers} t={t} getCategoryName={getCategoryName} CATEGORIES={categories} iconComponents={iconComponents} EmptyState={EmptyState} WorkerGrid={WorkerGrid} i18n={i18n} quoteServiceRequestId={quoteServiceRequestId} />
+          <SearchResults filteredWorkers={filteredWorkers} selectedCategory={selectedCategory} isLoadingWorkers={isLoadingWorkers} t={t} getCategoryName={getCategoryName} CATEGORIES={categories} iconComponents={iconComponents} EmptyState={EmptyState} WorkerGrid={WorkerGrid} i18n={i18n} quoteServiceRequestId={quoteServiceRequestId} serviceDiscovery={serviceDiscovery} />
       </div>
     </div>
   )
