@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useLocation } from 'react-router-dom'
 import { Button, Card, Avatar, Badge, RatingStars, Chip, Input } from '@/ui'
 import { CATEGORIES, getCategoryName, getServicesByCategoryId, getServiceById, getCategoryById } from '@kaamgar/shared'
 import { usePublicCatalog } from '@/hooks/usePublicCatalog'
@@ -36,7 +36,7 @@ const iconComponents = {
 
 import { Zap, Wrench, Hammer, Snowflake, Brush } from 'lucide-react'
 
-function FilterPanel({ filtersOpen, setFiltersOpen, selectedCategory, setSelectedCategory, selectedArea, setSelectedArea, sortBy, setSortBy, t, categories, serviceAreas, i18n }: any) {
+function FilterPanel({ filtersOpen, setFiltersOpen, selectedCategory, setSelectedCategory, selectedArea, setSelectedArea, t, categories, serviceAreas, i18n }: any) {
   if (!filtersOpen) return null
 
   return (
@@ -76,20 +76,6 @@ function FilterPanel({ filtersOpen, setFiltersOpen, selectedCategory, setSelecte
           </div>
         </div>
 
-        <div>
-          <label className="label">{t('common.sort')}</label>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { value: 'rating', label: t('common.rating') },
-              { value: 'experience', label: t('common.experience') },
-              { value: 'reviews', label: t('common.reviews') },
-            ].map(({ value, label }) => (
-              <Chip key={value} selected={sortBy === value} onClick={() => setSortBy(value as any)} variant="outline">
-                {label}
-              </Chip>
-            ))}
-          </div>
-        </div>
       </div>
     </motion.div>
   )
@@ -126,7 +112,7 @@ function EmptyState({ t, clearFilters }: any) {
   )
 }
 
-function WorkerGrid({ filteredWorkers, t, iconComponents, CATEGORIES, getCategoryName, i18n }: any) {
+function WorkerGrid({ filteredWorkers, t, iconComponents, CATEGORIES, getCategoryName, i18n, quoteServiceRequestId }: any) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ staggerChildren: 0.08 }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {filteredWorkers.map((worker: any, index: number) => {
@@ -138,7 +124,7 @@ function WorkerGrid({ filteredWorkers, t, iconComponents, CATEGORIES, getCategor
 
         return (
           <motion.div key={worker.id} style={{ transitionDelay: `${index * 80}ms` }}>
-            <Link to={`/worker/${worker.id}`} className="card-interactive group">
+            <Link to={`/worker/${worker.id}`} state={quoteServiceRequestId ? { serviceRequestId: quoteServiceRequestId } : undefined} className="card-interactive group">
               <div className="p-5">
                 <div className="flex items-start gap-4">
                   <Avatar name={worker.name} size="lg" src={worker.avatar} status={worker.available ? 'online' : 'busy'} />
@@ -206,7 +192,7 @@ function WorkerGrid({ filteredWorkers, t, iconComponents, CATEGORIES, getCategor
   )
 }
 
-function SearchResults({ filteredWorkers, selectedCategory, isLoadingWorkers, t, getCategoryName, CATEGORIES, iconComponents, EmptyState, WorkerGrid, i18n }: any) {
+function SearchResults({ filteredWorkers, selectedCategory, isLoadingWorkers, t, getCategoryName, CATEGORIES, iconComponents, EmptyState, WorkerGrid, i18n, quoteServiceRequestId }: any) {
   return (
     <>
       <ResultsHeader filteredWorkers={filteredWorkers} selectedCategory={selectedCategory} t={t} getCategoryName={getCategoryName} CATEGORIES={CATEGORIES} i18n={i18n} />
@@ -218,7 +204,7 @@ function SearchResults({ filteredWorkers, selectedCategory, isLoadingWorkers, t,
       ) : filteredWorkers.length === 0 ? (
         <EmptyState t={t} clearFilters={() => {}} />
       ) : (
-        <WorkerGrid filteredWorkers={filteredWorkers} t={t} iconComponents={iconComponents} CATEGORIES={CATEGORIES} getCategoryName={getCategoryName} i18n={i18n} />
+        <WorkerGrid filteredWorkers={filteredWorkers} t={t} iconComponents={iconComponents} CATEGORIES={CATEGORIES} getCategoryName={getCategoryName} i18n={i18n} quoteServiceRequestId={quoteServiceRequestId} />
       )}
     </>
   )
@@ -227,6 +213,7 @@ function SearchResults({ filteredWorkers, selectedCategory, isLoadingWorkers, t,
 export default function Search() {
   const { t, i18n } = useTranslation()
   const { categories, serviceAreas } = usePublicCatalog()
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const [filtersOpen, setFiltersOpen] = useState(
     Boolean(searchParams.get('filters') || searchParams.get('view') === 'services' || searchParams.get('category'))
@@ -234,9 +221,9 @@ export default function Search() {
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '')
   const [selectedArea, setSelectedArea] = useState(searchParams.get('area') || '')
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '')
-  const [sortBy, setSortBy] = useState<'rating' | 'experience' | 'reviews'>('rating')
   const [workerData, setWorkerData] = useState<SearchWorker[]>([])
   const [isLoadingWorkers, setIsLoadingWorkers] = useState(true)
+  const quoteServiceRequestId = location.state?.quoteServiceRequestId as string | undefined
 
   useEffect(() => {
     const cat = searchParams.get('category')
@@ -281,6 +268,8 @@ export default function Search() {
 
   const filteredWorkers = useMemo(() => {
     let workers = [...workerData]
+    // Only currently available approved providers can receive a quote request.
+    workers = workers.filter(w => w.available)
     if (selectedCategory) {
       const childServices = getServicesByCategoryId(selectedCategory)
       const targetIds = new Set<string>([selectedCategory])
@@ -304,16 +293,8 @@ export default function Search() {
         return matchesName || matchesBio || matchesCat
       })
     }
-    workers.sort((a, b) => {
-      switch (sortBy) {
-        case 'rating': return b.rating - a.rating
-        case 'experience': return b.experience - a.experience
-        case 'reviews': return b.reviews - a.reviews
-        default: return 0
-      }
-    })
     return workers
-  }, [workerData, selectedCategory, selectedArea, searchQuery, sortBy])
+  }, [workerData, selectedCategory, selectedArea, searchQuery])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -364,12 +345,12 @@ export default function Search() {
         </div>
 
         <AnimatePresence>
-          <FilterPanel filtersOpen={filtersOpen} setFiltersOpen={setFiltersOpen} selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} selectedArea={selectedArea} setSelectedArea={setSelectedArea} sortBy={sortBy} setSortBy={setSortBy} t={t} categories={categories} serviceAreas={serviceAreas} i18n={i18n} />
+          <FilterPanel filtersOpen={filtersOpen} setFiltersOpen={setFiltersOpen} selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} selectedArea={selectedArea} setSelectedArea={setSelectedArea} t={t} categories={categories} serviceAreas={serviceAreas} i18n={i18n} />
         </AnimatePresence>
       </motion.div>
 
       <div className="container-app py-8">
-        <SearchResults filteredWorkers={filteredWorkers} selectedCategory={selectedCategory} isLoadingWorkers={isLoadingWorkers} t={t} getCategoryName={getCategoryName} CATEGORIES={categories} iconComponents={iconComponents} EmptyState={EmptyState} WorkerGrid={WorkerGrid} i18n={i18n} />
+        <SearchResults filteredWorkers={filteredWorkers} selectedCategory={selectedCategory} isLoadingWorkers={isLoadingWorkers} t={t} getCategoryName={getCategoryName} CATEGORIES={categories} iconComponents={iconComponents} EmptyState={EmptyState} WorkerGrid={WorkerGrid} i18n={i18n} quoteServiceRequestId={quoteServiceRequestId} />
       </div>
     </div>
   )

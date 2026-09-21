@@ -1,6 +1,14 @@
 export type Language = 'en' | 'hi'
 export type UserRole = 'customer' | 'worker' | 'admin' | 'super_admin' | 'sub_admin'
 
+/** Canonical Job ID: the existing public.bookings.id UUID. */
+export type JobId = string
+
+/** Deterministic human-readable reference for an existing booking UUID. */
+export function formatJobReference(jobId: JobId): string {
+  return jobId ? `#JUG-${jobId.slice(0, 8).toUpperCase()}` : ''
+}
+
 export interface User {
   id: string
   name: string

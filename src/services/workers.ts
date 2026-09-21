@@ -31,7 +31,9 @@ export async function fetchApprovedWorkers(): Promise<PublicWorker[]> {
   const { data, error } = await getSupabaseClient()
     .from('approved_worker_directory')
     .select('id, name, avatar, bio, experience, rating, reviews, available, categories, areas')
-    .order('rating', { ascending: false })
+    // Fair-chance discovery order: factual rating/reviews remain visible,
+    // but established providers are not algorithmically promoted.
+    .order('id', { ascending: true })
 
   if (error) throw error
 

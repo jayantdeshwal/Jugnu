@@ -185,31 +185,31 @@ export const MUZAFFARNAGAR_KNOWLEDGE = {
   ],
   standardRates: {
     electrician: {
-      visit: '₹149 - ₹199',
+      visit: 'Provider-defined quote; Jugnu does not set a fixed visiting price.',
       scope: 'Switchboard / MCB fixing, wiring diagnosis, fan/light installation.',
     },
     plumber: {
-      visit: '₹149 - ₹249',
+      visit: 'Provider-defined quote; Jugnu does not set a fixed visiting price.',
       scope: 'Tap replacement, pipe leak repair, flush tank, motor pump priming.',
     },
     ac_repair: {
-      visit: '₹249 - ₹349',
-      scope: 'Inspection, filter deep wash, gas pressure testing (gas refill extra ₹1200-₹1800).',
+      visit: 'Provider-defined quote after reviewing the requested work.',
+      scope: 'Inspection, filter deep wash, and gas pressure testing are quoted by the provider.',
     },
     part_time_maid: {
-      visit: '₹499 - ₹1499',
-      scope: 'Bathroom deep cleaning from ₹399, full 2BHK/3BHK house deep cleaning ₹1299-₹2499.',
+      visit: 'Provider-defined quote based on the requested work and property.',
+      scope: 'Bathroom and full-home cleaning work are quoted by the provider.',
     },
     parlour_service: {
-      visit: '₹199 - ₹899',
+      visit: 'Provider-defined quote based on the requested service.',
       scope: 'Haircut, facial, grooming, nail care, mehendi and beauty care at home.',
     },
     carpenter: {
-      visit: '₹199 - ₹299',
+      visit: 'Provider-defined quote based on the requested work.',
       scope: 'Door lock fitting, hinge alignment, bed/wardrobe repair.',
     },
     painter: {
-      visit: '₹0 (Free Estimate)',
+      visit: 'Provider-defined quote after reviewing the requested work.',
       scope: 'Interior wall painting, touch-up putty, waterproof coating quotation.',
     },
   },

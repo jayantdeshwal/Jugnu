@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button, Card, Avatar, Badge, RatingStars, Modal } from '@kaamgar/ui'
-import { getCategoryName, getServiceById, getCategoryById } from '@kaamgar/shared'
+import { formatJobReference, getCategoryName, getServiceById, getCategoryById, JobId } from '@kaamgar/shared'
 import {
   Calendar,
   Clock,
@@ -30,9 +30,11 @@ import { getSupabaseClient } from '@/lib/supabase'
 import ContactModal from '@/components/ContactModal'
 import { buildCustomerToWorkerWhatsAppMessage } from '@/utils/contact'
 import { fetchCustomerReviewedBookingIds, submitBookingReview } from '@/services/reviews'
+import { BookingChangeRequest, decideBookingChangeRequest, fetchBookingChangeRequests } from '@/services/changeRequests'
+import { acceptBookingQuote, BookingQuote, BookingQuoteRequest, cancelBookingQuoteRequest, fetchCustomerQuoteData } from '@/services/quotes'
 
 interface BookingRow {
-  id: string
+  id: JobId
   worker_id: string
   category_id: string
   status: keyof typeof statusConfig
@@ -41,6 +43,7 @@ interface BookingRow {
   notes: string | null
   worker?: { name: string; avatar: string | null; phone?: string | null }
   hasReview?: boolean
+  changeRequests?: BookingChangeRequest[]
 }
 
 interface WorkerDirectoryRow {
@@ -114,6 +117,12 @@ export default function Bookings() {
   const [isCancelling, setIsCancelling] = useState(false)
   const [cancelError, setCancelError] = useState('')
   const [actionSuccess, setActionSuccess] = useState('')
+  const [decidingRequestId, setDecidingRequestId] = useState('')
+  const [changeRequestError, setChangeRequestError] = useState('')
+  const [quoteRequests, setQuoteRequests] = useState<BookingQuoteRequest[]>([])
+  const [quotes, setQuotes] = useState<BookingQuote[]>([])
+  const [quoteWorkers, setQuoteWorkers] = useState<Map<string, { name: string; avatar: string | null; rating: number; reviews: number; experience: number }>>(new Map())
+  const [quoteActionId, setQuoteActionId] = useState('')
 
   // Contact modal state
   const [contactModalData, setContactModalData] = useState<{
@@ -222,20 +231,85 @@ export default function Bookings() {
       }
 
       const reviewedIds = await fetchCustomerReviewedBookingIds(customerId)
+      const changeRequests = await fetchBookingChangeRequests(bookings.map(booking => booking.id))
+      const requestsByBooking = new Map<string, BookingChangeRequest[]>()
+      changeRequests.forEach(request => {
+        const existing = requestsByBooking.get(request.booking_id) ?? []
+        existing.push(request)
+        requestsByBooking.set(request.booking_id, existing)
+      })
 
       setAllBookings(
         bookings.map(booking => ({
           ...booking,
           worker: workerById.get(booking.worker_id),
           hasReview: reviewedIds.has(booking.id),
+          changeRequests: requestsByBooking.get(booking.id) ?? [],
         }))
       )
+
+      const quoteData = await fetchCustomerQuoteData(customerId)
+      setQuoteRequests(quoteData.requests)
+      setQuotes(quoteData.quotes)
+      const quoteWorkerIds = [...new Set(quoteData.requests.map(request => request.worker_id))]
+      if (quoteWorkerIds.length > 0) {
+        const { data: quoteWorkerRows } = await (supabase.from('approved_worker_directory') as any)
+          .select('id, name, avatar, rating, reviews, experience')
+          .in('id', quoteWorkerIds)
+        setQuoteWorkers(new Map((quoteWorkerRows ?? []).map((worker: any) => [worker.id, {
+          name: worker.name || 'Provider',
+          avatar: worker.avatar || null,
+          rating: Number(worker.rating ?? 0),
+          reviews: Number(worker.reviews ?? 0),
+          experience: Number(worker.experience ?? 0),
+        }])))
+      } else {
+        setQuoteWorkers(new Map())
+      }
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : 'Unable to load bookings')
     } finally {
       setIsLoading(false)
     }
   }, [user?.id])
+
+  const handleChangeRequestDecision = async (request: BookingChangeRequest, decision: 'approved' | 'rejected') => {
+    setDecidingRequestId(request.id)
+    setChangeRequestError('')
+    try {
+      await decideBookingChangeRequest(request.id, decision)
+      await loadBookings()
+    } catch (error) {
+      setChangeRequestError(error instanceof Error ? error.message : 'Unable to update the additional-charge request')
+    } finally {
+      setDecidingRequestId('')
+    }
+  }
+
+  const handleCancelQuoteRequest = async (request: BookingQuoteRequest) => {
+    setQuoteActionId(request.id)
+    try {
+      await cancelBookingQuoteRequest(request.id, 'Customer no longer wants to wait')
+      await loadBookings()
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Unable to cancel quote request')
+    } finally {
+      setQuoteActionId('')
+    }
+  }
+
+  const handleAcceptQuote = async (quote: BookingQuote) => {
+    setQuoteActionId(quote.id)
+    try {
+      await acceptBookingQuote(quote.id)
+      setActionSuccess('Quote accepted. Your booking has been created.')
+      await loadBookings()
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Unable to accept quote')
+    } finally {
+      setQuoteActionId('')
+    }
+  }
 
   useEffect(() => {
     void loadBookings()
@@ -387,7 +461,7 @@ export default function Bookings() {
     const Icon = config.icon
     const { serviceName, categoryName } = resolveServiceAndCategory(booking.category_id)
     const canCancel = booking.status === 'pending' || booking.status === 'accepted'
-    const shortRef = booking.id ? `#JUG-${booking.id.slice(0, 8).toUpperCase()}` : ''
+    const jobReference = formatJobReference(booking.id)
 
     return (
       <div
@@ -406,7 +480,7 @@ export default function Bookings() {
         <div className="flex items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-zinc-800/80">
           <div className="flex items-center gap-2">
             <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300">
-              {shortRef}
+              {jobReference}
             </span>
             {categoryName && (
               <span className="text-xs text-slate-500 dark:text-zinc-400 hidden sm:inline-block">
@@ -494,6 +568,43 @@ export default function Bookings() {
             </div>
           )}
         </div>
+
+        {booking.changeRequests?.map(request => (
+          <div key={request.id} className="mt-4 rounded-xl border border-amber-500/25 bg-amber-500/5 p-3.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-bold text-slate-900 dark:text-white">Additional charge requested</p>
+              <Badge variant={request.status === 'pending' ? 'warning' : request.status === 'approved' ? 'success' : 'default'}>
+                {request.status === 'pending' ? 'Pending approval' : request.status[0].toUpperCase() + request.status.slice(1)}
+              </Badge>
+            </div>
+            <p className="mt-2 text-xs text-slate-600 dark:text-zinc-400">Job {jobReference} • {new Date(request.created_at).toLocaleString(i18n.language === 'hi' ? 'hi-IN' : 'en-IN')}</p>
+            <p className="mt-2 text-sm text-slate-700 dark:text-zinc-300">Reason: {request.reason}</p>
+            <p className="mt-1 text-sm font-bold text-slate-900 dark:text-white">Additional amount: ₹{request.amount.toFixed(2)}</p>
+            {request.status === 'pending' && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  loading={decidingRequestId === request.id}
+                  onClick={() => void handleChangeRequestDecision(request, 'approved')}
+                >
+                  Approve
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={Boolean(decidingRequestId)}
+                  onClick={() => void handleChangeRequestDecision(request, 'rejected')}
+                >
+                  Reject
+                </Button>
+              </div>
+            )}
+          </div>
+        ))}
+        {changeRequestError && (
+          <p className="mt-2 text-xs font-semibold text-rose-600 dark:text-rose-400">{changeRequestError}</p>
+        )}
 
         {/* Actions Row */}
         <div className="mt-4 pt-3 border-t border-slate-100 dark:border-zinc-800/80 flex flex-wrap items-center justify-between gap-2.5">
@@ -684,6 +795,60 @@ export default function Bookings() {
             <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" />
             <span>{loadError}</span>
           </div>
+        )}
+
+        {quoteRequests.length > 0 && (
+          <section className="mb-6 space-y-3">
+            <div className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-amber-500" />
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">Quote Requests</h2>
+            </div>
+            {quoteRequests.map(request => {
+              const service = request.service_request
+              const worker = quoteWorkers.get(request.worker_id)
+              const quote = request.status === 'quoted'
+                ? quotes.find(item => item.quote_request_id === request.id && item.status === 'submitted')
+                : undefined
+              const canCancel = request.status === 'pending' || request.status === 'quoted'
+              return (
+                <Card key={request.id} className="p-4 border-amber-500/25 bg-amber-500/5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="font-bold text-slate-900 dark:text-white">{worker?.name || 'Selected provider'}</p>
+                      <p className="text-xs text-slate-600 dark:text-zinc-400 mt-1">{service ? resolveServiceAndCategory(service.category_id).serviceName : 'Service request'}</p>
+                      {worker && <p className="text-xs text-slate-600 dark:text-zinc-400 mt-1">{worker.rating > 0 ? `★ ${worker.rating.toFixed(1)}` : 'No ratings yet'} · {worker.reviews} reviews · {worker.experience} years experience</p>}
+                    </div>
+                    <Badge variant={request.status === 'quoted' ? 'success' : request.status === 'pending' ? 'warning' : 'default'}>
+                      {request.status === 'pending' ? 'Waiting for provider' : request.status === 'quoted' ? 'Quote received' : request.status[0].toUpperCase() + request.status.slice(1)}
+                    </Badge>
+                  </div>
+                  {service && <p className="mt-2 text-xs text-slate-600 dark:text-zinc-400">{formatDate(service.scheduled_for)} at {formatTime(service.scheduled_for)} · {service.pincode}</p>}
+                  {quote && (
+                    <div className="mt-3 rounded-xl bg-white/70 dark:bg-zinc-900/50 border border-emerald-500/25 p-3">
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">Provider quote: ₹{Number(quote.amount).toFixed(2)}</p>
+                      {quote.details && <p className="mt-1 text-sm text-slate-600 dark:text-zinc-400">{quote.details}</p>}
+                      <p className="mt-1 text-xs text-slate-500 dark:text-zinc-500">Received {new Date(quote.submitted_at).toLocaleString(i18n.language === 'hi' ? 'hi-IN' : 'en-IN')}</p>
+                      <Button variant="primary" size="sm" className="mt-3" loading={quoteActionId === quote.id} onClick={() => void handleAcceptQuote(quote)}>
+                        Accept Quote
+                      </Button>
+                    </div>
+                  )}
+                  {canCancel && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button variant="outline" size="sm" disabled={Boolean(quoteActionId)} loading={quoteActionId === request.id} onClick={() => void handleCancelQuoteRequest(request)}>
+                          Cancel Request
+                        </Button>
+                      </div>
+                  )}
+                  {(request.status === 'cancelled' || request.status === 'expired' || request.status === 'rejected') && service && (
+                    <Link to="/search" state={{ quoteServiceRequestId: request.service_request_id }} className="inline-block mt-3">
+                      <Button variant="secondary" size="sm">Choose Another Provider</Button>
+                    </Link>
+                  )}
+                </Card>
+              )
+            })}
+          </section>
         )}
 
         {/* Filter Navigation Tabs */}

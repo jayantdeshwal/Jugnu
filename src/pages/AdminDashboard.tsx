@@ -46,6 +46,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { getSupabaseClient } from '@/lib/supabase'
+import { formatJobReference, JobId } from '@kaamgar/shared'
 import {
   fetchAdminWorkers,
   fetchAdminCustomers,
@@ -70,7 +71,7 @@ interface ReviewWorkerRpc {
 }
 
 interface AdminBooking {
-  id: string
+  id: JobId
   customer_id: string
   worker_id: string
   category_id: string
@@ -2187,7 +2188,7 @@ export default function AdminDashboard() {
                     filteredBookings.map(booking => (
                       <tr key={booking.id} className="hover:bg-surface-200/40 transition-colors">
                         <td className="px-6 py-4 font-mono text-xs text-brand-400 font-bold">
-                          #{booking.id.slice(0, 8)}
+                          {formatJobReference(booking.id)}
                         </td>
                         <td className="px-6 py-4 text-sm font-medium text-semantic-text-primary">
                           {booking.customerName}

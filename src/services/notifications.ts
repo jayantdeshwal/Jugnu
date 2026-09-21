@@ -1,9 +1,10 @@
 import { getSupabaseClient } from '@/lib/supabase'
+import type { JobId } from '@kaamgar/shared'
 
 export interface DbNotification {
   id: string
   user_id: string
-  booking_id: string | null
+  booking_id: JobId | null
   notification_type: 'booking_created' | 'booking_accepted' | 'booking_in_progress' | 'booking_completed' | 'booking_rejected' | 'booking_cancelled' | 'profile_approved' | 'profile_rejected' | 'review_received' | string
   title: string
   body: string

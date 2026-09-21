@@ -8,21 +8,15 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { fetchApprovedWorker } from '@/services/workers'
 import { getSupabaseClient } from '@/lib/supabase'
-import { sendBookingCreatedSms } from '@/services/sms'
+import { createBookingQuoteRequest, createServiceRequest } from '@/services/quotes'
 import { sanitizeErrorMessage } from '@/utils/errors'
-
-interface CreateBookingRpc {
-  rpc: (
-    functionName: 'create_booking',
-    params: { target_worker_id: string; target_category_id: string; target_pincode: string; target_scheduled_at: string; target_address: string; target_notes?: string },
-  ) => Promise<{ data: string | null; error: { message: string } | null }>
-}
 
 export default function Booking() {
   const { t, i18n } = useTranslation()
   const { workerId } = useParams<{ workerId: string }>()
   const navigate = useNavigate()
   const location = useLocation()
+  const existingServiceRequestId = location.state?.serviceRequestId as string | undefined
   const { user, isAuthenticated } = useAuth()
   const [worker, setWorker] = useState<any>(null)
   const [loadingWorker, setLoadingWorker] = useState(true)
@@ -38,7 +32,8 @@ export default function Booking() {
   }))
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showConfirm, setShowConfirm] = useState(false)
-  const [bookingSubmitted, setBookingSubmitted] = useState(false)
+  const [quoteRequested, setQuoteRequested] = useState(false)
+  const [responseHours, setResponseHours] = useState('24')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [bookingError, setBookingError] = useState('')
 
@@ -52,6 +47,29 @@ export default function Booking() {
       .catch(() => setWorker(null))
       .finally(() => setLoadingWorker(false))
   }, [workerId])
+
+  useEffect(() => {
+    if (!existingServiceRequestId) return
+    let isMounted = true
+    ;(getSupabaseClient() as any)
+      .from('service_requests')
+      .select('scheduled_for, pincode, address, notes')
+      .eq('id', existingServiceRequestId)
+      .maybeSingle()
+      .then(({ data, error }: { data: any; error: any }) => {
+        if (!isMounted || error || !data) return
+        const scheduled = new Date(data.scheduled_for)
+        setFormData(prev => ({
+          ...prev,
+          date: scheduled.toISOString().slice(0, 10),
+          time: scheduled.toTimeString().slice(0, 5),
+          pincode: data.pincode,
+          address: data.address,
+          notes: data.notes || '',
+        }))
+      })
+    return () => { isMounted = false }
+  }, [existingServiceRequestId])
   
   const validateStep = () => {
     const newErrors: Record<string, string> = {}
@@ -73,10 +91,6 @@ export default function Booking() {
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (worker?.available === false) {
-      setErrors({ form: t('booking.workerUnavailableWarning', 'This worker is currently unavailable/off-duty and cannot accept new bookings right now.') })
-      return
-    }
     if (validateStep()) {
       setShowConfirm(true)
     }
@@ -85,11 +99,6 @@ export default function Booking() {
   const confirmBooking = async () => {
     if (!isAuthenticated || !user || !worker) {
       navigate('/login')
-      return
-    }
-
-    if (worker.available === false) {
-      setBookingError(t('booking.workerUnavailableWarning', 'This worker is currently unavailable/off-duty and cannot accept new bookings right now.'))
       return
     }
 
@@ -105,31 +114,22 @@ export default function Booking() {
         throw new Error('Please select a valid date and time')
       }
 
-      const supabase = getSupabaseClient() as unknown as CreateBookingRpc
-      const { data: newBookingId, error } = await supabase.rpc('create_booking', {
-        target_worker_id: worker.id,
-        target_category_id: worker.categories[0],
-        target_pincode: formData.pincode,
-        target_scheduled_at: scheduledAt.toISOString(),
-        target_address: formData.address,
-        target_notes: formData.notes,
+      const serviceRequestId = existingServiceRequestId || await createServiceRequest({
+        categoryId: worker.categories[0],
+        pincode: formData.pincode,
+        scheduledFor: scheduledAt.toISOString(),
+        address: formData.address,
+        notes: formData.notes,
       })
-
-      if (error) throw new Error(error.message)
-
-      setBookingSubmitted(true)
-      setShowConfirm(false)
-
-      // Dispatch real-time SMS alert to worker (non-blocking)
-      void sendBookingCreatedSms({
-        bookingId: newBookingId || undefined,
+      const deadline = new Date(Date.now() + Number(responseHours) * 60 * 60 * 1000).toISOString()
+      await createBookingQuoteRequest({
+        serviceRequestId,
         workerId: worker.id,
-        workerPhone: worker.phone || undefined,
-        workerName: worker.name || 'Worker',
-        customerName: user?.name || 'Customer',
-        serviceCategory: worker.categories?.[0] || 'Service',
-        scheduledAt: scheduledAt.toLocaleString(),
+        responseDeadlineAt: deadline,
       })
+
+      setQuoteRequested(true)
+      setShowConfirm(false)
     } catch (bookingError) {
       const message = sanitizeErrorMessage(bookingError, 'Unable to create booking. Please try again.')
       setBookingError(message)
@@ -196,15 +196,15 @@ export default function Booking() {
           </div>
         </div>
         
-        {bookingSubmitted ? (
+        {quoteRequested ? (
           <div className="text-center py-12 bg-surface-100 border border-semantic-border-light rounded-xl p-8">
             <div className="w-20 h-20 mx-auto mb-4 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center">
               <Check className="w-10 h-10 text-emerald-400" />
             </div>
-            <h2 className="text-2xl font-bold text-semantic-text-primary mb-2">{t('booking.bookingSent')}</h2>
-            <p className="text-semantic-text-secondary mb-6">{t('booking.bookingSentDesc', { name: worker.name })}</p>
+            <h2 className="text-2xl font-bold text-semantic-text-primary mb-2">Quote Requested</h2>
+            <p className="text-semantic-text-secondary mb-6">Your request was sent to {worker.name}. A booking will be created only after you accept the provider's quote.</p>
             <Button variant="primary" className="w-full sm:w-auto" onClick={() => navigate('/bookings')}>
-              {t('booking.trackBooking')}
+              View Quote Requests
             </Button>
           </div>
         ) : (
@@ -318,7 +318,7 @@ export default function Booking() {
                   disabled={worker.available === false} 
                   className="flex-1"
                 >
-                  {worker.available === false ? t('workerProfile.unavailable', 'Currently Unavailable') : t('booking.confirmBooking')}
+                  Request Quote
                 </Button>
               </div>
             </form>
@@ -362,13 +362,26 @@ export default function Booking() {
               <p className="font-medium text-semantic-text-primary mt-0.5">{formData.pincode}</p>
             </div>
           </div>
+
+          <div>
+            <label className="label text-semantic-text-secondary">Provider response deadline</label>
+            <select
+              value={responseHours}
+              onChange={event => setResponseHours(event.target.value)}
+              className="input w-full bg-surface-200 border-semantic-border-light text-semantic-text-primary"
+            >
+              <option value="24">24 hours</option>
+              <option value="48">48 hours</option>
+              <option value="72">72 hours</option>
+            </select>
+          </div>
           
           <div className="flex gap-3 pt-2">
             <Button variant="secondary" onClick={() => setShowConfirm(false)} className="flex-1">
               {t('common.cancel')}
             </Button>
             <Button variant="primary" onClick={confirmBooking} loading={isSubmitting} className="flex-1">
-              {t('common.confirm')}
+              Request Quote
             </Button>
           </div>
         </div>

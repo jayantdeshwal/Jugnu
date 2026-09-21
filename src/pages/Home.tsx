@@ -872,7 +872,7 @@ export default function Home() {
                                 <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500 dark:text-zinc-400">
                                   <span className="flex items-center gap-0.5 text-amber-500 font-bold">
                                     <Star className="w-3 h-3 fill-amber-500" />
-                                    <span>{worker.rating > 0 ? worker.rating.toFixed(1) : '5.0'}</span>
+                                    <span>{worker.rating > 0 ? worker.rating.toFixed(1) : 'No ratings yet'}</span>
                                   </span>
                                   <span>•</span>
                                   <span>{worker.reviews} {t('common.reviews', 'reviews')}</span>

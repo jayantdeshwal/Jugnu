@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { CATEGORIES, getCategoryName } from '@kaamgar/shared'
+import { CATEGORIES, formatJobReference, getCategoryName, JobId } from '@kaamgar/shared'
 import {
   ArrowLeft,
   Briefcase,
@@ -30,6 +30,7 @@ import {
   Shield,
   Edit,
   Zap,
+  FileText,
 } from 'lucide-react'
 import { Badge, Button, Card, Skeleton, Avatar, Modal } from '@/ui'
 import { useAuth } from '@/context/AuthContext'
@@ -37,6 +38,8 @@ import { useAiAssistant } from '@/context/AiAssistantContext'
 import { getSupabaseClient } from '@/lib/supabase'
 import ContactModal from '@/components/ContactModal'
 import { formatPhoneDisplay, buildWorkerToCustomerWhatsAppMessage } from '@/utils/contact'
+import { BookingChangeRequest, createBookingChangeRequest, fetchBookingChangeRequests } from '@/services/changeRequests'
+import { BookingQuoteRequest, fetchWorkerQuoteData, respondToBookingQuoteRequest, ServiceRequest } from '@/services/quotes'
 
 interface WorkerProfileRow {
   bio: string
@@ -46,10 +49,11 @@ interface WorkerProfileRow {
   rejection_reason: string | null
   rating?: number
   review_count?: number
+  service_areas: string[]
 }
 
 interface WorkerBookingRow {
-  id: string
+  id: JobId
   category_id: string
   status: 'pending' | 'accepted' | 'rejected' | 'in_progress' | 'completed' | 'cancelled' | 'disputed'
   scheduled_at: string
@@ -62,6 +66,7 @@ interface WorkerBookingRow {
     phone?: string | null
     avatar?: string | null
   }
+  changeRequests?: BookingChangeRequest[]
 }
 
 type TabFilter = 'all' | 'pending' | 'active' | 'completed'
@@ -81,6 +86,18 @@ export default function WorkerDashboard() {
   const [updatingBookingId, setUpdatingBookingId] = useState('')
   const [isUpdatingAvailability, setIsUpdatingAvailability] = useState(false)
   const [availabilitySuccessMsg, setAvailabilitySuccessMsg] = useState('')
+  const [changeRequestBooking, setChangeRequestBooking] = useState<WorkerBookingRow | null>(null)
+  const [changeAmount, setChangeAmount] = useState('')
+  const [changeReason, setChangeReason] = useState('')
+  const [changeRequestError, setChangeRequestError] = useState('')
+  const [isSubmittingChangeRequest, setIsSubmittingChangeRequest] = useState(false)
+  const [quoteRequests, setQuoteRequests] = useState<BookingQuoteRequest[]>([])
+  const [quoteServices, setQuoteServices] = useState<Map<string, ServiceRequest>>(new Map())
+  const [quoteRequestToRespond, setQuoteRequestToRespond] = useState<BookingQuoteRequest | null>(null)
+  const [quoteAmount, setQuoteAmount] = useState('')
+  const [quoteDetails, setQuoteDetails] = useState('')
+  const [quoteError, setQuoteError] = useState('')
+  const [isSubmittingQuote, setIsSubmittingQuote] = useState(false)
   
   const tabParam = searchParams.get('tab')
   const [activeTab, setActiveTab] = useState<TabFilter>(
@@ -176,7 +193,7 @@ export default function WorkerDashboard() {
       if (!workerId) throw new Error('Please sign in to access worker workspace')
 
       // Fetch worker profile and categories
-      const [wpRes, wcRes, bookingsRes] = await Promise.all([
+      const [wpRes, wcRes, bookingsRes, areasRes] = await Promise.all([
         (supabase.from('worker_profiles') as any)
           .select('bio, experience_years, approval_status, is_available, rejection_reason, rating, review_count')
           .eq('id', workerId)
@@ -188,16 +205,30 @@ export default function WorkerDashboard() {
           .select('id, category_id, status, scheduled_at, address, notes, created_at, customer_id')
           .eq('worker_id', workerId)
           .order('created_at', { ascending: false }),
+        (supabase.from('approved_worker_directory') as any)
+          .select('areas')
+          .eq('id', workerId)
+          .maybeSingle(),
       ])
 
       if (wpRes.error) throw wpRes.error
-      setProfile(wpRes.data as WorkerProfileRow | null)
+      setProfile(wpRes.data ? {
+        ...wpRes.data,
+        service_areas: (areasRes.data?.areas ?? []).filter(Boolean),
+      } as WorkerProfileRow : null)
 
       const userCats = (wcRes.data ?? []).map((c: any) => c.category_id).filter(Boolean)
       setCategoriesList(userCats)
 
       if (bookingsRes.error) throw bookingsRes.error
       const rawBookings = (bookingsRes.data ?? []) as any[]
+      const changeRequests = await fetchBookingChangeRequests(rawBookings.map(booking => booking.id as JobId))
+      const requestsByBooking = new Map<string, BookingChangeRequest[]>()
+      changeRequests.forEach(request => {
+        const existing = requestsByBooking.get(request.booking_id) ?? []
+        existing.push(request)
+        requestsByBooking.set(request.booking_id, existing)
+      })
 
       // Fetch customer details
       const customerIds = [...new Set(rawBookings.map(b => b.customer_id))].filter(Boolean)
@@ -225,9 +256,14 @@ export default function WorkerDashboard() {
       const completeBookings: WorkerBookingRow[] = rawBookings.map(b => ({
         ...b,
         customer: customerById.get(b.customer_id) || { name: 'Customer' },
+        changeRequests: requestsByBooking.get(b.id) ?? [],
       }))
 
       setBookings(completeBookings)
+
+      const quoteData = await fetchWorkerQuoteData(workerId)
+      setQuoteRequests(quoteData.requests)
+      setQuoteServices(new Map(quoteData.services.map(service => [service.id, service])))
     } catch (err) {
       console.warn('Dashboard load error:', err)
       setError(err instanceof Error ? err.message : 'Unable to load worker workspace')
@@ -235,6 +271,60 @@ export default function WorkerDashboard() {
       setIsLoading(false)
     }
   }, [])
+
+  const handleCreateChangeRequest = async () => {
+    if (!changeRequestBooking) return
+    const amount = Number(changeAmount)
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setChangeRequestError('Enter an additional amount greater than zero.')
+      return
+    }
+    if (!changeReason.trim()) {
+      setChangeRequestError('Enter a reason for the additional charge.')
+      return
+    }
+
+    setIsSubmittingChangeRequest(true)
+    setChangeRequestError('')
+    try {
+      await createBookingChangeRequest({ bookingId: changeRequestBooking.id, amount, reason: changeReason })
+      setChangeRequestBooking(null)
+      setChangeAmount('')
+      setChangeReason('')
+      await loadDashboardData()
+    } catch (err) {
+      setChangeRequestError(err instanceof Error ? err.message : 'Unable to create the additional-charge request')
+    } finally {
+      setIsSubmittingChangeRequest(false)
+    }
+  }
+
+  const handleQuoteResponse = async (action: 'reject' | 'quote') => {
+    if (!quoteRequestToRespond) return
+    const amount = Number(quoteAmount)
+    if (action === 'quote' && (!Number.isFinite(amount) || amount <= 0)) {
+      setQuoteError('Enter the quote amount submitted by you.')
+      return
+    }
+    setIsSubmittingQuote(true)
+    setQuoteError('')
+    try {
+      await respondToBookingQuoteRequest({
+        requestId: quoteRequestToRespond.id,
+        action,
+        amount: action === 'quote' ? amount : undefined,
+        details: quoteDetails,
+      })
+      setQuoteRequestToRespond(null)
+      setQuoteAmount('')
+      setQuoteDetails('')
+      await loadDashboardData()
+    } catch (err) {
+      setQuoteError(err instanceof Error ? err.message : 'Unable to respond to quote request')
+    } finally {
+      setIsSubmittingQuote(false)
+    }
+  }
 
   useEffect(() => {
     void loadDashboardData()
@@ -585,7 +675,7 @@ export default function WorkerDashboard() {
             <div className="flex items-center justify-center gap-0.5">
               <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
               <span className="text-base font-extrabold text-slate-900 dark:text-white">
-                {profile?.rating && profile.rating > 0 ? profile.rating.toFixed(1) : '5.0'}
+                {profile?.rating && profile.rating > 0 ? profile.rating.toFixed(1) : 'No ratings yet'}
               </span>
             </div>
             <p className="text-[10px] text-semantic-text-secondary mt-0.5">Rating</p>
@@ -595,7 +685,9 @@ export default function WorkerDashboard() {
             <p className="text-[10px] text-semantic-text-secondary mt-0.5">Reviews</p>
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-900 dark:text-white truncate mt-1">251001/02</p>
+            <p className="text-xs font-bold text-slate-900 dark:text-white truncate mt-1">
+              {profile?.service_areas?.length ? profile.service_areas.join(', ') : 'No areas listed'}
+            </p>
             <p className="text-[10px] text-semantic-text-secondary mt-0.5">Coverage</p>
           </div>
         </div>
@@ -632,6 +724,46 @@ export default function WorkerDashboard() {
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-amber-500' : ''}`} />
             </button>
           </div>
+        )}
+
+        {/* ===================================================================== */}
+        {/* PROVIDER QUOTE REQUESTS                                                */}
+        {/* ===================================================================== */}
+        {quoteRequests.some(request => request.status === 'pending') && (
+          <section className="mb-6 rounded-2xl border border-amber-500/25 bg-amber-500/5 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <FileText className="w-4 h-4 text-amber-500" />
+                Quote Requests
+              </h3>
+              <Badge variant="warning">{quoteRequests.filter(request => request.status === 'pending').length} pending</Badge>
+            </div>
+            <div className="space-y-3">
+              {quoteRequests.filter(request => request.status === 'pending').map(request => {
+                const service = quoteServices.get(request.service_request_id)
+                return (
+                  <div key={request.id} className="rounded-xl bg-white/70 dark:bg-zinc-900/50 border border-amber-500/20 p-3">
+                    <div className="flex flex-wrap justify-between gap-2">
+                      <div>
+                        <p className="font-semibold text-slate-900 dark:text-white">{service ? getCategoryName(CATEGORIES.find(category => category.id === service.category_id) || CATEGORIES[0], i18n.language === 'hi' ? 'hi' : 'en') : 'Service request'}</p>
+                        {service && <p className="text-xs text-semantic-text-secondary mt-1">{new Date(service.scheduled_for).toLocaleString(i18n.language === 'hi' ? 'hi-IN' : 'en-IN')} · {service.pincode}</p>}
+                        <p className="text-xs text-semantic-text-secondary mt-1">Respond by {new Date(request.response_deadline_at).toLocaleString(i18n.language === 'hi' ? 'hi-IN' : 'en-IN')}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={() => { setQuoteRequestToRespond(request); setQuoteError('') }}>
+                          Send Quote
+                        </Button>
+                        <Button variant="secondary" size="sm" onClick={() => void (async () => { try { await respondToBookingQuoteRequest({ requestId: request.id, action: 'reject' }); await loadDashboardData() } catch (err) { setError(err instanceof Error ? err.message : 'Unable to reject quote request') } })()}>
+                          Reject
+                        </Button>
+                      </div>
+                    </div>
+                    {service?.notes && <p className="mt-2 text-xs text-semantic-text-secondary">Notes: {service.notes}</p>}
+                  </div>
+                )
+              })}
+            </div>
+          </section>
         )}
 
         {/* ===================================================================== */}
@@ -759,6 +891,10 @@ export default function WorkerDashboard() {
                       </div>
                     </div>
 
+                    <span className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded-lg bg-surface-200 text-semantic-text-secondary border border-semantic-border-light whitespace-nowrap">
+                      {formatJobReference(booking.id)}
+                    </span>
+
                     <Badge
                       variant={
                         booking.status === 'completed'
@@ -818,6 +954,35 @@ export default function WorkerDashboard() {
                       </a>
                     )}
                   </div>
+
+                  {booking.changeRequests?.map(request => (
+                    <div key={request.id} className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-3 text-xs">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-bold text-slate-900 dark:text-white">Additional charge request</span>
+                        <Badge variant={request.status === 'approved' ? 'success' : request.status === 'rejected' ? 'danger' : 'warning'} size="sm">
+                          {request.status === 'pending' ? 'Pending customer approval' : request.status[0].toUpperCase() + request.status.slice(1)}
+                        </Badge>
+                      </div>
+                      <p className="mt-1 text-semantic-text-secondary">Job {formatJobReference(booking.id)} • ₹{request.amount.toFixed(2)}</p>
+                      <p className="mt-1 text-semantic-text-secondary">Reason: {request.reason}</p>
+                    </div>
+                  ))}
+
+                  {['accepted', 'in_progress'].includes(booking.status) && !(booking.changeRequests ?? []).some(request => request.status === 'pending') && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setChangeRequestBooking(booking)
+                        setChangeAmount('')
+                        setChangeReason('')
+                        setChangeRequestError('')
+                      }}
+                      className="w-full text-xs border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+                    >
+                      Request Additional Charge
+                    </Button>
+                  )}
 
                   {/* Status Action Buttons */}
                   {booking.status === 'pending' && (
@@ -890,6 +1055,73 @@ export default function WorkerDashboard() {
         whatsappMessage={contactModalData.whatsappMessage}
         bookingContext={contactModalData.bookingContext}
       />
+
+      <Modal
+        isOpen={Boolean(quoteRequestToRespond)}
+        onClose={() => { if (!isSubmittingQuote) setQuoteRequestToRespond(null) }}
+        title="Send Provider Quote"
+        description="Enter the amount and details you choose to offer. Jugnu does not calculate or suggest this amount."
+      >
+        <div className="space-y-4">
+          {quoteError && <p className="rounded-xl bg-rose-500/10 border border-rose-500/30 p-3 text-xs text-rose-500">{quoteError}</p>}
+          <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300">
+            Quote amount
+            <input type="number" min="0.01" step="0.01" value={quoteAmount} onChange={event => setQuoteAmount(event.target.value)} className="mt-1.5 w-full rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 px-3.5 py-2.5 text-sm text-slate-900 dark:text-zinc-100 focus:border-amber-500 focus:outline-none" placeholder="Enter your amount" />
+          </label>
+          <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300">
+            Quote details
+            <textarea value={quoteDetails} onChange={event => setQuoteDetails(event.target.value)} rows={4} maxLength={2000} className="mt-1.5 w-full rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 px-3.5 py-2.5 text-sm text-slate-900 dark:text-zinc-100 focus:border-amber-500 focus:outline-none" placeholder="Explain what your quote includes" />
+          </label>
+          <div className="flex gap-2">
+            <Button variant="secondary" className="flex-1" disabled={isSubmittingQuote} onClick={() => setQuoteRequestToRespond(null)}>Cancel</Button>
+            <Button variant="primary" className="flex-1" loading={isSubmittingQuote} onClick={() => void handleQuoteResponse('quote')}>Submit Quote</Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={Boolean(changeRequestBooking)}
+        onClose={() => {
+          if (!isSubmittingChangeRequest) setChangeRequestBooking(null)
+        }}
+        title="Request Additional Charge"
+        description={changeRequestBooking ? `Job ${formatJobReference(changeRequestBooking.id)} — customer approval is required.` : undefined}
+      >
+        <div className="space-y-4">
+          {changeRequestError && <p className="rounded-xl bg-rose-500/10 border border-rose-500/30 p-3 text-xs text-rose-500">{changeRequestError}</p>}
+          <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300">
+            Additional amount
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={changeAmount}
+              onChange={event => setChangeAmount(event.target.value)}
+              className="mt-1.5 w-full rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 px-3.5 py-2.5 text-sm text-slate-900 dark:text-zinc-100 focus:border-amber-500 focus:outline-none"
+              placeholder="0.00"
+            />
+          </label>
+          <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300">
+            Reason
+            <textarea
+              value={changeReason}
+              onChange={event => setChangeReason(event.target.value)}
+              rows={3}
+              maxLength={1000}
+              className="mt-1.5 w-full rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 px-3.5 py-2.5 text-sm text-slate-900 dark:text-zinc-100 focus:border-amber-500 focus:outline-none"
+              placeholder="Explain why this additional charge is needed"
+            />
+          </label>
+          <div className="flex gap-2">
+            <Button variant="secondary" className="flex-1" disabled={isSubmittingChangeRequest} onClick={() => setChangeRequestBooking(null)}>
+              Cancel
+            </Button>
+            <Button variant="primary" className="flex-1" loading={isSubmittingChangeRequest} onClick={() => void handleCreateChangeRequest()}>
+              Send Request
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Artisan Helpline Modal */}
       <Modal

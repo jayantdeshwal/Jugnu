@@ -313,7 +313,7 @@ export default function Register() {
               </div>
 
               <Link
-                to={`/worker/register${customerPhone ? `?phone=${customerPhone}` : ''}`}
+                to={`/register/worker${customerPhone ? `?phone=${customerPhone}` : ''}`}
                 className="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/25 transition-all hover:scale-[1.01] active:scale-[0.99]"
               >
                 <span>Proceed to Artisan Registration</span>

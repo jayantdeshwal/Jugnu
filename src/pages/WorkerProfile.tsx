@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import { Button, Card, Avatar, Badge, RatingStars, Chip, Input, Tabs, TabList, Tab, TabPanel, Modal } from '@/ui'
-import { CATEGORIES, getCategoryName } from '@kaamgar/shared'
-import { Star, MapPin, Clock, CheckCircle, Truck, ArrowLeft, Phone, MessageCircle, Zap, Wrench, Hammer, Snowflake, Brush, Calendar, Shield, Award, TrendingUp, AlertCircle, Power } from 'lucide-react'
+import { CATEGORIES, getCategoryName, getServiceById } from '@kaamgar/shared'
+import { Star, MapPin, Clock, CheckCircle, Truck, ArrowLeft, Phone, MessageCircle, Zap, Wrench, Hammer, Snowflake, Brush, Calendar, Shield, AlertCircle, Power } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { fetchApprovedWorker } from '@/services/workers'
 import { fetchWorkerReviews, ReviewItem } from '@/services/reviews'
@@ -20,6 +20,8 @@ export default function WorkerProfile() {
   const { t, i18n } = useTranslation()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
+  const existingServiceRequestId = location.state?.serviceRequestId as string | undefined
   const [worker, setWorker] = useState<any>(null)
   const [reviewsList, setReviewsList] = useState<ReviewItem[]>([])
   const [isLoadingReviews, setIsLoadingReviews] = useState(true)
@@ -48,19 +50,18 @@ export default function WorkerProfile() {
           setError('Worker profile not found')
           return
         }
+        const registeredServices = nextWorker.categories
+          .map(serviceId => {
+            const service = getServiceById(serviceId)
+            return service ? (i18n.language === 'hi' ? service.name_hi : service.name_en) : ''
+          })
+          .filter((service): service is string => Boolean(service))
+
         setWorker({
           ...nextWorker,
           category: nextWorker.categories[0] || '',
           phone: null,
-          services: [
-            'Home Repairs',
-            'Installation & Maintenance',
-            'Emergency Inspection',
-            'General Service',
-          ],
-          completedJobs: Math.max(nextWorker.reviews * 2, 12),
-          responseRate: 96,
-          avgResponseTime: '15 min',
+          services: registeredServices,
         })
         setReviewsList(liveReviews)
       })
@@ -147,7 +148,16 @@ export default function WorkerProfile() {
                     </span>
                     <span className="flex items-center gap-1">
                       <Star className="w-4 h-4 text-amber-500" />
-                      <RatingStars rating={worker.rating} size="sm" showValue />
+                      {worker.rating > 0 ? (
+                        <RatingStars rating={worker.rating} size="sm" showValue />
+                      ) : (
+                        <span className="text-sm">{t('workerProfile.noRatings', 'No ratings yet')}</span>
+                      )}
+                    </span>
+                    <span className="text-sm">
+                      {worker.reviews > 0
+                        ? t('workerProfile.multipleReviews', { count: worker.reviews })
+                        : t('workerProfile.noReviews', 'No reviews yet')}
                     </span>
                   </div>
                   <div className="mt-4 flex flex-wrap justify-center sm:justify-start gap-2">
@@ -160,7 +170,7 @@ export default function WorkerProfile() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3 w-full sm:w-auto">
-                  <Button variant="primary" size="lg" className="flex-1 sm:flex-none group" onClick={() => navigate(`/booking/${worker.id}`)}>
+                  <Button variant="primary" size="lg" className="flex-1 sm:flex-none group" onClick={() => navigate(`/booking/${worker.id}`, { state: { serviceRequestId: existingServiceRequestId } })}>
                     <Truck className="w-5 h-5 mr-2 group-hover:translate-x-1 transition-transform" />
                     {t('workerProfile.bookNow')}
                   </Button>
@@ -193,9 +203,11 @@ export default function WorkerProfile() {
                     <Badge variant="brand">{t('workerProfile.servicesCount', { count: worker.services.length })}</Badge>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {worker.services.map((service: string) => (
+                    {worker.services.length > 0 ? worker.services.map((service: string) => (
                       <Chip key={service} variant="outline">{service}</Chip>
-                    ))}
+                    )) : (
+                      <p className="text-sm text-semantic-text-secondary">No registered services available.</p>
+                    )}
                   </div>
                 </Card>
               </TabPanel>
@@ -329,7 +341,7 @@ export default function WorkerProfile() {
                     className="w-full" 
                     size="lg" 
                     disabled={!worker.available}
-                    onClick={() => navigate(`/booking/${worker.id}`, { state: { bookingDraft } })}
+                    onClick={() => navigate(`/booking/${worker.id}`, { state: { bookingDraft, serviceRequestId: existingServiceRequestId } })}
                   >
                     {worker.available ? t('booking.confirmBooking') : t('workerProfile.unavailable', 'Currently Unavailable')}
                   </Button>
@@ -359,35 +371,6 @@ export default function WorkerProfile() {
               </Card>
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-            >
-              <div className="grid grid-cols-3 gap-4">
-                <Card className="p-4 text-center">
-                  <div className="w-12 h-12 mx-auto mb-2 bg-brand-100 dark:bg-brand-900/30 rounded-xl flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6 text-brand-600" />
-                  </div>
-                  <p className="text-2xl font-bold text-semantic-text-primary">{worker.completedJobs}</p>
-                  <p className="text-sm text-semantic-text-secondary">{t('workerProfile.completedJobs', 'Completed Jobs')}</p>
-                </Card>
-                <Card className="p-4 text-center">
-                  <div className="w-12 h-12 mx-auto mb-2 bg-brand-100 dark:bg-brand-900/30 rounded-xl flex items-center justify-center">
-                    <Award className="w-6 h-6 text-brand-600" />
-                  </div>
-                  <p className="text-2xl font-bold text-semantic-text-primary">{worker.responseRate}%</p>
-                  <p className="text-sm text-semantic-text-secondary">{t('workerProfile.responseRate', 'Response Rate')}</p>
-                </Card>
-                <Card className="p-4 text-center">
-                  <div className="w-12 h-12 mx-auto mb-2 bg-brand-100 dark:bg-brand-900/30 rounded-xl flex items-center justify-center">
-                    <Clock className="w-6 h-6 text-brand-600" />
-                  </div>
-                  <p className="text-2xl font-bold text-semantic-text-primary">{worker.avgResponseTime}</p>
-                  <p className="text-sm text-semantic-text-secondary">{t('workerProfile.avgResponse', 'Avg Response')}</p>
-                </Card>
-              </div>
-            </motion.div>
           </div>
         </motion.div>
       </div>
@@ -415,7 +398,7 @@ export default function WorkerProfile() {
               className="w-full flex items-center justify-center gap-2"
               onClick={() => {
                 setShowContactNotice(false)
-                navigate(`/booking/${worker.id}`)
+                navigate(`/booking/${worker.id}`, { state: { serviceRequestId: existingServiceRequestId } })
               }}
             >
               <Truck className="w-4 h-4" />

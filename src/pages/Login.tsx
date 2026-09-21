@@ -190,7 +190,7 @@ export default function Login() {
               navigate('/worker/dashboard')
             } else {
               // User has verified phone but has not completed worker onboarding
-              navigate(`/worker/register?phone=${cleanPhone}`)
+              navigate(`/register/worker?phone=${cleanPhone}`)
             }
           } catch (err) {
             setWorkerError(sanitizeErrorMessage(err, 'Sign in failed after OTP verification.'))
@@ -524,7 +524,7 @@ export default function Login() {
                   {workerError.toLowerCase().includes('register') && (
                     <div className="pl-6 pt-1">
                       <Link
-                        to={`/worker/register?phone=${tryNormalizeIndianPhone(workerPhone) ?? workerPhone.replace(/\D/g, '').slice(0, 10)}`}
+                        to={`/register/worker?phone=${tryNormalizeIndianPhone(workerPhone) ?? workerPhone.replace(/\D/g, '').slice(0, 10)}`}
                         className="font-semibold text-emerald-400 hover:text-emerald-300 underline inline-flex items-center gap-1"
                       >
                         <span>Register as a worker now</span>
@@ -579,7 +579,7 @@ export default function Login() {
               <div className="mt-5 pt-4 border-t border-slate-200 dark:border-zinc-800 text-center text-xs text-slate-500 dark:text-zinc-400">
                 <p className="mb-1 text-slate-500 dark:text-zinc-500">Not registered as a worker yet?</p>
                 <Link
-                  to="/worker/register"
+                  to="/register/worker"
                   className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-1"
                 >
                   <span>Register as Worker to get jobs</span>

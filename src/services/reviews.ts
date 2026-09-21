@@ -1,8 +1,9 @@
 import { getSupabaseClient } from '@/lib/supabase'
+import type { JobId } from '@kaamgar/shared'
 
 export interface ReviewItem {
   id: string
-  booking_id: string
+  booking_id: JobId
   customer_id: string
   worker_id: string
   rating: number
@@ -37,7 +38,10 @@ export async function fetchWorkerReviews(workerId: string): Promise<ReviewItem[]
     return []
   }
 
-  const reviews = (reviewsData ?? []) as any[]
+  const reviews = (reviewsData ?? []).filter((review: any) => {
+    const rating = Number(review.rating)
+    return Number.isInteger(rating) && rating >= 1 && rating <= 5
+  }) as any[]
   if (reviews.length === 0) return []
 
   const customerIds = [...new Set(reviews.map(r => r.customer_id))].filter(Boolean)
@@ -69,7 +73,7 @@ export async function fetchWorkerReviews(workerId: string): Promise<ReviewItem[]
       booking_id: r.booking_id,
       customer_id: r.customer_id,
       worker_id: r.worker_id,
-      rating: Number(r.rating ?? 5),
+      rating: Number(r.rating),
       comment: r.comment ?? '',
       created_at: r.created_at,
       customer_name: cust.name,

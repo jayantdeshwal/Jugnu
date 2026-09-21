@@ -223,8 +223,8 @@ function resolveLocalQuery(query: string, persona: AssistantPersona): ChatMessag
         sender: 'assistant',
         persona,
         timestamp: new Date(),
-        textEn: `⚡ **Recommended Service: Electrician (इलेक्ट्रीशियन)**\n\n- **Safety Tip**: Please turn off the main switch / MCB immediately if you notice sparking or burning smell.\n- **Standard Visiting Fee**: ₹149 - ₹199 across Muzaffarnagar (251001 & 251002).\n- **Typical Scope**: Switchboard repairs, MCB replacement, fan regulator fixing, ceiling fan installation, inverter connection.\n- **Arrival Time**: Verified local electricians arrive within 30-45 minutes in New Mandi, Civil Lines, and Roorkee Road.`,
-        textHi: `⚡ **सुझाई गई सेवा: इलेक्ट्रीशियन (बिजली मिस्त्री)**\n\n- **सुरक्षा सलाह**: अगर स्पार्किंग या जलने की गंध आ रही हो, तो तुरंत मुख्य MCB / मेन स्विच बंद कर दें।\n- **विजिटिंग शुल्क**: मुज़फ़्फ़रनगर में ₹149 - ₹199 (251001 व 251002 में)।\n- **प्रमुख कार्य**: स्विचबोर्ड मरम्मत, MCB बदलना, पंखा लगाना, इन्वर्टर वायरिंग।\n- **पहुँचने का समय**: नई मंडी, सिविल लाइन्स और रुड़की रोड में 30-45 मिनट में उपलब्ध।`,
+        textEn: `⚡ **Recommended Service: Electrician (इलेक्ट्रीशियन)**\n\n- **Safety Tip**: Please turn off the main switch / MCB immediately if you notice sparking or burning smell.\n- **Pricing**: Jugnu does not set a fixed price. Request and review the provider's quote before accepting.\n- **Typical Scope**: Switchboard repairs, MCB replacement, fan regulator fixing, ceiling fan installation, inverter connection.\n- **Arrival Time**: Verified local electricians arrive within 30-45 minutes in New Mandi, Civil Lines, and Roorkee Road.`,
+        textHi: `⚡ **सुझाई गई सेवा: इलेक्ट्रीशियन (बिजली मिस्त्री)**\n\n- **सुरक्षा सलाह**: अगर स्पार्किंग या जलने की गंध आ रही हो, तो तुरंत मुख्य MCB / मेन स्विच बंद कर दें।\n- **कीमत**: जुगनू कोई निश्चित कीमत तय नहीं करता। प्रदाता का कोट मंगाकर स्वीकार करने से पहले देखें।\n- **प्रमुख कार्य**: स्विचबोर्ड मरम्मत, MCB बदलना, पंखा लगाना, इन्वर्टर वायरिंग।\n- **पहुँचने का समय**: नई मंडी, सिविल लाइन्स और रुड़की रोड में 30-45 मिनट में उपलब्ध।`,
         actions,
       }
     }
@@ -247,8 +247,8 @@ function resolveLocalQuery(query: string, persona: AssistantPersona): ChatMessag
         sender: 'assistant',
         persona,
         timestamp: new Date(),
-        textEn: `🚰 **Recommended Service: Plumber (प्लंबर)**\n\n- **Emergency Tip**: If water is overflowing or pipe has burst, immediately close the main gate valve near your overhead water tank.\n- **Standard Visiting Fee**: ₹149 - ₹249 depending on locality.\n- **Typical Scope**: Concealed pipe leak diagnosis, tap/mixer replacement, flush tank ball-cock repair, motor pump priming.\n- **Coverage**: Verified plumbers available in Civil Lines, New Mandi, Gandhi Colony, and Circular Road.`,
-        textHi: `🚰 **सुझाई गई सेवा: प्लंबर (नलसाज)**\n\n- **आपातकालीन सलाह**: अगर पाइप फट गया है या टंकी ओवरफ्लो हो रही है, तो सबसे पहले छत की टंकी के पास लगा मुख्य वाल्व बंद कर दें।\n- **विजिटिंग शुल्क**: मुज़फ़्फ़रनगर में ₹149 - ₹249।\n- **प्रमुख कार्य**: पाइप लीकेज मरम्मत, नल बदलना, फ्लश टैंक रिपेयर, मोटर पंप फिटिंग।\n- **कवरेज**: सिविल लाइन्स, नई मंडी, गांधी कॉलोनी और सर्कुलर रोड में उपलब्ध।`,
+        textEn: `🚰 **Recommended Service: Plumber (प्लंबर)**\n\n- **Emergency Tip**: If water is overflowing or pipe has burst, immediately close the main gate valve near your overhead water tank.\n- **Pricing**: The provider submits the quote; Jugnu does not set a fixed visiting fee.\n- **Typical Scope**: Concealed pipe leak diagnosis, tap/mixer replacement, flush tank ball-cock repair, motor pump priming.\n- **Coverage**: Verified plumbers available in Civil Lines, New Mandi, Gandhi Colony, and Circular Road.`,
+        textHi: `🚰 **सुझाई गई सेवा: प्लंबर (नलसाज)**\n\n- **आपातकालीन सलाह**: अगर पाइप फट गया है या टंकी ओवरफ्लो हो रही है, तो सबसे पहले छत की टंकी के पास लगा मुख्य वाल्व बंद कर दें।\n- **कीमत**: प्रदाता अपना कोट देता है; जुगनू कोई निश्चित विजिटिंग शुल्क तय नहीं करता।\n- **प्रमुख कार्य**: पाइप लीकेज मरम्मत, नल बदलना, फ्लश टैंक रिपेयर, मोटर पंप फिटिंग।\n- **कवरेज**: सिविल लाइन्स, नई मंडी, गांधी कॉलोनी और सर्कुलर रोड में उपलब्ध।`,
         actions,
       }
     }
@@ -271,8 +271,8 @@ function resolveLocalQuery(query: string, persona: AssistantPersona): ChatMessag
         sender: 'assistant',
         persona,
         timestamp: new Date(),
-        textEn: `❄️ **Recommended Service: AC & Appliance Repair**\n\n- **Common Problem**: If your split/window AC runs but does not cool, it is usually due to choked air filters, outdoor fan dust, or low refrigerant gas.\n- **Standard Inspection Fee**: ₹249 - ₹349.\n- **Full Jet Service**: ₹499 per unit (deep foam and water jet pressure wash).\n- **Refrigerant Gas Refill**: Typically ₹1400 - ₹2000 depending on gas type (R32 / R410A / R22) with warranty.`,
-        textHi: `❄️ **सुझाई गई सेवा: AC व उपकरण मरम्मत**\n\n- **सामान्य कारण**: यदि AC हवा दे रहा है लेकिन ठंडक नहीं कर रहा, तो आमतौर पर फ़िल्टर चोक होने या गैस कम होने की वजह से होता है।\n- **जांच शुल्क**: ₹249 - ₹349।\n- **जेट सर्विसिंग**: ₹499 प्रति यूनिट (डीप वाटर व फोम जेट वॉश)।\n- **गैस रिफिल**: गैस के प्रकार (R32/R410/R22) के अनुसार ₹1400 - ₹2000 वारंटी के साथ।`,
+        textEn: `❄️ **Recommended Service: AC & Appliance Repair**\n\n- **Common Problem**: If your split/window AC runs but does not cool, it is usually due to choked air filters, outdoor fan dust, or low refrigerant gas.\n- **Pricing**: The provider quotes after reviewing the requested work; Jugnu does not set an inspection or service price.\n- **Scope**: Ask the provider to include any jet service or refrigerant work in the quote details.`,
+        textHi: `❄️ **सुझाई गई सेवा: AC व उपकरण मरम्मत**\n\n- **सामान्य कारण**: यदि AC हवा दे रहा है लेकिन ठंडक नहीं कर रहा, तो आमतौर पर फ़िल्टर चोक होने या गैस कम होने की वजह से होता है।\n- **कीमत**: प्रदाता काम देखकर अपना कोट देता है; जुगनू जांच या सेवा की कीमत तय नहीं करता।\n- **काम का दायरा**: जेट सर्विस या गैस के काम को कोट में शामिल कराने के लिए प्रदाता से पूछें।`,
         actions,
       }
     }
@@ -295,8 +295,8 @@ function resolveLocalQuery(query: string, persona: AssistantPersona): ChatMessag
         sender: 'assistant',
         persona,
         timestamp: new Date(),
-        textEn: `✨ **Recommended Service: Cleaning & Pest Control**\n\n- **Available Packages in Muzaffarnagar**:\n  - Bathroom Deep Clean: ₹399 per bathroom\n  - Kitchen Chimney & Tile Degreasing: ₹599\n  - 2BHK / 3BHK Full Home Deep Clean: ₹1299 - ₹2499\n  - Pest Control (Cockroach & Termite gel): ₹699\n- Artisans carry their own specialized chemical agents and equipment.`,
-        textHi: `✨ **सुझाई गई सेवा: डीप क्लीनिंग व पेस्ट कंट्रोल**\n\n- **मुज़फ़्फ़रनगर में प्रमुख पैकेज**:\n  - बाथरूम डीप क्लीनिंग: ₹399 प्रति बाथरूम\n  - किचन चिमनी व टाइल्स क्लीनिंग: ₹599\n  - 2BHK / 3BHK पूरे घर की डीप सफाई: ₹1299 - ₹2499\n  - कीट नियंत्रण (कॉकरोच/दीमक जेल स्प्रे): ₹699\n- कारीगर अपनी विशेष मशीनें और सुरक्षित केमिकल्स साथ लाते हैं।`,
+        textEn: `✨ **Recommended Service: Cleaning & Pest Control**\n\n- **Pricing**: Cleaning and pest-control providers submit their own quotes for the requested work.\n- Artisans carry their own specialized chemical agents and equipment.`,
+        textHi: `✨ **सुझाई गई सेवा: डीप क्लीनिंग व पेस्ट कंट्रोल**\n\n- **कीमत**: सफाई और कीट नियंत्रण के प्रदाता मांगे गए काम के लिए अपना कोट देते हैं।\n- कारीगर अपनी विशेष मशीनें और सुरक्षित केमिकल्स साथ लाते हैं।`,
         actions,
       }
     }
@@ -319,8 +319,8 @@ function resolveLocalQuery(query: string, persona: AssistantPersona): ChatMessag
         sender: 'assistant',
         persona,
         timestamp: new Date(),
-        textEn: `✂️ **Urban Company Style Salon & Spa at Home**\n\n- **Men's Grooming**: Haircut + beard styling + head massage (starts at ₹249). Hygienic disposable sheets used.\n- **Women's Salon & Spa**: Facial, cleanup, waxing, manicure/pedicure by background-verified female professionals in privacy of your home.\n- **Convenience**: No waiting in crowded market salons in Shiv Chowk or New Mandi!`,
-        textHi: `✂️ **घर पर सैलून व स्पा सेवा**\n\n- **पुरुष ग्रूमिंग**: बाल कटिंग + दाढ़ी सेट + हेड मसाज (मात्र ₹249 से शुरू)। डिस्पोजेबल किट का उपयोग।\n- **महिला सैलून व स्पा**: फेशियल, वैक्सिंग, मैनीक्योर/पेडीक्योर सत्यापित महिला ब्यूटीशियन द्वारा आपके घर की निजता में।\n- **सुविधा**: बाज़ार के सैलूनों में इंतज़ार करने की कोई ज़रूरत नहीं!`,
+        textEn: `✂️ **Urban Company Style Salon & Spa at Home**\n\n- **Men's Grooming**: Haircut + beard styling + head massage are quoted directly by the provider. Hygienic disposable sheets used.\n- **Women's Salon & Spa**: Facial, cleanup, waxing, manicure/pedicure by background-verified female professionals in privacy of your home.\n- **Convenience**: No waiting in crowded market salons in Shiv Chowk or New Mandi!`,
+        textHi: `✂️ **घर पर सैलून व स्पा सेवा**\n\n- **पुरुष ग्रूमिंग**: बाल कटिंग + दाढ़ी सेट + हेड मसाज के लिए प्रदाता अपना कोट देते हैं। डिस्पोजेबल किट का उपयोग।\n- **महिला सैलून व स्पा**: फेशियल, वैक्सिंग, मैनीक्योर/पेडीक्योर सत्यापित महिला ब्यूटीशियन द्वारा आपके घर की निजता में।\n- **सुविधा**: बाज़ार के सैलूनों में इंतज़ार करने की कोई ज़रूरत नहीं!`,
         actions,
       }
     }
@@ -374,8 +374,8 @@ function resolveLocalQuery(query: string, persona: AssistantPersona): ChatMessag
       sender: 'assistant',
       persona,
       timestamp: new Date(),
-      textEn: `I can help you find verified local artisans across all 8 trades in Muzaffarnagar (Electrician, Plumber, AC Repair, Cleaning, Men's/Women's Salon, Carpenter, Painter).\n\nStandard visiting charges are **₹149 - ₹249** with 0% middleman markup. Tell me what issue you are facing or click below to search.`,
-      textHi: `मैं मुज़फ़्फ़रनगर के सभी 8 ट्रेडों (इलेक्ट्रीशियन, प्लंबर, AC मरम्मत, सफाई, सैलून, कारपेंटर, पेंटर) में सत्यापित कारीगर खोजने में आपकी मदद कर सकता हूँ।\n\nविजिटिंग शुल्क मात्र **₹149 - ₹249** है। आप नीचे दी गई श्रेणियों में से चुन सकते हैं।`,
+      textEn: `I can help you find verified local artisans across all 8 trades in Muzaffarnagar (Electrician, Plumber, AC Repair, Cleaning, Men's/Women's Salon, Carpenter, Painter).\n\nJugnu does not set a standard price or markup. Choose a provider and request a quote after describing the work. Tell me what issue you are facing or click below to search.`,
+      textHi: `मैं मुज़फ़्फ़रनगर के सभी 8 ट्रेडों (इलेक्ट्रीशियन, प्लंबर, AC मरम्मत, सफाई, सैलून, कारपेंटर, पेंटर) में सत्यापित कारीगर खोजने में आपकी मदद कर सकता हूँ।\n\nजुगनू कोई निश्चित विजिटिंग शुल्क या मार्कअप तय नहीं करता। काम बताकर प्रदाता से कोट मंगाएं और नीचे दी गई श्रेणियों में से चुनें।`,
       actions: defaultActions,
     }
   }
@@ -434,8 +434,8 @@ function resolveLocalQuery(query: string, persona: AssistantPersona): ChatMessag
         sender: 'assistant',
         persona,
         timestamp: new Date(),
-        textEn: `💰 **Fair Price Protection Policy**:\n\n- **Standard Visiting/Inspection Charge**: ₹149 - ₹249 for Electrician, Plumber, Carpenter.\n- **Parts & Materials**: Artisans should present original market receipts from Muzaffarnagar electrical/hardware shops.\n- **Labour Charge**: Must be agreed before starting the repair.\n- If an artisan demands unreasonable rates without prior approval, do **not pay** extra and report them to Admin immediately.`,
-        textHi: `💰 **उचित दर सुरक्षा नीति**:\n\n- **मानक विजिटिंग शुल्क**: इलेक्ट्रीशियन, प्लंबर या कारपेंटर का ₹149 - ₹249 होता है।\n- **सामान का बिल**: कारीगर को दुकान का पक्का बिल देना अनिवार्य है।\n- **मजदूरी**: काम शुरू करने से पहले तय होनी चाहिए।\n- अगर कोई कारीगर तय से ज्यादा मांगता है, तो तुरंत नीचे दिए बटन से एडमिन को बताएं।`,
+      textEn: `💰 **Quote Review Guidance**:\n\n- Providers submit their own quotes; Jugnu does not set a standard visiting or inspection charge.\n- **Parts & Materials**: Ask the provider to explain materials and include any agreed work in the quote details.\n- **Labour Charge**: Review the provider's quote before accepting it.\n- If you have a pricing concern, report it to Admin before accepting or proceeding.`,
+      textHi: `💰 **कोट देखने की सलाह**:\n\n- प्रदाता अपना कोट देते हैं; जुगनू कोई मानक विजिटिंग या जांच शुल्क तय नहीं करता।\n- **सामान का बिल**: प्रदाता से सामान और काम का विवरण कोट में स्पष्ट कराने को कहें।\n- **मजदूरी**: काम शुरू करने से पहले प्रदाता का कोट देखें।\n- कीमत को लेकर चिंता हो तो स्वीकार या काम शुरू करने से पहले एडमिन को बताएं।`,
         actions,
       }
     }
