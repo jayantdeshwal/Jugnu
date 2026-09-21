@@ -197,7 +197,7 @@ export default function WorkerDashboard() {
         const { data: authData } = await supabase.auth.getUser()
         workerId = authData?.user?.id
       }
-      if (!workerId) throw new Error('Please sign in to access worker workspace')
+      if (!workerId) throw new Error(t('workerDashboard.signInRequired', 'Please sign in to access your worker workspace'))
 
       // Fetch worker profile and categories
       const [wpRes, wcRes, bookingsRes, areasRes] = await Promise.all([
@@ -251,7 +251,7 @@ export default function WorkerDashboard() {
             (profiles as any[]).map(p => [
               p.id,
               {
-                name: p.full_name || 'Customer',
+                name: p.full_name || t('bookings.customer', 'Customer'),
                 phone: p.phone,
                 avatar: p.avatar_url,
               },
@@ -262,7 +262,7 @@ export default function WorkerDashboard() {
 
       const completeBookings: WorkerBookingRow[] = rawBookings.map(b => ({
         ...b,
-        customer: customerById.get(b.customer_id) || { name: 'Customer' },
+        customer: customerById.get(b.customer_id) || { name: t('bookings.customer', 'Customer') },
         changeRequests: requestsByBooking.get(b.id) ?? [],
       }))
 
@@ -273,21 +273,22 @@ export default function WorkerDashboard() {
       setQuoteServices(new Map(quoteData.services.map(service => [service.id, service])))
     } catch (err) {
       console.warn('Dashboard load error:', err)
-      setError(err instanceof Error ? err.message : 'Unable to load worker workspace')
+      const message = err && typeof err === 'object' && 'message' in err ? String((err as { message?: unknown }).message) : ''
+      setError(message || t('workerDashboard.loadError', 'Unable to load your worker workspace'))
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [t, user?.id])
 
   const handleCreateChangeRequest = async () => {
     if (!changeRequestBooking) return
     const amount = Number(changeAmount)
     if (!Number.isFinite(amount) || amount <= 0) {
-      setChangeRequestError('Enter an additional amount greater than zero.')
+      setChangeRequestError(t('workerDashboard.additionalAmountError', 'Enter an additional amount greater than zero.'))
       return
     }
     if (!changeReason.trim()) {
-      setChangeRequestError('Enter a reason for the additional charge.')
+      setChangeRequestError(t('workerDashboard.additionalReasonError', 'Enter a reason for the additional charge.'))
       return
     }
 
@@ -300,7 +301,7 @@ export default function WorkerDashboard() {
       setChangeReason('')
       await loadDashboardData()
     } catch (err) {
-      setChangeRequestError(err instanceof Error ? err.message : 'Unable to create the additional-charge request')
+      setChangeRequestError(err instanceof Error ? err.message : t('workerDashboard.changeRequestError', 'Unable to create the additional-charge request'))
     } finally {
       setIsSubmittingChangeRequest(false)
     }
@@ -310,7 +311,7 @@ export default function WorkerDashboard() {
     if (!quoteRequestToRespond) return
     const amount = Number(quoteAmount)
     if (action === 'quote' && (!Number.isFinite(amount) || amount <= 0)) {
-      setQuoteError('Enter the quote amount submitted by you.')
+      setQuoteError(t('workerDashboard.quoteAmountError', 'Enter the quote amount submitted by you.'))
       return
     }
     setIsSubmittingQuote(true)
@@ -327,7 +328,7 @@ export default function WorkerDashboard() {
       setQuoteDetails('')
       await loadDashboardData()
     } catch (err) {
-      setQuoteError(err instanceof Error ? err.message : 'Unable to respond to quote request')
+      setQuoteError(err instanceof Error ? err.message : t('workerDashboard.quoteResponseError', 'Unable to respond to quote request'))
     } finally {
       setIsSubmittingQuote(false)
     }
@@ -386,7 +387,7 @@ export default function WorkerDashboard() {
         const { data: authData } = await supabase.auth.getUser()
         workerId = authData?.user?.id
       }
-      if (!workerId) throw new Error('Please sign in to update bookings')
+      if (!workerId) throw new Error(t('workerDashboard.signInRequired', 'Please sign in to access your worker workspace'))
 
       const { error: rpcError } = await (supabase as any).rpc('update_booking_status', {
         target_booking_id: bookingId,
@@ -406,7 +407,7 @@ export default function WorkerDashboard() {
         current.map(booking => (booking.id === bookingId ? { ...booking, status } : booking))
       )
     } catch (updateError) {
-      setError(updateError instanceof Error ? updateError.message : 'Unable to update booking')
+      setError(updateError instanceof Error ? updateError.message : t('workerDashboard.updateBookingError', 'Unable to update booking'))
     } finally {
       setUpdatingBookingId('')
     }
@@ -426,7 +427,7 @@ export default function WorkerDashboard() {
         const { data: authData } = await supabase.auth.getUser()
         workerId = authData?.user?.id
       }
-      if (!workerId) throw new Error('Please sign in to manage availability')
+      if (!workerId) throw new Error(t('workerDashboard.signInRequired', 'Please sign in to access your worker workspace'))
 
       const { error: rpcError } = await (supabase as any).rpc('update_worker_availability', {
         target_available: newStatus,
@@ -443,12 +444,12 @@ export default function WorkerDashboard() {
       setProfile(prev => (prev ? { ...prev, is_available: newStatus } : null))
       setAvailabilitySuccessMsg(
         newStatus
-          ? (i18n.language === 'hi' ? 'अब आप काम के लिए ऑनलाइन हैं!' : 'You are now Online and ready to accept bookings!')
-          : (i18n.language === 'hi' ? 'अब आप ऑफ़-ड्यूटी हैं। ग्राहक अभी आपको बुक नहीं कर सकते।' : 'You are now Off-Duty.')
+          ? t('workerDashboard.onlineSuccess', 'You are now Online and ready to accept bookings!')
+          : t('workerDashboard.offlineSuccess', 'You are now Off-Duty.')
       )
       setTimeout(() => setAvailabilitySuccessMsg(''), 4000)
     } catch (toggleError) {
-      setError(toggleError instanceof Error ? toggleError.message : 'Unable to update availability status')
+      setError(toggleError instanceof Error ? toggleError.message : t('workerDashboard.availabilityError', 'Unable to update availability status'))
     } finally {
       setIsUpdatingAvailability(false)
     }
@@ -479,7 +480,7 @@ export default function WorkerDashboard() {
   const primaryCategoryObj = CATEGORIES.find(c => categoriesList.includes(c.id))
   const primaryCategoryName = primaryCategoryObj
     ? getCategoryName(primaryCategoryObj, i18n.language === 'hi' ? 'hi' : 'en')
-    : 'Artisan Specialist'
+    : t('workerDashboard.artisanSpecialist', 'Artisan Specialist')
 
   return (
     <div className="min-h-screen bg-semantic-bg-primary pb-24 text-semantic-text-primary">
@@ -492,7 +493,7 @@ export default function WorkerDashboard() {
             type="button"
             onClick={() => navigate(-1)}
             className="w-10 h-10 rounded-full bg-surface-100/90 hover:bg-surface-200 border border-semantic-border-light flex items-center justify-center text-semantic-text-primary transition-colors active:scale-95 shadow-sm"
-            aria-label="Go Back"
+            aria-label={t('common.back', 'Back')}
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -505,7 +506,7 @@ export default function WorkerDashboard() {
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-100 border border-semantic-border-light text-xs font-semibold">
             <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
             <span className={isOnline ? 'text-emerald-400' : 'text-amber-400'}>
-              {isOnline ? 'Online' : 'Off-Duty'}
+              {isOnline ? t('workerDashboard.online', 'Online') : t('workerDashboard.offDuty', 'Off-Duty')}
             </span>
           </div>
         </div>
@@ -539,12 +540,12 @@ export default function WorkerDashboard() {
               ) : approvalStatus === 'pending' ? (
                 <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/30">
                   <Clock3 className="w-3 h-3" />
-                  <span>Under Review</span>
+                  <span>{t('workerDashboard.underReview', 'Under Review')}</span>
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1 text-[11px] font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full border border-red-500/30">
                   <AlertCircle className="w-3 h-3" />
-                  <span>Needs Changes</span>
+                  <span>{t('workerDashboard.needsChanges', 'Needs Changes')}</span>
                 </span>
               )}
 
@@ -555,12 +556,12 @@ export default function WorkerDashboard() {
 
             {/* Bold Worker Full Name */}
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight truncate">
-              {user?.name || 'Verified Professional'}
+              {user?.name || t('workerDashboard.verifiedProfessional', 'Verified Professional')}
             </h1>
 
             {/* Trade details & experience */}
             <p className="text-xs text-semantic-text-secondary mt-0.5">
-              {profile?.experience_years ? `${profile.experience_years} years experience` : 'Local Professional'} • Muzaffarnagar
+              {profile?.experience_years ? t('workerDashboard.yearsExperience', '{{count}} years experience', { count: profile.experience_years }) : t('workerDashboard.localProfessional', 'Local Professional')} • Muzaffarnagar
             </p>
           </div>
 
@@ -570,7 +571,7 @@ export default function WorkerDashboard() {
             onClick={() => navigate('/profile')}
             className="shrink-0 px-4 py-1.5 rounded-full border border-semantic-border-medium hover:border-brand-500 text-xs font-semibold text-semantic-text-primary hover:text-brand-400 transition-colors shadow-sm active:scale-95"
           >
-            Edit Profile
+            {t('common.edit', 'Edit Profile')}
           </button>
         </div>
 
@@ -597,7 +598,7 @@ export default function WorkerDashboard() {
               <Power className={`w-5 h-5 ${isOnline ? 'animate-pulse text-emerald-400' : 'text-amber-400'}`} />
             </div>
             <span className={`text-xs font-bold leading-tight ${isOnline ? 'text-emerald-400' : 'text-slate-900 dark:text-zinc-200'}`}>
-              {isOnline ? 'Online (Ready)' : 'Off-Duty'}
+              {isOnline ? t('workerDashboard.onlineReady', 'Online (Ready)') : t('workerDashboard.offDuty', 'Off-Duty')}
             </span>
           </button>
 
@@ -616,7 +617,7 @@ export default function WorkerDashboard() {
               )}
             </div>
             <span className="text-xs font-bold text-slate-900 dark:text-zinc-200 group-hover:text-amber-600 dark:group-hover:text-brand-400 leading-tight">
-              {pendingCount > 0 ? `${pendingCount} New Requests` : 'Job Requests'}
+              {pendingCount > 0 ? t('workerDashboard.newRequests', '{{count}} new requests', { count: pendingCount }) : t('workerDashboard.jobRequests', 'Job Requests')}
             </span>
           </button>
 
@@ -630,7 +631,7 @@ export default function WorkerDashboard() {
               <Headphones className="w-5 h-5" />
             </div>
             <span className="text-xs font-bold text-slate-900 dark:text-zinc-200 group-hover:text-blue-500 dark:group-hover:text-blue-400 leading-tight">
-              Artisan Helpline
+              {t('workerDashboard.artisanHelpline', 'Artisan Helpline')}
             </span>
           </button>
         </div>
@@ -676,26 +677,26 @@ export default function WorkerDashboard() {
         <div className={`grid-cols-4 gap-2 mb-6 p-3 rounded-2xl bg-surface-100 border border-semantic-border-light text-center ${isLeadsTab ? 'hidden md:grid' : 'grid'}`}>
           <div>
             <p className="text-base font-extrabold text-emerald-400">{completedCount}</p>
-            <p className="text-[10px] text-semantic-text-secondary mt-0.5">Completed</p>
+            <p className="text-[10px] text-semantic-text-secondary mt-0.5">{t('workerDashboard.completed', 'Completed')}</p>
           </div>
           <div>
             <div className="flex items-center justify-center gap-0.5">
               <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
               <span className="text-base font-extrabold text-slate-900 dark:text-white">
-                {profile?.rating && profile.rating > 0 ? profile.rating.toFixed(1) : 'No ratings yet'}
+                  {profile?.rating && profile.rating > 0 ? profile.rating.toFixed(1) : t('workerDashboard.noRatings', 'No ratings yet')}
               </span>
             </div>
-            <p className="text-[10px] text-semantic-text-secondary mt-0.5">Rating</p>
+            <p className="text-[10px] text-semantic-text-secondary mt-0.5">{t('workerDashboard.rating', 'Rating')}</p>
           </div>
           <div>
             <p className="text-base font-extrabold text-brand-400">{profile?.review_count ?? 0}</p>
-            <p className="text-[10px] text-semantic-text-secondary mt-0.5">Reviews</p>
+            <p className="text-[10px] text-semantic-text-secondary mt-0.5">{t('workerDashboard.reviews', 'Reviews')}</p>
           </div>
           <div>
             <p className="text-xs font-bold text-slate-900 dark:text-white truncate mt-1">
-              {profile?.service_areas?.length ? profile.service_areas.join(', ') : 'No areas listed'}
+              {profile?.service_areas?.length ? profile.service_areas.join(', ') : t('workerDashboard.noAreas', 'No areas listed')}
             </p>
-            <p className="text-[10px] text-semantic-text-secondary mt-0.5">Coverage</p>
+            <p className="text-[10px] text-semantic-text-secondary mt-0.5">{t('workerDashboard.coverage', 'Coverage')}</p>
           </div>
         </div>
 
@@ -711,16 +712,16 @@ export default function WorkerDashboard() {
                   <Zap className="w-4 h-4" />
                 </div>
                 <h2 className="text-base font-black text-slate-900 dark:text-white">
-                  {t('worker.newLeads', 'New Job Leads')}
+                  {t('workerDashboard.newLeads', 'New Job Leads')}
                 </h2>
                 {pendingCount > 0 && (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500 text-slate-950">
-                    {pendingCount} New
+                    {t('workerDashboard.newCount', '{{count}} new', { count: pendingCount })}
                   </span>
                 )}
               </div>
               <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-1">
-                Incoming customer service requests across Muzaffarnagar
+                {t('workerDashboard.leadsSubtitle', 'New customer service requests in Muzaffarnagar')}
               </p>
             </div>
             <button
@@ -741,9 +742,9 @@ export default function WorkerDashboard() {
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <FileText className="w-4 h-4 text-amber-500" />
-                Quote Requests
+                {t('workerDashboard.quoteRequests', 'Quote Requests')}
               </h3>
-              <Badge variant="warning">{quoteRequests.filter(request => request.status === 'pending').length} pending</Badge>
+              <Badge variant="warning">{t('workerDashboard.pendingCount', '{{count}} pending', { count: quoteRequests.filter(request => request.status === 'pending').length })}</Badge>
             </div>
             <div className="space-y-3">
               {quoteRequests.filter(request => request.status === 'pending').map(request => {
@@ -752,16 +753,16 @@ export default function WorkerDashboard() {
                   <div key={request.id} className="rounded-xl bg-white/70 dark:bg-zinc-900/50 border border-amber-500/20 p-3">
                     <div className="flex flex-wrap justify-between gap-2">
                       <div>
-                        <p className="font-semibold text-slate-900 dark:text-white">{service ? getCategoryName(CATEGORIES.find(category => category.id === service.category_id) || CATEGORIES[0], i18n.language === 'hi' ? 'hi' : 'en') : 'Service request'}</p>
+                        <p className="font-semibold text-slate-900 dark:text-white">{service ? getCategoryName(CATEGORIES.find(category => category.id === service.category_id) || CATEGORIES[0], i18n.language === 'hi' ? 'hi' : 'en') : t('workerDashboard.serviceRequest', 'Service request')}</p>
                         {service && <p className="text-xs text-semantic-text-secondary mt-1">{new Date(service.scheduled_for).toLocaleString(i18n.language === 'hi' ? 'hi-IN' : 'en-IN')} · {service.pincode}</p>}
-                        <p className="text-xs text-semantic-text-secondary mt-1">Respond by {new Date(request.response_deadline_at).toLocaleString(i18n.language === 'hi' ? 'hi-IN' : 'en-IN')}</p>
+                        <p className="text-xs text-semantic-text-secondary mt-1">{t('workerDashboard.respondBy', 'Respond by')} {new Date(request.response_deadline_at).toLocaleString(i18n.language === 'hi' ? 'hi-IN' : 'en-IN')}</p>
                       </div>
                       <div className="flex gap-2">
                         <Button variant="outline" size="sm" onClick={() => { setQuoteRequestToRespond(request); setQuoteError('') }}>
-                          Send Quote
+                          {t('workerDashboard.sendQuote', 'Send Quote')}
                         </Button>
-                        <Button variant="secondary" size="sm" onClick={() => void (async () => { try { await respondToBookingQuoteRequest({ requestId: request.id, action: 'reject' }); await loadDashboardData() } catch (err) { setError(err instanceof Error ? err.message : 'Unable to reject quote request') } })()}>
-                          Reject
+                        <Button variant="secondary" size="sm" onClick={() => void (async () => { try { await respondToBookingQuoteRequest({ requestId: request.id, action: 'reject' }); await loadDashboardData() } catch (err) { setError(err instanceof Error ? err.message : t('workerDashboard.rejectQuoteError', 'Unable to reject quote request')) } })()}>
+                          {t('workerDashboard.reject', 'Reject')}
                         </Button>
                       </div>
                     </div>
@@ -793,7 +794,7 @@ export default function WorkerDashboard() {
           <div className="flex items-center justify-between mb-3 px-1">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <ClipboardList className="w-4 h-4 text-brand-400" />
-              <span>Customer Job Requests</span>
+              <span>{t('workerDashboard.customerJobRequests', 'Customer Job Requests')}</span>
             </h3>
             <button
               type="button"
@@ -801,7 +802,7 @@ export default function WorkerDashboard() {
               className="text-xs text-brand-400 hover:text-brand-300 flex items-center gap-1 font-semibold"
             >
               <RefreshCw className="w-3 h-3" />
-              <span>Refresh</span>
+              <span>{t('common.refresh', 'Refresh')}</span>
             </button>
           </div>
 
@@ -816,7 +817,7 @@ export default function WorkerDashboard() {
                   : 'bg-surface-100 text-semantic-text-secondary hover:text-slate-900 dark:hover:text-white border border-semantic-border-light'
               }`}
             >
-              All ({bookings.length})
+              {t('common.all', 'All')} ({bookings.length})
             </button>
             <button
               type="button"
@@ -827,7 +828,7 @@ export default function WorkerDashboard() {
                   : 'bg-surface-100 text-semantic-text-secondary hover:text-slate-900 dark:hover:text-white border border-semantic-border-light'
               }`}
             >
-              <span>Pending</span>
+              <span>{t('workerDashboard.pending', 'Pending')}</span>
               {pendingCount > 0 && (
                 <span className="w-4 h-4 rounded-full bg-amber-400/20 text-amber-600 dark:text-amber-300 text-[10px] flex items-center justify-center font-bold">
                   {pendingCount}
@@ -843,7 +844,7 @@ export default function WorkerDashboard() {
                   : 'bg-surface-100 text-semantic-text-secondary hover:text-slate-900 dark:hover:text-white border border-semantic-border-light'
               }`}
             >
-              Active / In Progress ({activeCount})
+              {t('workerDashboard.activeInProgress', 'Active / In Progress')} ({activeCount})
             </button>
             <button
               type="button"
@@ -854,7 +855,7 @@ export default function WorkerDashboard() {
                   : 'bg-surface-100 text-semantic-text-secondary hover:text-slate-900 dark:hover:text-white border border-semantic-border-light'
               }`}
             >
-              Completed ({completedCount})
+              {t('workerDashboard.completed', 'Completed')} ({completedCount})
             </button>
           </div>
         </div>
@@ -865,12 +866,12 @@ export default function WorkerDashboard() {
             <div className="p-8 rounded-2xl bg-surface-100/60 border border-semantic-border-light text-center">
               <ClipboardList className="w-10 h-10 text-semantic-text-tertiary mx-auto mb-2 opacity-50" />
               <p className="text-sm font-semibold text-semantic-text-primary">
-                No bookings in this category
+                {t('workerDashboard.noBookingsCategory', 'No bookings in this category')}
               </p>
               <p className="text-xs text-semantic-text-secondary mt-1">
                 {isOnline
-                  ? 'Your profile is online and visible to customers in Muzaffarnagar. New requests will appear here.'
-                  : 'You are currently Off-Duty. Toggle "Online" above to receive customer bookings.'}
+                  ? t('workerDashboard.onlineEmpty', 'Your profile is online and visible to customers in Muzaffarnagar. New requests will appear here.')
+                  : t('workerDashboard.offDutyEmpty', 'You are currently Off-Duty. Turn Online above to receive customer bookings.')}
               </p>
             </div>
           ) : (
@@ -904,10 +905,10 @@ export default function WorkerDashboard() {
                       </div>
                       <div>
                         <p className="text-xs font-bold text-slate-900 dark:text-white">
-                          {booking.customer?.name || 'Customer'}
+                          {booking.customer?.name || t('bookings.customer', 'Customer')}
                         </p>
                         <p className="text-[10px] text-semantic-text-tertiary capitalize">
-                          {catName} Service
+                          {catName} {t('workerDashboard.service', 'Service')}
                         </p>
                       </div>
                     </div>
@@ -929,9 +930,9 @@ export default function WorkerDashboard() {
                       size="sm"
                     >
                       {booking.status === 'in_progress'
-                        ? 'In Progress'
+                        ? t('workerDashboard.inProgress', 'In Progress')
                         : booking.status === 'accepted'
-                        ? 'Accepted'
+                        ? t('workerDashboard.accepted', 'Accepted')
                         : booking.status}
                     </Badge>
                   </div>
@@ -944,7 +945,7 @@ export default function WorkerDashboard() {
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      <span className="truncate">{booking.address || 'Muzaffarnagar'}</span>
+                      <span className="truncate">{booking.address || t('workerDashboard.muzaffarnagar', 'Muzaffarnagar')}</span>
                     </div>
                     {booking.notes && (
                       <p className="text-[11px] text-semantic-text-tertiary italic pt-1 border-t border-semantic-border-light/40">
@@ -962,7 +963,7 @@ export default function WorkerDashboard() {
                       className="flex-1 text-xs flex items-center justify-center gap-1.5 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 py-1.5"
                     >
                       <MessageCircle className="w-3.5 h-3.5" />
-                      <span>WhatsApp / Call</span>
+                      <span>{t('workerDashboard.whatsappCall', 'WhatsApp / Call')}</span>
                     </Button>
 
                     {booking.customer?.phone && (
@@ -971,7 +972,7 @@ export default function WorkerDashboard() {
                         className="px-3 py-1.5 rounded-xl border border-semantic-border-medium hover:border-brand-500 text-xs font-semibold text-semantic-text-secondary hover:text-white transition-colors flex items-center gap-1"
                       >
                         <Phone className="w-3.5 h-3.5" />
-                        <span>Call</span>
+                        <span>{t('workerDashboard.call', 'Call')}</span>
                       </a>
                     )}
                   </div>
@@ -979,9 +980,9 @@ export default function WorkerDashboard() {
                   {booking.changeRequests?.map(request => (
                     <div key={request.id} className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-3 text-xs">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="font-bold text-slate-900 dark:text-white">Additional charge request</span>
+                        <span className="font-bold text-slate-900 dark:text-white">{t('workerDashboard.additionalChargeRequest', 'Additional charge request')}</span>
                         <Badge variant={request.status === 'approved' ? 'success' : request.status === 'rejected' ? 'danger' : 'warning'} size="sm">
-                          {request.status === 'pending' ? 'Pending customer approval' : request.status[0].toUpperCase() + request.status.slice(1)}
+                          {request.status === 'pending' ? t('workerDashboard.pendingCustomerApproval', 'Pending customer approval') : request.status}
                         </Badge>
                       </div>
                       <p className="mt-1 text-semantic-text-secondary">Job {formatJobReference(booking.id)} • ₹{request.amount.toFixed(2)}</p>
@@ -1001,7 +1002,7 @@ export default function WorkerDashboard() {
                       }}
                       className="w-full text-xs border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
                     >
-                      Request Additional Charge
+                      {t('workerDashboard.requestAdditionalCharge', 'Request Additional Charge')}
                     </Button>
                   )}
 
@@ -1039,7 +1040,7 @@ export default function WorkerDashboard() {
                         className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-1.5 shadow-sm flex items-center justify-center gap-1.5"
                       >
                         <Play className="w-3.5 h-3.5" />
-                        <span>Start Service (काम शुरू करें)</span>
+                        <span>{t('workerDashboard.startService', 'Start Service')}</span>
                       </Button>
                     </div>
                   )}
@@ -1054,7 +1055,7 @@ export default function WorkerDashboard() {
                         className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-1.5 shadow-sm flex items-center justify-center gap-1.5"
                       >
                         <Check className="w-3.5 h-3.5" />
-                        <span>Mark Completed (काम पूरा हुआ)</span>
+                        <span>{t('workerDashboard.markCompleted', 'Mark Completed')}</span>
                       </Button>
                     </div>
                   )}
@@ -1105,13 +1106,13 @@ export default function WorkerDashboard() {
         onClose={() => {
           if (!isSubmittingChangeRequest) setChangeRequestBooking(null)
         }}
-        title="Request Additional Charge"
-        description={changeRequestBooking ? `Job ${formatJobReference(changeRequestBooking.id)} — customer approval is required.` : undefined}
+        title={t('workerDashboard.requestAdditionalCharge', 'Request Additional Charge')}
+        description={changeRequestBooking ? `${t('workerDashboard.job', 'Job')} ${formatJobReference(changeRequestBooking.id)} — ${t('workerDashboard.customerApprovalRequired', 'customer approval is required.')}` : undefined}
       >
         <div className="space-y-4">
           {changeRequestError && <p className="rounded-xl bg-rose-500/10 border border-rose-500/30 p-3 text-xs text-rose-500">{changeRequestError}</p>}
           <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300">
-            Additional amount
+            {t('workerDashboard.additionalAmount', 'Additional amount')}
             <input
               type="number"
               min="0.01"
@@ -1123,22 +1124,22 @@ export default function WorkerDashboard() {
             />
           </label>
           <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300">
-            Reason
+            {t('workerDashboard.reason', 'Reason')}
             <textarea
               value={changeReason}
               onChange={event => setChangeReason(event.target.value)}
               rows={3}
               maxLength={1000}
               className="mt-1.5 w-full rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 px-3.5 py-2.5 text-sm text-slate-900 dark:text-zinc-100 focus:border-amber-500 focus:outline-none"
-              placeholder="Explain why this additional charge is needed"
+              placeholder={t('workerDashboard.additionalReasonPlaceholder', 'Explain why this additional charge is needed')}
             />
           </label>
           <div className="flex gap-2">
             <Button variant="secondary" className="flex-1" disabled={isSubmittingChangeRequest} onClick={() => setChangeRequestBooking(null)}>
-              Cancel
+              {t('common.cancel', 'Cancel')}
             </Button>
             <Button variant="primary" className="flex-1" loading={isSubmittingChangeRequest} onClick={() => void handleCreateChangeRequest()}>
-              Send Request
+              {t('workerDashboard.sendRequest', 'Send Request')}
             </Button>
           </div>
         </div>
@@ -1148,8 +1149,8 @@ export default function WorkerDashboard() {
       <Modal
         isOpen={showSupportModal}
         onClose={() => setShowSupportModal(false)}
-        title="Artisan Support & Coordination"
-        description="Connect with our administrator team for verification, payment queries, or assistance."
+        title={t('workerDashboard.supportTitle', 'Artisan Support & Coordination')}
+        description={t('workerDashboard.supportDescription', 'Connect with our administrator team for verification, payment queries, or assistance.')}
       >
         <div className="space-y-3 pt-2">
           <a
@@ -1164,10 +1165,10 @@ export default function WorkerDashboard() {
               </div>
               <div>
                 <p className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-emerald-500 dark:group-hover:text-emerald-300">
-                  WhatsApp Artisan Desk
+                  {t('workerDashboard.whatsappDesk', 'WhatsApp Artisan Desk')}
                 </p>
                 <p className="text-[11px] text-semantic-text-secondary">
-                  Direct support for Muzaffarnagar artisans
+                  {t('workerDashboard.directSupport', 'Direct support for Muzaffarnagar artisans')}
                 </p>
               </div>
             </div>

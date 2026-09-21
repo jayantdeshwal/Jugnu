@@ -2,6 +2,10 @@ import type { JobId } from '@kaamgar/shared'
 import { getSupabaseClient } from '@/lib/supabase'
 import { getProblemImageSignedUrl } from '@/services/storage'
 
+function isOptionalAttachmentTableMissing(error: { code?: string; message?: string } | null): boolean {
+  return Boolean(error && (error.code === '42P01' || error.code === 'PGRST205' || /service_request_attachments/i.test(error.message || '')))
+}
+
 export type QuoteRequestStatus = 'pending' | 'quoted' | 'rejected' | 'cancelled' | 'expired' | 'accepted'
 export type QuoteStatus = 'submitted' | 'accepted' | 'rejected' | 'cancelled'
 
@@ -135,8 +139,8 @@ export async function fetchCustomerQuoteData(customerId: string): Promise<{ requ
   const attachmentRes = serviceIds.length
     ? await supabase.from('service_request_attachments').select('service_request_id, storage_path').in('service_request_id', serviceIds)
     : { data: [], error: null }
-  if (attachmentRes.error) throw attachmentRes.error
-  const attachmentUrls = await Promise.all((attachmentRes.data ?? []).map(async (attachment: any) => [
+  if (attachmentRes.error && !isOptionalAttachmentTableMissing(attachmentRes.error)) throw attachmentRes.error
+  const attachmentUrls = await Promise.all((attachmentRes.error ? [] : attachmentRes.data ?? []).map(async (attachment: any) => [
     attachment.service_request_id,
     await getProblemImageSignedUrl(attachment.storage_path),
   ] as const))
@@ -168,8 +172,8 @@ export async function fetchWorkerQuoteData(workerId: string): Promise<{ requests
   const attachmentRes = ids.length
     ? await supabase.from('service_request_attachments').select('service_request_id, storage_path').in('service_request_id', ids)
     : { data: [], error: null }
-  if (attachmentRes.error) throw attachmentRes.error
-  const attachmentUrls = await Promise.all((attachmentRes.data ?? []).map(async (attachment: any) => [
+  if (attachmentRes.error && !isOptionalAttachmentTableMissing(attachmentRes.error)) throw attachmentRes.error
+  const attachmentUrls = await Promise.all((attachmentRes.error ? [] : attachmentRes.data ?? []).map(async (attachment: any) => [
     attachment.service_request_id,
     await getProblemImageSignedUrl(attachment.storage_path),
   ] as const))

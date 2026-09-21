@@ -69,14 +69,14 @@ const iconMap: Record<string, any> = {
 
 // Popular search issue chips for quick selection
 const POPULAR_SEARCHES = [
-  { label: 'Switchboard / MCB Repair', category: 'electrician' },
-  { label: 'AC Filter & Gas Service', category: 'ac_repair' },
-  { label: 'Water Pipe Leakage', category: 'plumber' },
-  { label: 'Part-time Home Maid', category: 'part_time_maid' },
-  { label: 'Parlour Service & Care', category: 'parlour_service' },
-  { label: 'Door Lock / Furniture Fix', category: 'carpenter' },
-  { label: 'Wall Paint & Dampness', category: 'painter' },
-  { label: 'Car Repair & Service', category: 'car_mechanic' },
+  { labelKey: 'home.popularSwitchboard', category: 'electrician' },
+  { labelKey: 'home.popularAc', category: 'ac_repair' },
+  { labelKey: 'home.popularPipe', category: 'plumber' },
+  { labelKey: 'home.popularMaid', category: 'part_time_maid' },
+  { labelKey: 'home.popularParlour', category: 'parlour_service' },
+  { labelKey: 'home.popularFurniture', category: 'carpenter' },
+  { labelKey: 'home.popularPaint', category: 'painter' },
+  { labelKey: 'home.popularCar', category: 'car_mechanic' },
 ]
 
 // Common query aliases mapping to canonical service IDs in @kaamgar/shared
@@ -453,7 +453,7 @@ export default function Home() {
               )}
               <MapPin className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
               <span className="font-semibold text-slate-900 dark:text-zinc-100 truncate">
-                {selectedArea ? `${selectedArea} • Muzaffarnagar` : 'Muzaffarnagar (251001 & 251002)'}
+                {selectedArea ? `${selectedArea} • ${t('home.city', 'Muzaffarnagar')}` : t('home.areaDefault', 'Muzaffarnagar (251001 & 251002)')}
               </span>
               <span className="text-[10px] bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 font-bold px-1.5 py-0.2 rounded border border-emerald-200 dark:border-emerald-700/50 shrink-0">
                 ⚡ 30-45 mins
@@ -653,7 +653,7 @@ export default function Home() {
                             : 'bg-slate-50 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:text-white'
                         }`}
                       >
-                        {pincode} - {pincode === '251001' ? 'City / New Mandi' : 'Cantt / Civil Lines'}
+                        {pincode} - {pincode === '251001' ? t('home.cityNewMandi', 'City / New Mandi') : t('home.canttCivilLines', 'Cantt / Civil Lines')}
                       </button>
                     ))}
                   </div>
@@ -668,7 +668,7 @@ export default function Home() {
                   <div className="flex flex-wrap gap-1.5">
                     {POPULAR_SEARCHES.map(item => (
                       <button
-                        key={item.label}
+                        key={item.labelKey}
                         type="button"
                         onClick={() => {
                           setSelectedCategory(item.category)
@@ -676,7 +676,7 @@ export default function Home() {
                         }}
                         className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-slate-50 hover:bg-slate-100 dark:bg-zinc-800/80 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
                       >
-                        {item.label}
+                          {t(item.labelKey)}
                       </button>
                     ))}
                   </div>
@@ -689,7 +689,7 @@ export default function Home() {
                       <Grid className="w-3.5 h-3.5 text-amber-500" />
                       <span>{t('home.stickyCategoriesTitle', 'Select Service Category')}</span>
                     </h4>
-                    <span className="text-[11px] text-slate-500 dark:text-zinc-400">Tap to apply & close</span>
+                        <span className="text-[11px] text-slate-500 dark:text-zinc-400">{t('home.tapApplyClose', 'Tap to apply & close')}</span>
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -748,7 +748,7 @@ export default function Home() {
                               {getCategoryName(cat, i18n.language === 'hi' ? 'hi' : 'en')}
                             </p>
                             <p className="text-[10px] text-slate-500 dark:text-zinc-400 truncate">
-                              {totalCount > 0 ? `${totalCount} Verified` : 'Same-day'}
+                              {totalCount > 0 ? `${totalCount} ${t('home.verified', 'Verified')}` : t('home.sameDay', 'Same-day')}
                             </p>
                           </div>
                         </button>
@@ -768,7 +768,7 @@ export default function Home() {
                     }}
                     className="text-xs text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white cursor-pointer font-medium"
                   >
-                    Clear Filters
+                    {t('common.clearFilters', 'Clear Filters')}
                   </button>
                   <Button
                     variant="primary"
@@ -776,7 +776,7 @@ export default function Home() {
                     onClick={() => setIsFilterOpen(false)}
                     className="text-xs font-bold px-4 cursor-pointer"
                   >
-                    Done
+                    {t('common.done', 'Done')}
                   </Button>
                 </div>
               </motion.div>
@@ -803,13 +803,13 @@ export default function Home() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
                   <div>
                     <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                      <span>Verified Artisans</span>
+                      <span>{t('home.verifiedArtisans', 'Verified Artisans')}</span>
                       <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
-                        {matchingWorkers.length} {matchingWorkers.length === 1 ? 'Found' : 'Found'}
+                        {matchingWorkers.length} {t('home.found', 'Found')}
                       </span>
                     </h2>
                     <p className="text-xs text-slate-600 dark:text-zinc-400 mt-1">
-                      Direct phone & WhatsApp connection • 0% platform fee • Aadhaar & Police verified
+                      {t('home.resultsSubtitle', 'Direct phone & WhatsApp connection • 0% platform fee • Aadhaar & Police verified')}
                     </p>
                   </div>
 
@@ -819,7 +819,7 @@ export default function Home() {
                       onClick={clearAllSearchAndFilters}
                       className="text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-white px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 transition-colors cursor-pointer"
                     >
-                      Clear Results
+                      {t('home.clearResults', 'Clear Results')}
                     </button>
                     <Link
                       to={`/search?${new URLSearchParams({
@@ -829,7 +829,7 @@ export default function Home() {
                       }).toString()}`}
                       className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1"
                     >
-                      <span>Full Directory</span>
+                      <span>{t('home.fullDirectory', 'Full Directory')}</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>
@@ -862,7 +862,7 @@ export default function Home() {
                                   <h3 className="font-bold text-sm text-slate-900 dark:text-white truncate">
                                     {worker.name}
                                   </h3>
-                                  <span title="Verified Artisan">
+                                  <span title={t('home.verifiedArtisan', 'Verified Artisan')}>
                                     <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
                                   </span>
                                 </div>
@@ -872,12 +872,12 @@ export default function Home() {
                                 <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500 dark:text-zinc-400">
                                   <span className="flex items-center gap-0.5 text-amber-500 font-bold">
                                     <Star className="w-3 h-3 fill-amber-500" />
-                                    <span>{worker.rating > 0 ? worker.rating.toFixed(1) : 'No ratings yet'}</span>
+                                    <span>{worker.rating > 0 ? worker.rating.toFixed(1) : t('home.noRatings', 'No ratings yet')}</span>
                                   </span>
                                   <span>•</span>
                                   <span>{worker.reviews} {t('common.reviews', 'reviews')}</span>
                                   <span>•</span>
-                                  <span>{worker.experience} yrs exp</span>
+                                  <span>{worker.experience} {t('home.yearsShort', 'yrs exp')}</span>
                                 </div>
                               </div>
                             </div>
@@ -893,7 +893,7 @@ export default function Home() {
                             <div className="flex items-center gap-1.5 mt-3 text-[11px] text-slate-500 dark:text-zinc-400">
                               <MapPin className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                               <span className="truncate">
-                                Areas: {worker.areas.join(', ') || 'All Muzaffarnagar'}
+                                {t('home.areas', 'Areas')}: {worker.areas.join(', ') || t('home.allMuzaffarnagar', 'All Muzaffarnagar')}
                               </span>
                             </div>
                           </div>
@@ -902,13 +902,13 @@ export default function Home() {
                           <div className="mt-4 pt-3.5 border-t border-slate-100 dark:border-zinc-800/80 flex items-center justify-between">
                             <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
                               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                              <span>{worker.available ? 'Available Now' : 'Accepting Calls'}</span>
+                              <span>{worker.available ? t('home.availableNow', 'Available Now') : t('home.acceptingCalls', 'Accepting Calls')}</span>
                             </span>
                             <Link
                               to={`/worker/${worker.id}`}
                               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-xs active:scale-95 transition-all"
                             >
-                              <span>View & Call</span>
+                              <span>{t('home.viewAndCall', 'View & Call')}</span>
                               <ArrowRight className="w-3.5 h-3.5" />
                             </Link>
                           </div>
@@ -923,18 +923,18 @@ export default function Home() {
                       <Search className="w-6 h-6" />
                     </div>
                     <h3 className="font-bold text-base text-slate-900 dark:text-white mb-1">
-                      No matching verified artisans found
+                      {t('home.noMatchingArtisans', 'No matching verified artisans found')}
                     </h3>
                     <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed max-w-md mx-auto mb-4">
                       {searchQuery
                         ? `We couldn't find an approved artisan matching "${searchQuery}" in Muzaffarnagar right now.`
-                        : 'No approved artisans match the selected category or area filters.'}
+                        : t('home.noApprovedMatch', 'No approved artisans match the selected category or area filters.')}
                     </p>
 
                     {/* Quick fallback category suggestions */}
                     <div className="mb-4">
                       <p className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 mb-2">
-                        Try one of our active categories:
+                        {t('home.tryCategories', 'Try one of our active categories:')}
                       </p>
                       <div className="flex flex-wrap justify-center gap-1.5">
                         {['plumber', 'electrician', 'parlour_service', 'ac_repair', 'carpenter'].map(catId => (
@@ -969,7 +969,7 @@ export default function Home() {
                         className="text-xs font-bold inline-flex items-center gap-1.5"
                       >
                         <Bot className="w-3.5 h-3.5" />
-                        <span>Ask AI Assistant</span>
+              <span>{t('home.askAiAssistant', 'Ask AI Assistant')}</span>
                       </Button>
                     </div>
                   </div>
@@ -1076,7 +1076,7 @@ export default function Home() {
                   {t('home.statDirect')}
                 </span>
                 <span className="text-[10px] text-slate-500 dark:text-zinc-400">
-                  Direct WhatsApp & Call
+                  {t('home.directWhatsapp', 'Direct WhatsApp & Call')}
                 </span>
               </motion.div>
 
@@ -1089,10 +1089,10 @@ export default function Home() {
                   <Users className="w-4 h-4" />
                 </div>
                 <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                  {allWorkers.length > 0 ? `${allWorkers.length}+ Verified Artisans` : t('home.statHyperlocal')}
+                  {allWorkers.length > 0 ? `${allWorkers.length}+ ${t('home.verifiedArtisans', 'Verified Artisans')}` : t('home.statHyperlocal')}
                 </span>
                 <span className="text-[10px] text-slate-500 dark:text-zinc-400">
-                  Dedicated to 251001 & 251002
+                  {t('home.dedicatedPincodes', 'Dedicated to 251001 & 251002')}
                 </span>
               </motion.div>
             </div>
@@ -1257,11 +1257,11 @@ export default function Home() {
                 <h2 className="text-base sm:text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
                   <span>{t('home.popularCategories', 'Popular Services')}</span>
                   <span className="text-[10px] bg-amber-500/15 text-amber-700 dark:text-amber-400 font-bold px-2 py-0.5 rounded-full border border-amber-500/30">
-                    Same-Day
+                    {t('home.sameDay', 'Same-Day')}
                   </span>
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-zinc-400 mt-0.5">
-                  Book verified local technicians with 0% commission
+                  {t('home.servicesSubtitle', 'Book verified local technicians with 0% commission')}
                 </p>
               </div>
 
@@ -1291,7 +1291,7 @@ export default function Home() {
                   {t('home.instaHelp', 'InstaHelp (30 Mins)')}
                 </h3>
                 <span className="mt-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/60 dark:border-emerald-500/25 px-2 py-0.5 rounded-full">
-                  ⚡ Fastest Arrival
+                  ⚡ {t('home.fastestArrival', 'Fastest Arrival')}
                 </span>
               </motion.div>
 
@@ -1310,7 +1310,7 @@ export default function Home() {
                   {t('categories.parlour_service', 'Parlour Service')}
                 </h3>
                 <span className="mt-1 text-[10px] font-semibold text-pink-700 dark:text-pink-300 bg-pink-50 dark:bg-pink-500/10 border border-pink-200/60 dark:border-pink-500/25 px-2 py-0.5 rounded-full">
-                  Personal Care
+                  {t('home.personalCare', 'Personal Care')}
                 </span>
               </motion.div>
 
@@ -1329,7 +1329,7 @@ export default function Home() {
                   {t('categories.carpenter', 'Carpenter & Woodwork')}
                 </h3>
                 <span className="mt-1 text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200/60 dark:border-amber-500/25 px-2 py-0.5 rounded-full">
-                  Furniture Fix
+                  {t('home.furnitureFix', 'Furniture Fix')}
                 </span>
               </motion.div>
 
@@ -1348,7 +1348,7 @@ export default function Home() {
                   {t('categories.part_time_maid', 'Part-time Home Maid')}
                 </h3>
                 <span className="mt-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/60 dark:border-emerald-500/25 px-2 py-0.5 rounded-full">
-                  Home Help
+                  {t('home.homeHelp', 'Home Help')}
                 </span>
               </motion.div>
 
@@ -1367,7 +1367,7 @@ export default function Home() {
                   {t('categories.ac_repair', 'AC Repair & Service')}
                 </h3>
                 <span className="mt-1 text-[10px] font-semibold text-cyan-700 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-200/60 dark:border-cyan-500/25 px-2 py-0.5 rounded-full">
-                  ⚡ 44 mins
+                  ⚡ {t('home.minutes', '44 mins')}
                 </span>
               </motion.div>
 
@@ -1389,7 +1389,7 @@ export default function Home() {
                   {t('home.allServicesGrid', 'All Services')}
                 </h3>
                 <span className="mt-1 text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200/60 dark:border-amber-500/25 px-2 py-0.5 rounded-full">
-                  Electrician, Plumber +
+                  {t('home.moreServices', 'Electrician, Plumber +')}
                 </span>
               </motion.div>
             </div>
@@ -1494,10 +1494,10 @@ export default function Home() {
                 </div>
                 <div>
                   <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                    {i18n.language === 'hi' ? 'मरम्मत समझ नहीं आ रही? AI से पूछें' : 'Not sure what repair you need?'}
+                    {t('home.aiUnsure', 'Not sure what repair you need?')}
                   </h4>
                   <p className="text-[11px] text-slate-600 dark:text-zinc-400">
-                    {i18n.language === 'hi' ? 'हमारा AI सहायक 10 सेकंड में सही मिस्त्री और रेट बताएगा' : 'Our AI Assistant diagnoses the issue & matches the right artisan in 10s.'}
+                    {t('home.aiDescription', 'Our AI Assistant diagnoses the issue and matches the right artisan in 10 seconds.')}
                   </p>
                 </div>
               </div>
@@ -1507,7 +1507,7 @@ export default function Home() {
                 onClick={() => aiAssistant.openAssistant('customer_booking')}
                 className="text-xs font-bold px-4 py-1.5 shrink-0 shadow-md shadow-amber-500/20 active:scale-95 cursor-pointer"
               >
-                <span>{i18n.language === 'hi' ? 'AI से पूछें →' : 'Ask AI →'}</span>
+                <span>{t('home.askAi', 'Ask AI →')}</span>
               </Button>
             </motion.div>
           )}
