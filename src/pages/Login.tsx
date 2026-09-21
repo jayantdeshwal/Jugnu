@@ -238,8 +238,11 @@ export default function Login() {
             // 30-minute authorization expired. The server verifies the OTP against the
             // *current* session and renews the admin_2fa_sessions row — the admin stays
             // signed in and no new session is created.
+            const { data: currentSession } = await supabase.auth.getSession()
             const alreadyAdminSession =
-              Boolean(user) && (user?.role === 'super_admin' || user?.role === 'sub_admin')
+              Boolean(currentSession.session) &&
+              Boolean(user) &&
+              (user?.role === 'super_admin' || user?.role === 'sub_admin')
 
             if (alreadyAdminSession) {
               const { data, error } = await supabase.functions.invoke('verify-admin-2fa', {

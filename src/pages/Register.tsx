@@ -35,6 +35,7 @@ export default function Register() {
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState(queryPhone)
   const [customerEmail, setCustomerEmail] = useState('')
+  const [customerTermsAccepted, setCustomerTermsAccepted] = useState(false)
   const [customerLoading, setCustomerLoading] = useState(false)
   const [customerError, setCustomerError] = useState('')
 
@@ -49,6 +50,11 @@ export default function Register() {
     e.preventDefault()
     setCustomerError('')
     setAlreadyRegisteredNotice(null)
+
+    if (!customerTermsAccepted) {
+      setCustomerError(t('registerPage.termsRequired', 'Please accept the Terms & Conditions before continuing.'))
+      return
+    }
 
     const cleanName = customerName.trim()
     if (!cleanName || cleanName.length < 2) {
@@ -157,7 +163,10 @@ export default function Register() {
               }`}
             >
               <User className="w-4 h-4" />
-              <span>{t('registerPage.tabCustomer', 'Customer Sign Up')}</span>
+              <span className="text-left leading-tight">
+                <span className="block">{t('registerPage.customerChoiceEn', 'Register as Customer')}</span>
+                <span className="block text-[11px] font-medium opacity-90">{t('registerPage.customerChoiceHi', 'ग्राहक के रूप में पंजीकरण करें')}</span>
+              </span>
             </button>
             <button
               type="button"
@@ -173,7 +182,10 @@ export default function Register() {
               }`}
             >
               <Truck className="w-4 h-4" />
-              <span>{t('registerPage.tabWorker', 'Artisan / Worker')}</span>
+              <span className="text-left leading-tight">
+                <span className="block">{t('registerPage.workerChoiceEn', 'Register as Worker')}</span>
+                <span className="block text-[11px] font-medium opacity-90">{t('registerPage.workerChoiceHi', 'कामगार के रूप में पंजीकरण करें')}</span>
+              </span>
             </button>
           </div>
 
@@ -259,6 +271,16 @@ export default function Register() {
                   placeholder="name@gmail.com"
                   leftIcon={<Mail className="w-4 h-4 text-slate-400 dark:text-zinc-500" />}
                 />
+
+                <label className="flex items-start gap-3 rounded-xl border border-slate-200 dark:border-zinc-700 p-3.5 text-sm text-slate-700 dark:text-zinc-200 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={customerTermsAccepted}
+                    onChange={e => setCustomerTermsAccepted(e.target.checked)}
+                    className="mt-0.5 h-5 w-5 accent-amber-500"
+                  />
+                  <span>{t('registerPage.termsAcceptance', 'I agree to the Terms & Conditions')}</span>
+                </label>
 
                 <Button
                   type="submit"

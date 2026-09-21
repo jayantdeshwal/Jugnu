@@ -861,9 +861,9 @@ export default function Profile() {
                 </div>
               )}
 
-              {/* Row: My Rating & Reviews */}
-              <div
-                onClick={() => navigate('/bookings')}
+              {/* Row: My Rating & Reviews (Worker only) */}
+              {isWorker && <div
+                onClick={() => navigate('/worker/reviews')}
                 className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800/70 cursor-pointer transition-colors group"
               >
                 <div className="flex items-center gap-3.5">
@@ -880,7 +880,7 @@ export default function Profile() {
                   )}
                   <ChevronRight className="w-4 h-4 text-slate-400 dark:text-zinc-500 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all" />
                 </div>
-              </div>
+              </div>}
 
               {/* Row: Manage Addresses & Localities */}
               <div

@@ -81,7 +81,7 @@ export default function CategoryPage() {
 
   // Handle service selection: navigates into the existing worker discovery flow
   const handleServiceSelect = (service: ServiceItem) => {
-    navigate(`/search?category=${encodeURIComponent(service.id)}`)
+    navigate(`/search?category=${encodeURIComponent(service.id)}&source=category`)
   }
 
   // Active Category details when in Level 2

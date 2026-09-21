@@ -151,7 +151,20 @@ export default function Notifications() {
         url: '/admin?tab=notifications',
       }
     }
-    if (item.notification_type === 'booking_created' || (item.booking_id && isWorker)) {
+    const quoteNotificationTypes = [
+      'quote_request_created',
+      'quote_request_cancelled',
+      'quote_request_rejected',
+      'quote_request_expired',
+      'quote_submitted',
+      'quote_accepted',
+    ]
+    if (quoteNotificationTypes.includes(item.notification_type)) {
+      return isWorker
+        ? { label: t('notifications.viewDashboard', 'Worker Dashboard'), url: '/worker/dashboard' }
+        : { label: t('notifications.viewBookings', 'View My Bookings'), url: '/bookings' }
+    }
+    if (item.notification_type === 'booking_created' && isWorker) {
       return {
         label: t('notifications.viewDashboard', 'Worker Dashboard'),
         url: '/worker/dashboard',
@@ -267,7 +280,11 @@ export default function Notifications() {
                 <Card
                   key={notification.id}
                   onClick={() => {
-                    if (isUnread) void markAsRead(notification.id)
+                    if (action) {
+                      handleActionClick(notification, action.url)
+                    } else if (isUnread) {
+                      void markAsRead(notification.id)
+                    }
                   }}
                   className={`p-4 transition-all duration-200 cursor-pointer ${
                     isUnread

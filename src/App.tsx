@@ -19,6 +19,7 @@ import Profile from './pages/Profile'
 import AdminDashboard from './pages/AdminDashboard'
 import Notifications from './pages/Notifications'
 import WorkerDashboard from './pages/WorkerDashboard'
+import WorkerReviews from './pages/WorkerReviews'
 import CategoryPage from './pages/CategoryPage'
 
 import { useState } from 'react'
@@ -54,6 +55,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
   }
+  return <>{children}</>
+}
+
+function WorkerRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading, isWorker } = useAuth()
+  if (isLoading) return null
+  if (!isAuthenticated) return <Navigate to="/login?role=worker" replace />
+  if (!isWorker) return <Navigate to="/profile" replace />
   return <>{children}</>
 }
 
@@ -117,6 +126,7 @@ function AppRoutes() {
         <Route path="notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
         <Route path="alerts" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
         <Route path="worker/dashboard" element={<ProtectedRoute><WorkerDashboard /></ProtectedRoute>} />
+        <Route path="worker/reviews" element={<WorkerRoute><WorkerReviews /></WorkerRoute>} />
         <Route path="admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

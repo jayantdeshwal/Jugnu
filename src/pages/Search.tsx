@@ -36,7 +36,7 @@ const iconComponents = {
 
 import { Zap, Wrench, Hammer, Snowflake, Brush } from 'lucide-react'
 
-function FilterPanel({ filtersOpen, setFiltersOpen, selectedCategory, setSelectedCategory, selectedArea, setSelectedArea, t, categories, serviceAreas, i18n }: any) {
+function FilterPanel({ filtersOpen, setFiltersOpen, selectedCategory, setSelectedCategory, selectedArea, setSelectedArea, t, categories, serviceAreas, i18n, serviceDiscovery }: any) {
   if (!filtersOpen) return null
 
   return (
@@ -48,7 +48,7 @@ function FilterPanel({ filtersOpen, setFiltersOpen, selectedCategory, setSelecte
       className="container-app pb-4 border-t border-semantic-border-light bg-semantic-bg-secondary"
     >
       <div className="max-w-7xl mx-auto space-y-4 pt-4">
-        <div>
+        {!serviceDiscovery && <div>
           <label className="label">{t('common.category')}</label>
           <div className="flex flex-wrap gap-2">
             <Chip selected={!selectedCategory} onClick={() => setSelectedCategory('')} variant="outline">
@@ -60,7 +60,7 @@ function FilterPanel({ filtersOpen, setFiltersOpen, selectedCategory, setSelecte
               </Chip>
             ))}
           </div>
-        </div>
+        </div>}
 
         <div>
           <label className="label">{t('common.area')}</label>
@@ -215,8 +215,9 @@ export default function Search() {
   const { categories, serviceAreas } = usePublicCatalog()
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
+  const serviceDiscovery = searchParams.get('source') === 'category'
   const [filtersOpen, setFiltersOpen] = useState(
-    Boolean(searchParams.get('filters') || searchParams.get('view') === 'services' || searchParams.get('category'))
+    Boolean(searchParams.get('filters') || searchParams.get('view') === 'services' || (searchParams.get('category') && !serviceDiscovery))
   )
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '')
   const [selectedArea, setSelectedArea] = useState(searchParams.get('area') || '')
@@ -238,7 +239,7 @@ export default function Search() {
     if (area !== null) {
       setSelectedArea(area)
     }
-    if (searchParams.get('view') === 'services' || searchParams.get('filters') || searchParams.get('category')) {
+    if (searchParams.get('view') === 'services' || searchParams.get('filters') || (searchParams.get('category') && !serviceDiscovery)) {
       setFiltersOpen(true)
     }
   }, [searchParams])
@@ -345,7 +346,7 @@ export default function Search() {
         </div>
 
         <AnimatePresence>
-          <FilterPanel filtersOpen={filtersOpen} setFiltersOpen={setFiltersOpen} selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} selectedArea={selectedArea} setSelectedArea={setSelectedArea} t={t} categories={categories} serviceAreas={serviceAreas} i18n={i18n} />
+          <FilterPanel filtersOpen={filtersOpen} setFiltersOpen={setFiltersOpen} selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} selectedArea={selectedArea} setSelectedArea={setSelectedArea} t={t} categories={categories} serviceAreas={serviceAreas} i18n={i18n} serviceDiscovery={serviceDiscovery} />
         </AnimatePresence>
       </motion.div>
 

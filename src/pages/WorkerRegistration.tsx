@@ -125,6 +125,7 @@ export default function WorkerRegistration() {
   const [loading, setLoading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [termsAccepted, setTermsAccepted] = useState(false)
 
   // Category & multi-service selection state (Strict max 2 services within 1 parent category)
   const initialParentCategory = formData.category
@@ -374,6 +375,7 @@ export default function WorkerRegistration() {
 
     if (currentStep === 2) {
       if (!formData.idProof) newErrors.idProof = 'Government ID proof document is required'
+      if (!termsAccepted) newErrors.terms = t('auth.workerRegistration.termsRequired', 'Please accept the Terms & Conditions before submitting.')
     }
 
     setErrors(newErrors)
@@ -1192,6 +1194,21 @@ export default function WorkerRegistration() {
                     <li>{t('auth.workerRegistration.nextStep4', '• 0% commission on bookings for the starting 3 months.')}</li>
                   </ul>
                 </div>
+              </div>
+            )}
+
+            {currentStepKey === 'documents' && (
+              <div className="mt-6">
+                <label className="flex items-start gap-3 rounded-xl border border-semantic-border-light p-3.5 text-sm text-semantic-text-secondary cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={e => setTermsAccepted(e.target.checked)}
+                    className="mt-0.5 h-5 w-5 accent-emerald-500"
+                  />
+                  <span>{t('auth.workerRegistration.termsAcceptance', 'I agree to the Terms & Conditions')}</span>
+                </label>
+                {errors.terms && <p className="mt-1 text-xs text-red-400">{errors.terms}</p>}
               </div>
             )}
 
