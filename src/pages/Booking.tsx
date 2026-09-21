@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { Button, Card, Modal, Avatar, Badge } from '@kaamgar/ui'
-import { CATEGORIES, getCategoryName } from '@kaamgar/shared'
+import { CATEGORIES, getCategoryName, getServiceById } from '@kaamgar/shared'
 import { ArrowLeft, Calendar, Clock, MapPin, Check, AlertCircle, Info } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
@@ -18,6 +18,7 @@ export default function Booking() {
   const navigate = useNavigate()
   const location = useLocation()
   const existingServiceRequestId = location.state?.serviceRequestId as string | undefined
+  const selectedServiceId = location.state?.serviceId as string | undefined
   const { user, isAuthenticated } = useAuth()
   const [worker, setWorker] = useState<any>(null)
   const [loadingWorker, setLoadingWorker] = useState(true)
@@ -116,6 +117,9 @@ export default function Booking() {
       if (!formData.address.trim()) newErrors.address = t('errors.required')
       if (!formData.pincode.trim()) newErrors.pincode = t('errors.required')
       else if (!/^\d{6}$/.test(formData.pincode)) newErrors.pincode = 'Enter valid 6-digit pincode'
+      else if (worker && worker.areas?.length > 0 && !worker.areas.includes(formData.pincode)) {
+        newErrors.pincode = t('booking.workerDoesNotCoverPincode', 'This worker does not serve the selected pincode.')
+      }
     }
     
     setErrors(newErrors)
@@ -147,8 +151,13 @@ export default function Booking() {
         throw new Error('Please select a valid date and time')
       }
 
+      if (worker.areas?.length > 0 && !worker.areas.includes(formData.pincode)) {
+        throw new Error(t('booking.workerDoesNotCoverPincode', 'This worker does not serve the selected pincode.'))
+      }
+
+      const canonicalServiceId = selectedServiceId && getServiceById(selectedServiceId)?.id
       const serviceRequestId = existingServiceRequestId || createdServiceRequestId || await createServiceRequest({
-        categoryId: worker.categories[0],
+        categoryId: canonicalServiceId || worker.categories[0],
         pincode: formData.pincode,
         scheduledFor: scheduledAt.toISOString(),
         address: formData.address,

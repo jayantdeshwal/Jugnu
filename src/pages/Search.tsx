@@ -118,7 +118,7 @@ function EmptyState({ t, clearFilters }: any) {
   )
 }
 
-function WorkerGrid({ filteredWorkers, t, iconComponents, CATEGORIES, getCategoryName, i18n, quoteServiceRequestId }: any) {
+function WorkerGrid({ filteredWorkers, t, iconComponents, CATEGORIES, getCategoryName, i18n, quoteServiceRequestId, selectedServiceId }: any) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ staggerChildren: 0.08 }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {filteredWorkers.map((worker: any, index: number) => {
@@ -130,7 +130,14 @@ function WorkerGrid({ filteredWorkers, t, iconComponents, CATEGORIES, getCategor
 
         return (
           <motion.div key={worker.id} style={{ transitionDelay: `${index * 80}ms` }}>
-            <Link to={`/worker/${worker.id}`} state={quoteServiceRequestId ? { serviceRequestId: quoteServiceRequestId } : undefined} className="card-interactive group">
+            <Link
+              to={`/worker/${worker.id}`}
+              state={{
+                ...(quoteServiceRequestId ? { serviceRequestId: quoteServiceRequestId } : {}),
+                ...(selectedServiceId ? { serviceId: selectedServiceId } : {}),
+              }}
+              className="card-interactive group"
+            >
               <div className="p-5">
                 <div className="flex items-start gap-4">
                   <Avatar name={worker.name} size="lg" src={worker.avatar} status={worker.available ? 'online' : 'busy'} />
@@ -199,6 +206,7 @@ function WorkerGrid({ filteredWorkers, t, iconComponents, CATEGORIES, getCategor
 }
 
 function SearchResults({ filteredWorkers, selectedCategory, isLoadingWorkers, t, getCategoryName, CATEGORIES, iconComponents, EmptyState, WorkerGrid, i18n, quoteServiceRequestId, serviceDiscovery }: any) {
+  const selectedServiceId = serviceDiscovery && getServiceById(selectedCategory)?.id
   return (
     <>
       <ResultsHeader filteredWorkers={filteredWorkers} selectedCategory={selectedCategory} t={t} getCategoryName={getCategoryName} CATEGORIES={CATEGORIES} i18n={i18n} serviceDiscovery={serviceDiscovery} />
@@ -210,7 +218,7 @@ function SearchResults({ filteredWorkers, selectedCategory, isLoadingWorkers, t,
       ) : filteredWorkers.length === 0 ? (
         <EmptyState t={t} clearFilters={() => {}} />
       ) : (
-        <WorkerGrid filteredWorkers={filteredWorkers} t={t} iconComponents={iconComponents} CATEGORIES={CATEGORIES} getCategoryName={getCategoryName} i18n={i18n} quoteServiceRequestId={quoteServiceRequestId} />
+        <WorkerGrid filteredWorkers={filteredWorkers} t={t} iconComponents={iconComponents} CATEGORIES={CATEGORIES} getCategoryName={getCategoryName} i18n={i18n} quoteServiceRequestId={quoteServiceRequestId} selectedServiceId={selectedServiceId} />
       )}
     </>
   )

@@ -334,6 +334,7 @@
     "problemImageHint": "साफ फोटो से कारीगर को जवाब देने से पहले समस्या समझने में मदद मिल सकती है।",
     "problemImagePreview": "चुनी गई समस्या की फोटो",
     "problemImageInvalid": "कृपया 8 MB से छोटी JPEG, PNG या WebP फोटो चुनें।",
+    "workerDoesNotCoverPincode": "यह कारीगर चुने गए पिनकोड में सेवा नहीं देता।",
     "takePhoto": "फोटो लें",
     "chooseImage": "फोटो चुनें",
     "estimatedPrice": "अनुमानित कीमत",

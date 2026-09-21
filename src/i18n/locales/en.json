@@ -334,6 +334,7 @@
     "problemImageHint": "A clear photo can help the worker understand the issue before responding.",
     "problemImagePreview": "Selected problem",
     "problemImageInvalid": "Please choose a JPEG, PNG, or WebP image under 8 MB.",
+    "workerDoesNotCoverPincode": "This worker does not serve the selected pincode.",
     "takePhoto": "Take Photo",
     "chooseImage": "Choose Image",
     "estimatedPrice": "Estimated Price",
