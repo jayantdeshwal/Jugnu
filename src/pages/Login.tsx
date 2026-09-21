@@ -234,35 +234,11 @@ export default function Login() {
           try {
             const supabase = getSupabaseClient()
 
-            // RE-AUTHORIZATION PATH: an admin Supabase session is already active but its
-            // 30-minute authorization expired. The server verifies the OTP against the
-            // *current* session and renews the admin_2fa_sessions row — the admin stays
-            // signed in and no new session is created.
-            const { data: currentSession } = await supabase.auth.getSession()
-            const alreadyAdminSession =
-              Boolean(currentSession.session) &&
-              Boolean(user) &&
-              (user?.role === 'super_admin' || user?.role === 'sub_admin')
-
-            if (alreadyAdminSession) {
-              const { data, error } = await supabase.functions.invoke('verify-admin-2fa', {
-                body: { accessToken },
-              })
-              if (error || !data?.success) {
-                let msg = data?.error
-                if (!msg && error) {
-                  try { msg = (await (error as any).context?.json())?.error } catch { /* ignore */ }
-                }
-                throw new Error(msg || 'Administrator re-verification failed. Please retry.')
-              }
-              setAdminLoading(false)
-              navigate('/admin')
-              return
-            }
-
-            // FRESH SIGN-IN PATH: no active admin session. The server verifies MSG91,
-            // resolves the existing admin account, issues a genuine Supabase Auth session,
-            // and writes the initial 30-minute authorization row.
+            // Use the fresh phone-auth path whenever the admin login form is shown.
+            // This is important after the 30-minute authorization expires: React or
+            // Supabase may still hold the previous admin identity/session, but the OTP
+            // must establish a new genuine Supabase session instead of relying on the
+            // previous JWT in verify-admin-2fa.
             const { data, error } = await supabase.functions.invoke('verify-admin-phone-auth', {
               body: { phone: cleanPhone, accessToken },
             })
