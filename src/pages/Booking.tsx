@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { Button, Card, Modal, Avatar, Badge } from '@kaamgar/ui'
@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext'
 import { fetchApprovedWorker } from '@/services/workers'
 import { getSupabaseClient } from '@/lib/supabase'
 import { createBookingQuoteRequest, createServiceRequest } from '@/services/quotes'
+import { attachProblemImage, removeProblemImage, uploadProblemImage, validateFile } from '@/services/storage'
 import { sanitizeErrorMessage } from '@/utils/errors'
 
 export default function Booking() {
@@ -36,6 +37,12 @@ export default function Booking() {
   const [responseHours, setResponseHours] = useState('24')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [bookingError, setBookingError] = useState('')
+  const [createdServiceRequestId, setCreatedServiceRequestId] = useState<string | null>(null)
+  const [problemImage, setProblemImage] = useState<File | null>(null)
+  const [problemImagePreview, setProblemImagePreview] = useState<string | null>(null)
+  const [problemImagePath, setProblemImagePath] = useState<string | null>(null)
+  const imagePickerRef = useRef<HTMLInputElement>(null)
+  const cameraPickerRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!workerId) {
@@ -70,6 +77,32 @@ export default function Booking() {
       })
     return () => { isMounted = false }
   }, [existingServiceRequestId])
+
+  useEffect(() => () => {
+    if (problemImagePreview) URL.revokeObjectURL(problemImagePreview)
+  }, [problemImagePreview])
+
+  const handleProblemImage = (file: File | undefined) => {
+    if (!file) return
+    const validation = validateFile(file, { maxSizeMb: 8, allowedTypes: ['image/jpeg', 'image/png', 'image/webp'] })
+    if (!validation.valid) {
+      setErrors(prev => ({ ...prev, image: validation.error || t('booking.problemImageInvalid', 'Please choose a valid image.') }))
+      return
+    }
+    if (problemImagePreview) URL.revokeObjectURL(problemImagePreview)
+    setProblemImage(file)
+    setProblemImagePreview(URL.createObjectURL(file))
+    setProblemImagePath(null)
+    setErrors(prev => ({ ...prev, image: '' }))
+  }
+
+  const clearProblemImage = () => {
+    if (problemImagePreview) URL.revokeObjectURL(problemImagePreview)
+    setProblemImage(null)
+    setProblemImagePreview(null)
+    setProblemImagePath(null)
+    setErrors(prev => ({ ...prev, image: '' }))
+  }
   
   const validateStep = () => {
     const newErrors: Record<string, string> = {}
@@ -114,13 +147,31 @@ export default function Booking() {
         throw new Error('Please select a valid date and time')
       }
 
-      const serviceRequestId = existingServiceRequestId || await createServiceRequest({
+      const serviceRequestId = existingServiceRequestId || createdServiceRequestId || await createServiceRequest({
         categoryId: worker.categories[0],
         pincode: formData.pincode,
         scheduledFor: scheduledAt.toISOString(),
         address: formData.address,
         notes: formData.notes,
       })
+      if (!existingServiceRequestId && !createdServiceRequestId) setCreatedServiceRequestId(serviceRequestId)
+
+      if (problemImage && !problemImagePath) {
+        const storagePath = await uploadProblemImage(problemImage, user.id, serviceRequestId)
+        try {
+          await attachProblemImage({
+            serviceRequestId,
+            customerId: user.id,
+            storagePath,
+            mimeType: problemImage.type,
+            fileSize: problemImage.size,
+          })
+        } catch (attachmentError) {
+          await removeProblemImage(storagePath)
+          throw attachmentError
+        }
+        setProblemImagePath(storagePath)
+      }
       const deadline = new Date(Date.now() + Number(responseHours) * 60 * 60 * 1000).toISOString()
       await createBookingQuoteRequest({
         serviceRequestId,
@@ -133,7 +184,8 @@ export default function Booking() {
     } catch (bookingError) {
       const message = sanitizeErrorMessage(bookingError, 'Unable to create booking. Please try again.')
       setBookingError(message)
-      setErrors({ form: message })
+      setShowConfirm(false)
+      setErrors(prev => ({ ...prev, form: message }))
     } finally {
       setIsSubmitting(false)
     }
@@ -305,6 +357,33 @@ export default function Booking() {
                     rows={3}
                     className="input bg-surface-200 border-semantic-border-light text-semantic-text-primary placeholder:text-semantic-text-tertiary"
                   />
+                </div>
+
+                <div className="mb-6 rounded-xl border border-semantic-border-light bg-surface-200/40 p-4">
+                  <p className="text-sm font-semibold text-semantic-text-primary">{t('booking.problemImageTitle', 'Add photo of the problem (optional)')}</p>
+                  <p className="mt-1 text-xs text-semantic-text-secondary">{t('booking.problemImageHint', 'A clear photo can help the worker understand the issue before responding.')}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <input ref={cameraPickerRef} type="file" accept="image/jpeg,image/png,image/webp" capture="environment" className="hidden" onChange={event => handleProblemImage(event.target.files?.[0])} />
+                    <input ref={imagePickerRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={event => handleProblemImage(event.target.files?.[0])} />
+                    <Button type="button" variant="outline" size="sm" onClick={() => cameraPickerRef.current?.click()}>
+                      {t('booking.takePhoto', 'Take Photo')}
+                    </Button>
+                    <Button type="button" variant="secondary" size="sm" onClick={() => imagePickerRef.current?.click()}>
+                      {t('booking.chooseImage', 'Choose Image')}
+                    </Button>
+                  </div>
+                  {problemImagePreview && (
+                    <div className="mt-4 flex items-start gap-3">
+                      <img src={problemImagePreview} alt={t('booking.problemImagePreview', 'Selected problem')} className="h-24 w-24 rounded-xl object-cover border border-semantic-border-light" />
+                      <div className="space-y-2">
+                        <p className="text-xs text-semantic-text-secondary break-all">{problemImage?.name}</p>
+                        <Button type="button" variant="ghost" size="sm" onClick={clearProblemImage}>
+                          {t('common.remove', 'Remove')}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  {errors.image && <p className="mt-2 text-xs text-red-400">{errors.image}</p>}
                 </div>
               </div>
               

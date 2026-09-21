@@ -1,5 +1,6 @@
 import type { JobId } from '@kaamgar/shared'
 import { getSupabaseClient } from '@/lib/supabase'
+import { getProblemImageSignedUrl } from '@/services/storage'
 
 export type QuoteRequestStatus = 'pending' | 'quoted' | 'rejected' | 'cancelled' | 'expired' | 'accepted'
 export type QuoteStatus = 'submitted' | 'accepted' | 'rejected' | 'cancelled'
@@ -13,6 +14,8 @@ export interface ServiceRequest {
   scheduled_for: string
   address: string
   notes: string | null
+  problem_image_path?: string | null
+  problem_image_url?: string | null
   status: 'open' | 'fulfilled' | 'cancelled' | 'closed'
   created_at: string
   updated_at: string
@@ -129,7 +132,19 @@ export async function fetchCustomerQuoteData(customerId: string): Promise<{ requ
   ])
   if (serviceRes.error) throw serviceRes.error
   if (quoteRes.error) throw quoteRes.error
-  const services = new Map((serviceRes.data ?? []).map((service: ServiceRequest) => [service.id, service]))
+  const attachmentRes = serviceIds.length
+    ? await supabase.from('service_request_attachments').select('service_request_id, storage_path').in('service_request_id', serviceIds)
+    : { data: [], error: null }
+  if (attachmentRes.error) throw attachmentRes.error
+  const attachmentUrls = await Promise.all((attachmentRes.data ?? []).map(async (attachment: any) => [
+    attachment.service_request_id,
+    await getProblemImageSignedUrl(attachment.storage_path),
+  ] as const))
+  const imageByServiceId = new Map(attachmentUrls)
+  const services = new Map((serviceRes.data ?? []).map((service: ServiceRequest) => [
+    service.id,
+    { ...service, problem_image_url: imageByServiceId.get(service.id) ?? null },
+  ]))
   const enrichedRequests = requestRows.map(request => ({ ...request, service_request: services.get(request.service_request_id) })) as BookingQuoteRequest[]
   const quoteRows = (quoteRes.data ?? []) as BookingQuote[]
   const requestMap = new Map(enrichedRequests.map(request => [request.id, request]))
@@ -150,5 +165,18 @@ export async function fetchWorkerQuoteData(workerId: string): Promise<{ requests
   if (serviceRes.error) throw serviceRes.error
   const quoteRes = requestRows.length ? await supabase.from('booking_quotes').select('*').in('quote_request_id', requestRows.map(request => request.id)) : { data: [], error: null }
   if (quoteRes.error) throw quoteRes.error
-  return { requests: requestRows, services: (serviceRes.data ?? []) as ServiceRequest[], quotes: (quoteRes.data ?? []) as BookingQuote[] }
+  const attachmentRes = ids.length
+    ? await supabase.from('service_request_attachments').select('service_request_id, storage_path').in('service_request_id', ids)
+    : { data: [], error: null }
+  if (attachmentRes.error) throw attachmentRes.error
+  const attachmentUrls = await Promise.all((attachmentRes.data ?? []).map(async (attachment: any) => [
+    attachment.service_request_id,
+    await getProblemImageSignedUrl(attachment.storage_path),
+  ] as const))
+  const imageByServiceId = new Map(attachmentUrls)
+  const services = (serviceRes.data ?? []).map((service: ServiceRequest) => ({
+    ...service,
+    problem_image_url: imageByServiceId.get(service.id) ?? null,
+  })) as ServiceRequest[]
+  return { requests: requestRows, services, quotes: (quoteRes.data ?? []) as BookingQuote[] }
 }

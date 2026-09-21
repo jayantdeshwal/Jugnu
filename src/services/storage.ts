@@ -6,6 +6,7 @@ export interface FileValidationOptions {
 }
 
 const DEFAULT_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+const PROBLEM_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const DEFAULT_DOCUMENT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
 
 /**
@@ -121,5 +122,56 @@ export async function getIdProofSignedUrl(
     return null
   }
 
+  return data.signedUrl
+}
+
+/** Uploads an optional customer problem image to the private request-images bucket. */
+export async function uploadProblemImage(file: File, userId: string, serviceRequestId: string): Promise<string> {
+  const validation = validateFile(file, { maxSizeMb: 8, allowedTypes: PROBLEM_IMAGE_TYPES })
+  if (!validation.valid) throw new Error(validation.error)
+  if (!userId || !serviceRequestId) throw new Error('A signed-in customer and service request are required')
+
+  const supabase = getSupabaseClient()
+  const extension = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg'
+  const filePath = `${userId}/${serviceRequestId}/problem-${crypto.randomUUID()}.${extension}`
+  const { error } = await supabase.storage
+    .from('service-request-images')
+    .upload(filePath, file, { cacheControl: '3600', upsert: false, contentType: file.type })
+
+  if (error) throw new Error(`Failed to upload problem image: ${error.message}`)
+  return filePath
+}
+
+export async function attachProblemImage(params: {
+  serviceRequestId: string
+  customerId: string
+  storagePath: string
+  mimeType: string
+  fileSize: number
+}): Promise<void> {
+  const { error } = await (getSupabaseClient().from('service_request_attachments') as any).insert({
+    service_request_id: params.serviceRequestId,
+    customer_id: params.customerId,
+    storage_path: params.storagePath,
+    mime_type: params.mimeType,
+    file_size: params.fileSize,
+  })
+  if (error) throw error
+}
+
+export async function removeProblemImage(storagePath: string): Promise<void> {
+  if (!storagePath) return
+  await getSupabaseClient().storage.from('service-request-images').remove([storagePath])
+}
+
+export async function getProblemImageSignedUrl(storagePath: string, expiresInSeconds = 3600): Promise<string | null> {
+  if (!storagePath) return null
+  const { data, error } = await getSupabaseClient().storage
+    .from('service-request-images')
+    .createSignedUrl(storagePath, expiresInSeconds)
+  if (error) {
+    console.warn('Error generating signed URL for problem image:', error.message)
+    return null
+  }
   return data.signedUrl
 }

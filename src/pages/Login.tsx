@@ -429,7 +429,7 @@ export default function Login() {
                         to={`/register?phone=${tryNormalizeIndianPhone(customerPhone) ?? customerPhone.replace(/\D/g, '').slice(0, 10)}&role=customer`}
                         className="font-semibold text-amber-500 hover:text-amber-400 underline inline-flex items-center gap-1"
                       >
-                        <span>Register now with this number</span>
+                        <span>{t('loginPage.registerNow', 'Register now with this number')}</span>
                         <ArrowRight className="w-3 h-3" />
                       </Link>
                     </div>
@@ -441,16 +441,16 @@ export default function Login() {
                 <ShieldCheck className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
                 <div className="text-xs text-slate-700 dark:text-zinc-300 leading-relaxed">
                   <strong className="text-slate-900 dark:text-white block font-semibold mb-0.5">
-                    Instant Passwordless Login
+                    {t('loginPage.passwordlessTitle', 'Instant Passwordless Login')}
                   </strong>
-                  Enter your mobile number to receive an instant verification OTP. No passwords required.
+                  {t('loginPage.passwordlessDesc', 'Enter your mobile number to receive an instant verification OTP. No passwords required.')}
                 </div>
               </div>
 
               <form onSubmit={handleCustomerOtpLogin} className="space-y-4">
                 <div>
                   <Input
-                    label={t('loginPage.identifierLabel', 'Mobile Number (10 digits) *')}
+                    label={t('loginPage.phoneLabel', 'Mobile Number (10 digits) *')}
                     value={customerPhone}
                     onChange={e => {
                       setCustomerPhone(sanitizePhoneInput(e.target.value))
@@ -462,7 +462,7 @@ export default function Login() {
                     autoFocus
                   />
                   <p className="mt-1 text-[11px] text-slate-500 dark:text-zinc-500">
-                    A 6-digit OTP will be verified to sign you in.
+                    {t('loginPage.otpHint', 'A 6-digit OTP will be verified to sign you in.')}
                   </p>
                 </div>
 
@@ -474,19 +474,15 @@ export default function Login() {
                   loading={customerLoading}
                 >
                   <ShieldCheck className="w-4 h-4 mr-2" />
-                  <span>Send OTP & Sign In</span>
+                  <span>{t('loginPage.customerOtpBtn', 'Send OTP & Sign In')}</span>
                 </Button>
               </form>
 
               <div className="mt-5 pt-4 border-t border-slate-200 dark:border-zinc-800 text-center text-xs text-slate-500 dark:text-zinc-400">
-                <span>New to Jugnu? </span>
-                <Link
-                  to="/register?role=customer"
-                  className="font-semibold text-amber-600 dark:text-amber-400 hover:underline inline-flex items-center gap-0.5"
-                >
-                  <span>Create Customer Account</span>
+                <Button type="button" variant="secondary" onClick={() => navigate('/register?role=customer')} className="w-full mt-3 text-xs sm:text-sm">
+                  <span>{t('loginPage.registerCustomerCta', 'New to Jugnu? Create Customer Account')}</span>
                   <ArrowRight className="w-3 h-3 inline" />
-                </Link>
+                </Button>
               </div>
             </div>
           )}
@@ -506,7 +502,7 @@ export default function Login() {
                         to={`/register/worker?phone=${tryNormalizeIndianPhone(workerPhone) ?? workerPhone.replace(/\D/g, '').slice(0, 10)}`}
                         className="font-semibold text-emerald-400 hover:text-emerald-300 underline inline-flex items-center gap-1"
                       >
-                        <span>Register as a worker now</span>
+                        <span>{t('loginPage.registerWorkerNow', 'Register as a worker now')}</span>
                         <ArrowRight className="w-3 h-3" />
                       </Link>
                     </div>
@@ -518,16 +514,16 @@ export default function Login() {
                 <Truck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                 <div className="text-xs text-slate-700 dark:text-zinc-300 leading-relaxed">
                   <strong className="text-slate-900 dark:text-white block font-semibold mb-0.5">
-                    Artisan & Worker Portal
+                    {t('loginPage.workerPortalTitle', 'Artisan & Worker Portal')}
                   </strong>
-                  Sign in with your verified mobile number to access your worker dashboard and manage customer bookings.
+                  {t('loginPage.workerPortalDesc', 'Sign in with your verified mobile number to access your worker dashboard and manage customer bookings.')}
                 </div>
               </div>
 
               <form onSubmit={handleWorkerOtpLogin} className="space-y-4">
                 <div>
                   <Input
-                    label={t('loginPage.workerIdentifierLabel', 'Worker Mobile Number (10 digits) *')}
+                    label={t('loginPage.phoneLabel', 'Mobile Number (10 digits) *')}
                     value={workerPhone}
                     onChange={e => {
                       setWorkerPhone(sanitizePhoneInput(e.target.value))
@@ -539,7 +535,7 @@ export default function Login() {
                     autoFocus
                   />
                   <p className="mt-1 text-[11px] text-slate-500 dark:text-zinc-500">
-                    A 6-digit OTP will be verified to sign in.
+                    {t('loginPage.otpHint', 'A 6-digit OTP will be verified to sign in.')}
                   </p>
                 </div>
 
@@ -551,19 +547,15 @@ export default function Login() {
                   loading={workerLoading}
                 >
                   <ShieldCheck className="w-4 h-4 mr-2" />
-                  <span>Send OTP & Sign In to Dashboard</span>
+                  <span>{t('loginPage.workerOtpBtn', 'Send OTP & Sign In to Dashboard')}</span>
                 </Button>
               </form>
 
               <div className="mt-5 pt-4 border-t border-slate-200 dark:border-zinc-800 text-center text-xs text-slate-500 dark:text-zinc-400">
-                <p className="mb-1 text-slate-500 dark:text-zinc-500">Not registered as a worker yet?</p>
-                <Link
-                  to="/register/worker"
-                  className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-1"
-                >
-                  <span>Register as Worker to get jobs</span>
+                <Button type="button" variant="secondary" onClick={() => navigate('/register/worker')} className="w-full mt-3 text-xs sm:text-sm border-emerald-500/30 text-emerald-700 dark:text-emerald-300">
+                  <span>{t('loginPage.registerWorkerCta', 'New to Jugnu? Create Worker Account')}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
+                </Button>
               </div>
             </div>
           )}
