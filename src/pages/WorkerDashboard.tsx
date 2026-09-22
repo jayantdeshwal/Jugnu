@@ -31,6 +31,7 @@ import {
   Edit,
   Zap,
   FileText,
+  ExternalLink,
 } from 'lucide-react'
 import { Badge, Button, Card, Skeleton, Avatar, Modal } from '@/ui'
 import { useAuth } from '@/context/AuthContext'
@@ -38,8 +39,9 @@ import { useAiAssistant } from '@/context/AiAssistantContext'
 import { getSupabaseClient } from '@/lib/supabase'
 import ContactModal from '@/components/ContactModal'
 import { formatPhoneDisplay, buildWorkerToCustomerWhatsAppMessage } from '@/utils/contact'
-import { BookingChangeRequest, createBookingChangeRequest, fetchBookingChangeRequests } from '@/services/changeRequests'
+import { BookingChangeRequest, BookingPaymentSummary, confirmCashReceivedByWorker, createBookingChangeRequest, fetchBookingChangeRequests, fetchBookingPaymentSummaries } from '@/services/changeRequests'
 import { BookingQuoteRequest, fetchWorkerQuoteData, respondToBookingQuoteRequest, ServiceRequest } from '@/services/quotes'
+import { buildGoogleMapsDirectionsUrl } from '@/utils/maps'
 
 interface WorkerProfileRow {
   bio: string
@@ -55,7 +57,7 @@ interface WorkerProfileRow {
 interface WorkerBookingRow {
   id: JobId
   category_id: string
-  status: 'pending' | 'accepted' | 'rejected' | 'in_progress' | 'completed' | 'cancelled' | 'disputed'
+  status: 'pending' | 'accepted' | 'rejected' | 'in_progress' | 'payment_pending' | 'completed' | 'cancelled' | 'disputed'
   scheduled_at: string
   address: string
   notes: string | null
@@ -67,6 +69,7 @@ interface WorkerBookingRow {
     avatar?: string | null
   }
   changeRequests?: BookingChangeRequest[]
+  paymentSummary?: BookingPaymentSummary
 }
 
 type TabFilter = 'all' | 'pending' | 'active' | 'completed'
@@ -98,6 +101,8 @@ export default function WorkerDashboard() {
   const [quoteDetails, setQuoteDetails] = useState('')
   const [quoteError, setQuoteError] = useState('')
   const [isSubmittingQuote, setIsSubmittingQuote] = useState(false)
+  const [paymentActionBookingId, setPaymentActionBookingId] = useState('')
+  const [paymentError, setPaymentError] = useState('')
 
   useEffect(() => {
     const target = window.location.hash.slice(1)
@@ -230,6 +235,13 @@ export default function WorkerDashboard() {
       if (bookingsRes.error) throw bookingsRes.error
       const rawBookings = (bookingsRes.data ?? []) as any[]
       const changeRequests = await fetchBookingChangeRequests(rawBookings.map(booking => booking.id as JobId))
+      let paymentSummaries: BookingPaymentSummary[] = []
+      try {
+        paymentSummaries = await fetchBookingPaymentSummaries(rawBookings.map(booking => booking.id as JobId))
+      } catch (summaryError) {
+        console.warn('Booking payment summary unavailable:', summaryError)
+      }
+      const summaryByBooking = new Map(paymentSummaries.map(summary => [summary.booking_id, summary]))
       const requestsByBooking = new Map<string, BookingChangeRequest[]>()
       changeRequests.forEach(request => {
         const existing = requestsByBooking.get(request.booking_id) ?? []
@@ -264,6 +276,7 @@ export default function WorkerDashboard() {
         ...b,
         customer: customerById.get(b.customer_id) || { name: t('bookings.customer', 'Customer') },
         changeRequests: requestsByBooking.get(b.id) ?? [],
+        paymentSummary: summaryByBooking.get(b.id),
       }))
 
       setBookings(completeBookings)
@@ -382,26 +395,12 @@ export default function WorkerDashboard() {
     setError('')
     try {
       const supabase = getSupabaseClient()
-      let workerId = user?.id
-      if (!workerId) {
-        const { data: authData } = await supabase.auth.getUser()
-        workerId = authData?.user?.id
-      }
-      if (!workerId) throw new Error(t('workerDashboard.signInRequired', 'Please sign in to access your worker workspace'))
-
       const { error: rpcError } = await (supabase as any).rpc('update_booking_status', {
         target_booking_id: bookingId,
-        new_status: status,
+        target_status: status,
       })
 
-      if (rpcError) {
-        const { error: updateError } = await (supabase.from('bookings') as any)
-          .update({ status, updated_at: new Date().toISOString() })
-          .eq('id', bookingId)
-          .eq('worker_id', workerId)
-
-        if (updateError) throw updateError
-      }
+      if (rpcError) throw new Error(rpcError.message)
 
       setBookings(current =>
         current.map(booking => (booking.id === bookingId ? { ...booking, status } : booking))
@@ -410,6 +409,19 @@ export default function WorkerDashboard() {
       setError(updateError instanceof Error ? updateError.message : t('workerDashboard.updateBookingError', 'Unable to update booking'))
     } finally {
       setUpdatingBookingId('')
+    }
+  }
+
+  const handleConfirmCashReceived = async (booking: WorkerBookingRow) => {
+    setPaymentActionBookingId(booking.id)
+    setPaymentError('')
+    try {
+      await confirmCashReceivedByWorker(booking.id)
+      await loadDashboardData()
+    } catch (error) {
+      setPaymentError(error instanceof Error ? error.message : t('bookings.paymentActionFailed', 'Unable to update the payment. Please try again.'))
+    } finally {
+      setPaymentActionBookingId('')
     }
   }
 
@@ -467,12 +479,12 @@ export default function WorkerDashboard() {
   const isOnline = Boolean(profile?.is_available)
   const isLeadsTab = searchParams.get('tab') === 'leads'
   const pendingCount = bookings.filter(b => b.status === 'pending').length
-  const activeCount = bookings.filter(b => b.status === 'accepted' || b.status === 'in_progress').length
+  const activeCount = bookings.filter(b => b.status === 'accepted' || b.status === 'in_progress' || b.status === 'payment_pending').length
   const completedCount = bookings.filter(b => b.status === 'completed').length
 
   const filteredBookings = bookings.filter(b => {
     if (activeTab === 'pending') return b.status === 'pending'
-    if (activeTab === 'active') return b.status === 'accepted' || b.status === 'in_progress'
+    if (activeTab === 'active') return b.status === 'accepted' || b.status === 'in_progress' || b.status === 'payment_pending'
     if (activeTab === 'completed') return b.status === 'completed'
     return true
   })
@@ -931,6 +943,8 @@ export default function WorkerDashboard() {
                     >
                       {booking.status === 'in_progress'
                         ? t('workerDashboard.inProgress', 'In Progress')
+                        : booking.status === 'payment_pending'
+                        ? t('bookings.paymentPending', 'Payment Pending')
                         : booking.status === 'accepted'
                         ? t('workerDashboard.accepted', 'Accepted')
                         : booking.status}
@@ -976,6 +990,81 @@ export default function WorkerDashboard() {
                       </a>
                     )}
                   </div>
+
+                  {buildGoogleMapsDirectionsUrl(booking.address) ? (
+                    <a
+                      href={buildGoogleMapsDirectionsUrl(booking.address) as string}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="w-full rounded-xl border border-blue-500/40 px-3 py-2 text-xs font-semibold text-blue-700 dark:text-blue-300 hover:bg-blue-500/10 transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>{t('bookings.openInGoogleMaps', 'Open in Google Maps')}</span>
+                    </a>
+                  ) : (
+                    <p className="text-xs text-semantic-text-tertiary">
+                      {t('bookings.customerLocationUnavailable', 'Customer location is not available for this booking.')}
+                    </p>
+                  )}
+
+                  {booking.paymentSummary?.has_initial_quote && (
+                    <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-xs">
+                      <p className="font-bold text-slate-900 dark:text-white">{t('bookings.paymentSummary', 'Payment Summary')}</p>
+                      <div className="mt-2 space-y-1 text-semantic-text-secondary">
+                        <div className="flex items-center justify-between gap-3">
+                          <span>{t('bookings.initialServiceCharge', 'Initial service charge')}</span>
+                          <span className="font-semibold text-slate-900 dark:text-zinc-200">₹{booking.paymentSummary.initial_quote_amount.toFixed(2)}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <span>{t('bookings.approvedAdditionalCharges', 'Approved additional charges')}</span>
+                          <span className="font-semibold text-slate-900 dark:text-zinc-200">₹{booking.paymentSummary.approved_additional_amount.toFixed(2)}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-3 border-t border-emerald-500/20 pt-2 font-bold text-slate-900 dark:text-white">
+                          <span>{booking.paymentSummary.is_final || booking.paymentSummary.is_frozen
+                            ? t('bookings.finalPayableAmount', 'Final payable amount')
+                            : t('bookings.currentPayableAmount', 'Current payable amount')}</span>
+                          <span>₹{booking.paymentSummary.final_payable_amount.toFixed(2)}</span>
+                        </div>
+                      </div>
+                      {booking.paymentSummary.pending_additional_count > 0 && (
+                        <p className="mt-2 text-amber-700 dark:text-amber-300">{t('bookings.pendingAdditionalCharges', 'Additional charges are awaiting approval.')}</p>
+                      )}
+                      {booking.status === 'payment_pending' && booking.paymentSummary.pending_additional_count === 0 && (
+                        <>
+                          <p className="mt-2 text-amber-700 dark:text-amber-300">{t('bookings.paymentPendingMsg', 'Service is finished. Payment is pending.')}</p>
+                          {booking.paymentSummary.payment_method === 'upi' && booking.paymentSummary.payment_status !== 'paid' && (
+                            <p className="mt-2 text-amber-700 dark:text-amber-300">{t('bookings.upiComingSoon', 'UPI payment integration is coming soon.')}</p>
+                          )}
+                          {booking.paymentSummary.payment_method === 'cash' && booking.paymentSummary.payment_status === 'pending' && (
+                            <div className="mt-3 rounded-lg border border-amber-500/25 bg-amber-500/5 p-2.5">
+                              <p className="text-amber-700 dark:text-amber-300">{t('bookings.customerCashConfirmed', 'Customer says the cash was paid.')}</p>
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                className="mt-2"
+                                loading={paymentActionBookingId === booking.id}
+                                disabled={Boolean(paymentActionBookingId)}
+                                onClick={() => void handleConfirmCashReceived(booking)}
+                              >
+                                {t('bookings.confirmCashReceived', 'Confirm Cash Received')}
+                              </Button>
+                            </div>
+                          )}
+                          {paymentError && paymentActionBookingId === '' && (
+                            <p className="mt-2 text-rose-600 dark:text-rose-400">{paymentError}</p>
+                          )}
+                        </>
+                      )}
+                      {booking.paymentSummary.is_frozen && (
+                        <p className="mt-1 font-semibold text-slate-600 dark:text-zinc-300">
+                          {t('bookings.paymentStatus', 'Payment status')}: {t(`bookings.paymentStatuses.${booking.paymentSummary.payment_status ?? 'unpaid'}`, 'Unpaid')}
+                        </p>
+                      )}
+                      {!booking.paymentSummary.is_final && booking.paymentSummary.pending_additional_count === 0 && booking.status !== 'completed' && booking.status !== 'payment_pending' && (
+                        <p className="mt-2 text-semantic-text-tertiary">{t('bookings.finalAmountAfterCompletion', 'The final amount will be shown after the service is completed.')}</p>
+                      )}
+                    </div>
+                  )}
 
                   {booking.changeRequests?.map(request => (
                     <div key={request.id} className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-3 text-xs">
@@ -1045,17 +1134,17 @@ export default function WorkerDashboard() {
                     </div>
                   )}
 
-                  {booking.status === 'in_progress' && (
+                  {booking.status === 'in_progress' && !(booking.changeRequests ?? []).some(request => request.status === 'pending') && (
                     <div className="pt-1 border-t border-semantic-border-light/40">
                       <Button
                         variant="primary"
                         size="sm"
-                        onClick={() => handleUpdateStatus(booking.id, 'completed')}
+                        onClick={() => handleUpdateStatus(booking.id, 'payment_pending')}
                         disabled={isUpdating}
                         className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-1.5 shadow-sm flex items-center justify-center gap-1.5"
                       >
                         <Check className="w-3.5 h-3.5" />
-                        <span>{t('workerDashboard.markCompleted', 'Mark Completed')}</span>
+                        <span>{t('workerDashboard.serviceFinishedAwaitingPayment', 'Service Completed — Awaiting Payment')}</span>
                       </Button>
                     </div>
                   )}

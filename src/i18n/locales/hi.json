@@ -335,6 +335,7 @@
     "problemImagePreview": "चुनी गई समस्या की फोटो",
     "problemImageInvalid": "कृपया 8 MB से छोटी JPEG, PNG या WebP फोटो चुनें।",
     "workerDoesNotCoverPincode": "यह कारीगर चुने गए पिनकोड में सेवा नहीं देता।",
+    "activeServiceRequestExists": "इस सेवा के लिए आपका एक सक्रिय अनुरोध पहले से है। नया अनुरोध बनाने से पहले उसे पूरा या रद्द करें।",
     "takePhoto": "फोटो लें",
     "chooseImage": "फोटो चुनें",
     "estimatedPrice": "अनुमानित कीमत",
@@ -489,6 +490,7 @@
     "acceptedMsg": "कारीगर ने आपका बुकिंग अनुरोध स्वीकार कर लिया है।",
     "inProgressMsg": "कारीगर ने काम शुरू कर दिया है। सेवा अभी चल रही है।",
     "completedMsg": "सेवा सफलतापूर्वक पूरी हो गई है।",
+    "paymentPendingMsg": "सेवा पूरी हो गई है। भुगतान बाकी है।",
     "rejectedMsg": "कारीगर ने यह बुकिंग अनुरोध अस्वीकार कर दिया था।",
     "waitingForWorker": "कारीगर के जवाब की प्रतीक्षा है...",
     "reasonChangePlans": "योजना में बदलाव",
@@ -511,6 +513,39 @@
     "chatWorker": "व्हाट्सएप करें",
     "instructions": "विशेष निर्देश",
     "serviceLocation": "सेवा का पता"
+    ,"paymentSummary": "भुगतान का सारांश"
+    ,"initialServiceCharge": "शुरुआती सेवा शुल्क"
+    ,"approvedAdditionalCharges": "मंजूर अतिरिक्त शुल्क"
+    ,"finalPayableAmount": "अंतिम देय राशि"
+    ,"currentPayableAmount": "वर्तमान देय राशि"
+    ,"pendingAdditionalCharges": "कुछ अतिरिक्त शुल्क की मंजूरी बाकी है।"
+    ,"finalAmountAfterCompletion": "सेवा पूरी होने के बाद अंतिम राशि दिखाई जाएगी।"
+    ,"paymentPending": "भुगतान बाकी है"
+    ,"paymentStatus": "भुगतान की स्थिति"
+    ,"paymentStatuses": {
+      "unpaid": "भुगतान बाकी है",
+      "pending": "पुष्टि बाकी है",
+      "paid": "भुगतान हो गया",
+      "failed": "भुगतान असफल रहा",
+      "cancelled": "भुगतान रद्द है"
+    }
+    ,"paymentRequired": "भुगतान करना है"
+    ,"amountToPay": "देय राशि"
+    ,"choosePaymentMethod": "भुगतान का तरीका चुनें"
+    ,"paymentMethodUpi": "UPI"
+    ,"paymentMethodCash": "कैश"
+    ,"upiComingSoon": "UPI भुगतान की सुविधा जल्द उपलब्ध होगी।"
+    ,"cashPaymentTitle": "कैश भुगतान"
+    ,"cashPaymentInstructions": "यह राशि सीधे कारीगर को दें।"
+    ,"iHavePaidCash": "मैंने कैश दे दिया है"
+    ,"waitingForWorkerConfirmation": "कारीगर की पुष्टि का इंतजार है"
+    ,"workerConfirmationRequired": "कारीगर को कैश मिलने की पुष्टि करनी होगी।"
+    ,"customerCashConfirmed": "ग्राहक ने कैश देने की पुष्टि की है।"
+    ,"confirmCashReceived": "कैश मिलने की पुष्टि करें"
+    ,"cashPaymentCompleted": "कैश भुगतान की पुष्टि हो गई। बुकिंग पूरी हो गई।"
+    ,"paymentActionFailed": "भुगतान अपडेट नहीं हो सका। कृपया फिर कोशिश करें।"
+    ,"openInGoogleMaps": "Google Maps में खोलें"
+    ,"customerLocationUnavailable": "इस बुकिंग के लिए ग्राहक का पता उपलब्ध नहीं है।"
   },
   "workerDashboard": {
     "title": "कारीगर डैशबोर्ड",
@@ -624,6 +659,7 @@
     "decline": "मना करें",
     "startService": "सेवा शुरू करें",
     "markCompleted": "काम पूरा बताएं",
+    "serviceFinishedAwaitingPayment": "सेवा पूरी हुई — भुगतान बाकी है",
     "job": "काम",
     "customerApprovalRequired": "ग्राहक की मंजूरी जरूरी है।",
     "additionalAmount": "अतिरिक्त राशि",
@@ -672,6 +708,9 @@
     "profileAdminDesc": "व्यवस्थापक खाते बुकिंग नहीं करते हैं। कारीगर पंजीकरण की समीक्षा करने, पहचान दस्तावेजों को सत्यापित करने और प्लेटफॉर्म संचालन का प्रबंधन करने के लिए व्यवस्थापक पोर्टल का उपयोग करें।",
     "reviewPendingWorkers": "कारीगर पंजीकरण की समीक्षा करें",
     "viewAlerts": "सत्यापन और पहचान पत्र अलर्ट"
+    ,"bookingStatus": {
+      "paymentPending": "भुगतान बाकी है"
+    }
   },
   "notifications": {
     "title": "सूचनाएं",

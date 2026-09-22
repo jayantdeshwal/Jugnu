@@ -30,7 +30,7 @@ import { getSupabaseClient } from '@/lib/supabase'
 import ContactModal from '@/components/ContactModal'
 import { buildCustomerToWorkerWhatsAppMessage } from '@/utils/contact'
 import { fetchCustomerReviewedBookingIds, submitBookingReview } from '@/services/reviews'
-import { BookingChangeRequest, decideBookingChangeRequest, fetchBookingChangeRequests } from '@/services/changeRequests'
+import { BookingChangeRequest, BookingPaymentSummary, PaymentMethod, confirmCashPaymentByCustomer, decideBookingChangeRequest, fetchBookingChangeRequests, fetchBookingPaymentSummaries, selectBookingPaymentMethod } from '@/services/changeRequests'
 import { acceptBookingQuote, BookingQuote, BookingQuoteRequest, cancelBookingQuoteRequest, fetchCustomerQuoteData } from '@/services/quotes'
 
 interface BookingRow {
@@ -44,6 +44,7 @@ interface BookingRow {
   worker?: { name: string; avatar: string | null; phone?: string | null }
   hasReview?: boolean
   changeRequests?: BookingChangeRequest[]
+  paymentSummary?: BookingPaymentSummary
 }
 
 interface WorkerDirectoryRow {
@@ -73,6 +74,11 @@ const statusConfig = {
     label: 'Completed',
     icon: CheckCircle2,
     badgeClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',
+  },
+  payment_pending: {
+    label: 'Payment Pending',
+    icon: Clock,
+    badgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20',
   },
   rejected: {
     label: 'Declined',
@@ -117,6 +123,8 @@ export default function Bookings() {
   const [isCancelling, setIsCancelling] = useState(false)
   const [cancelError, setCancelError] = useState('')
   const [actionSuccess, setActionSuccess] = useState('')
+  const [paymentActionBookingId, setPaymentActionBookingId] = useState('')
+  const [paymentError, setPaymentError] = useState('')
   const [decidingRequestId, setDecidingRequestId] = useState('')
   const [changeRequestError, setChangeRequestError] = useState('')
   const [quoteRequests, setQuoteRequests] = useState<BookingQuoteRequest[]>([])
@@ -239,6 +247,13 @@ export default function Bookings() {
 
       const reviewedIds = await fetchCustomerReviewedBookingIds(customerId)
       const changeRequests = await fetchBookingChangeRequests(bookings.map(booking => booking.id))
+      let paymentSummaries: BookingPaymentSummary[] = []
+      try {
+        paymentSummaries = await fetchBookingPaymentSummaries(bookings.map(booking => booking.id))
+      } catch (summaryError) {
+        console.warn('Booking payment summary unavailable:', summaryError)
+      }
+      const summaryByBooking = new Map(paymentSummaries.map(summary => [summary.booking_id, summary]))
       const requestsByBooking = new Map<string, BookingChangeRequest[]>()
       changeRequests.forEach(request => {
         const existing = requestsByBooking.get(request.booking_id) ?? []
@@ -252,6 +267,7 @@ export default function Bookings() {
           worker: workerById.get(booking.worker_id),
           hasReview: reviewedIds.has(booking.id),
           changeRequests: requestsByBooking.get(booking.id) ?? [],
+          paymentSummary: summaryByBooking.get(booking.id),
         }))
       )
 
@@ -290,6 +306,33 @@ export default function Bookings() {
       setChangeRequestError(error instanceof Error ? error.message : 'Unable to update the additional-charge request')
     } finally {
       setDecidingRequestId('')
+    }
+  }
+
+  const handlePaymentMethod = async (booking: BookingRow, method: PaymentMethod) => {
+    setPaymentActionBookingId(booking.id)
+    setPaymentError('')
+    try {
+      await selectBookingPaymentMethod(booking.id, method)
+      await loadBookings()
+    } catch (error) {
+      setPaymentError(error instanceof Error ? error.message : t('bookings.paymentActionFailed', 'Unable to update the payment. Please try again.'))
+    } finally {
+      setPaymentActionBookingId('')
+    }
+  }
+
+  const handleCashConfirmation = async (booking: BookingRow) => {
+    setPaymentActionBookingId(booking.id)
+    setPaymentError('')
+    try {
+      await confirmCashPaymentByCustomer(booking.id)
+      setActionSuccess(t('bookings.waitingForWorkerConfirmation', 'Waiting for worker confirmation'))
+      await loadBookings()
+    } catch (error) {
+      setPaymentError(error instanceof Error ? error.message : t('bookings.paymentActionFailed', 'Unable to update the payment. Please try again.'))
+    } finally {
+      setPaymentActionBookingId('')
     }
   }
 
@@ -349,7 +392,7 @@ export default function Bookings() {
     }
   }, [user?.id, loadBookings])
 
-  const upcomingBookings = allBookings.filter(b => ['pending', 'accepted', 'in_progress'].includes(b.status))
+  const upcomingBookings = allBookings.filter(b => ['pending', 'accepted', 'in_progress', 'payment_pending'].includes(b.status))
   const pastBookings = allBookings.filter(b => ['completed', 'rejected', 'cancelled', 'disputed'].includes(b.status))
 
   const formatDate = (dateStr: string) => {
@@ -534,6 +577,11 @@ export default function Bookings() {
                 {t('bookings.completedMsg', 'Service completed successfully.')}
               </p>
             )}
+            {booking.status === 'payment_pending' && (
+              <p className="mt-2 text-xs font-semibold text-amber-600 dark:text-amber-400">
+                {t('bookings.paymentPendingMsg', 'Service is finished. Payment is pending.')}
+              </p>
+            )}
             {booking.status === 'rejected' && (
               <p className="mt-2 text-xs font-semibold text-rose-600 dark:text-rose-400">
                 {t('bookings.rejectedMsg', 'This booking request was declined by the artisan.')}
@@ -612,6 +660,98 @@ export default function Bookings() {
         ))}
         {changeRequestError && (
           <p className="mt-2 text-xs font-semibold text-rose-600 dark:text-rose-400">{changeRequestError}</p>
+        )}
+
+        {booking.paymentSummary?.has_initial_quote && (
+          <div className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3.5">
+            <p className="text-sm font-bold text-slate-900 dark:text-white">{t('bookings.paymentSummary', 'Payment Summary')}</p>
+            <div className="mt-2 space-y-1 text-sm text-slate-600 dark:text-zinc-400">
+              <div className="flex items-center justify-between gap-3">
+                <span>{t('bookings.initialServiceCharge', 'Initial service charge')}</span>
+                <span className="font-semibold text-slate-900 dark:text-zinc-200">₹{booking.paymentSummary.initial_quote_amount.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span>{t('bookings.approvedAdditionalCharges', 'Approved additional charges')}</span>
+                <span className="font-semibold text-slate-900 dark:text-zinc-200">₹{booking.paymentSummary.approved_additional_amount.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3 border-t border-emerald-500/20 pt-2 font-bold text-slate-900 dark:text-white">
+                <span>{booking.paymentSummary.is_final || booking.paymentSummary.is_frozen
+                  ? t('bookings.finalPayableAmount', 'Final payable amount')
+                  : t('bookings.currentPayableAmount', 'Current payable amount')}</span>
+                <span>₹{booking.paymentSummary.final_payable_amount.toFixed(2)}</span>
+              </div>
+            </div>
+            {booking.paymentSummary.pending_additional_count > 0 && (
+              <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">{t('bookings.pendingAdditionalCharges', 'Additional charges are awaiting approval.')}</p>
+            )}
+            {booking.status === 'payment_pending' && booking.paymentSummary.pending_additional_count === 0 && (
+              <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">{t('bookings.paymentPendingMsg', 'Service is finished. Payment is pending.')}</p>
+            )}
+            {booking.paymentSummary.is_frozen && (
+              <p className="mt-1 text-xs font-semibold text-slate-600 dark:text-zinc-300">
+                {t('bookings.paymentStatus', 'Payment status')}: {t(`bookings.paymentStatuses.${booking.paymentSummary.payment_status ?? 'unpaid'}`, 'Unpaid')}
+              </p>
+            )}
+            {!booking.paymentSummary.is_final && booking.paymentSummary.pending_additional_count === 0 && booking.status !== 'completed' && booking.status !== 'payment_pending' && (
+              <p className="mt-2 text-xs text-slate-500 dark:text-zinc-400">{t('bookings.finalAmountAfterCompletion', 'The final amount will be shown after the service is completed.')}</p>
+            )}
+            {booking.status === 'payment_pending' && booking.paymentSummary.is_frozen && booking.paymentSummary.payment_status !== 'paid' && (
+              <div className="mt-4 rounded-xl border border-amber-500/25 bg-amber-500/5 p-3">
+                <p className="text-sm font-bold text-slate-900 dark:text-white">{t('bookings.paymentRequired', 'Payment Required')}</p>
+                <p className="mt-1 text-xs text-slate-600 dark:text-zinc-400">{t('bookings.amountToPay', 'Amount to Pay')}: ₹{booking.paymentSummary.final_payable_amount.toFixed(2)}</p>
+                {!booking.paymentSummary.payment_method && (
+                  <>
+                    <p className="mt-3 text-xs font-semibold text-slate-700 dark:text-zinc-300">{t('bookings.choosePaymentMethod', 'Choose Payment Method')}</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={Boolean(paymentActionBookingId)}
+                        onClick={() => void handlePaymentMethod(booking, 'upi')}
+                      >
+                        {t('bookings.paymentMethodUpi', 'UPI')}
+                      </Button>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        disabled={Boolean(paymentActionBookingId)}
+                        onClick={() => void handlePaymentMethod(booking, 'cash')}
+                      >
+                        {t('bookings.paymentMethodCash', 'Cash')}
+                      </Button>
+                    </div>
+                  </>
+                )}
+                {booking.paymentSummary.payment_method === 'upi' && (
+                  <p className="mt-3 text-xs font-semibold text-amber-700 dark:text-amber-300">{t('bookings.upiComingSoon', 'UPI payment integration is coming soon.')}</p>
+                )}
+                {booking.paymentSummary.payment_method === 'cash' && booking.paymentSummary.payment_status === 'unpaid' && (
+                  <>
+                    <p className="mt-3 text-xs text-slate-600 dark:text-zinc-400">{t('bookings.cashPaymentInstructions', 'Pay this amount directly to the worker.')}</p>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      className="mt-3"
+                      loading={paymentActionBookingId === booking.id}
+                      disabled={Boolean(paymentActionBookingId)}
+                      onClick={() => void handleCashConfirmation(booking)}
+                    >
+                      {t('bookings.iHavePaidCash', 'I Have Paid Cash')}
+                    </Button>
+                  </>
+                )}
+                {booking.paymentSummary.payment_method === 'cash' && booking.paymentSummary.payment_status === 'pending' && (
+                  <div className="mt-3">
+                    <p className="text-xs font-semibold text-amber-700 dark:text-amber-300">{t('bookings.waitingForWorkerConfirmation', 'Waiting for worker confirmation')}</p>
+                    <p className="mt-1 text-xs text-slate-600 dark:text-zinc-400">{t('bookings.workerConfirmationRequired', 'The worker needs to confirm that the cash was received.')}</p>
+                  </div>
+                )}
+              </div>
+            )}
+            {paymentError && paymentActionBookingId === '' && booking.status === 'payment_pending' && (
+              <p className="mt-2 text-xs font-semibold text-rose-600 dark:text-rose-400">{paymentError}</p>
+            )}
+          </div>
         )}
 
         {/* Actions Row */}

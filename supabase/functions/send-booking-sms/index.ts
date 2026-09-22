@@ -174,6 +174,15 @@ serve(async (req: Request) => {
       }
     }
 
+    // A completion SMS is only valid after the authoritative booking state
+    // has reached completed. Other SMS event behavior remains unchanged.
+    if (event === 'booking_completed' && booking.status !== 'completed') {
+      return new Response(JSON.stringify({ error: 'Booking is not completed' }), {
+        status: 409,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     // 5. Authoritatively determine recipient and lookup profiles from database
     // For booking_created: recipient is assigned worker
     // For booking_accepted / completed: recipient is customer

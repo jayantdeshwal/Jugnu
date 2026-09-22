@@ -335,6 +335,7 @@
     "problemImagePreview": "Selected problem",
     "problemImageInvalid": "Please choose a JPEG, PNG, or WebP image under 8 MB.",
     "workerDoesNotCoverPincode": "This worker does not serve the selected pincode.",
+    "activeServiceRequestExists": "You already have an active request for this service. Please complete or cancel it before creating another one.",
     "takePhoto": "Take Photo",
     "chooseImage": "Choose Image",
     "estimatedPrice": "Estimated Price",
@@ -489,6 +490,7 @@
     "acceptedMsg": "Your booking request was accepted by the worker.",
     "inProgressMsg": "Worker has started the service. Job is currently in progress.",
     "completedMsg": "Service has been completed successfully.",
+    "paymentPendingMsg": "Service is finished. Payment is pending.",
     "rejectedMsg": "This booking request was declined by the worker.",
     "waitingForWorker": "Waiting for worker response...",
     "reasonChangePlans": "Change of plans",
@@ -511,6 +513,39 @@
     "chatWorker": "WhatsApp",
     "instructions": "Special Instructions",
     "serviceLocation": "Service Location"
+    ,"paymentSummary": "Payment Summary"
+    ,"initialServiceCharge": "Initial service charge"
+    ,"approvedAdditionalCharges": "Approved additional charges"
+    ,"finalPayableAmount": "Final payable amount"
+    ,"currentPayableAmount": "Current payable amount"
+    ,"pendingAdditionalCharges": "Additional charges are awaiting approval."
+    ,"finalAmountAfterCompletion": "The final amount will be shown after the service is completed."
+    ,"paymentPending": "Payment Pending"
+    ,"paymentStatus": "Payment status"
+    ,"paymentStatuses": {
+      "unpaid": "Unpaid",
+      "pending": "Confirmation pending",
+      "paid": "Paid",
+      "failed": "Payment failed",
+      "cancelled": "Payment cancelled"
+    }
+    ,"paymentRequired": "Payment Required"
+    ,"amountToPay": "Amount to Pay"
+    ,"choosePaymentMethod": "Choose Payment Method"
+    ,"paymentMethodUpi": "UPI"
+    ,"paymentMethodCash": "Cash"
+    ,"upiComingSoon": "UPI payment integration is coming soon."
+    ,"cashPaymentTitle": "Cash Payment"
+    ,"cashPaymentInstructions": "Pay this amount directly to the worker."
+    ,"iHavePaidCash": "I Have Paid Cash"
+    ,"waitingForWorkerConfirmation": "Waiting for worker confirmation"
+    ,"workerConfirmationRequired": "The worker needs to confirm that the cash was received."
+    ,"customerCashConfirmed": "Customer says the cash was paid."
+    ,"confirmCashReceived": "Confirm Cash Received"
+    ,"cashPaymentCompleted": "Cash payment confirmed. Booking completed."
+    ,"paymentActionFailed": "Unable to update the payment. Please try again."
+    ,"openInGoogleMaps": "Open in Google Maps"
+    ,"customerLocationUnavailable": "Customer location is not available for this booking."
   },
   "workerDashboard": {
     "title": "Worker Dashboard",
@@ -624,6 +659,7 @@
     "decline": "Decline",
     "startService": "Start Service",
     "markCompleted": "Mark Completed",
+    "serviceFinishedAwaitingPayment": "Service Completed — Awaiting Payment",
     "job": "Job",
     "customerApprovalRequired": "customer approval is required.",
     "additionalAmount": "Additional amount",
@@ -672,6 +708,9 @@
     "profileAdminDesc": "Administrator accounts do not place or receive bookings. Use the administrative portal to review worker registrations, verify ID documents, and manage platform operations.",
     "reviewPendingWorkers": "Review Worker Registrations",
     "viewAlerts": "Verification & ID Alerts"
+    ,"bookingStatus": {
+      "paymentPending": "Payment Pending"
+    }
   },
   "notifications": {
     "title": "Notifications",

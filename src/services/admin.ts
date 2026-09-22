@@ -215,7 +215,7 @@ export async function fetchAdminCustomers(): Promise<AdminCustomerRow[]> {
       totalBookingsByCustomer.set(b.customer_id, (totalBookingsByCustomer.get(b.customer_id) || 0) + 1)
       if (b.status === 'completed') {
         completedByCustomer.set(b.customer_id, (completedByCustomer.get(b.customer_id) || 0) + 1)
-      } else if (['pending', 'accepted', 'in_progress'].includes(b.status)) {
+      } else if (['pending', 'accepted', 'in_progress', 'payment_pending', 'disputed'].includes(b.status)) {
         activeByCustomer.set(b.customer_id, (activeByCustomer.get(b.customer_id) || 0) + 1)
       }
     }

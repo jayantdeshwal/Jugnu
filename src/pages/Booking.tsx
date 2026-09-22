@@ -191,7 +191,12 @@ export default function Booking() {
       setQuoteRequested(true)
       setShowConfirm(false)
     } catch (bookingError) {
-      const message = sanitizeErrorMessage(bookingError, 'Unable to create booking. Please try again.')
+      const rawMessage = bookingError && typeof bookingError === 'object' && 'message' in bookingError
+        ? String((bookingError as { message?: unknown }).message || '')
+        : ''
+      const message = rawMessage.includes('ACTIVE_SERVICE_REQUEST_EXISTS')
+        ? t('booking.activeServiceRequestExists', 'You already have an active request for this service. Please complete or cancel it before creating another one.')
+        : sanitizeErrorMessage(bookingError, 'Unable to create booking. Please try again.')
       setBookingError(message)
       setShowConfirm(false)
       setErrors(prev => ({ ...prev, form: message }))

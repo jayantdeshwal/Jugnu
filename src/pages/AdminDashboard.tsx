@@ -75,9 +75,12 @@ interface AdminBooking {
   customer_id: string
   worker_id: string
   category_id: string
-  status: 'pending' | 'accepted' | 'rejected' | 'in_progress' | 'completed' | 'cancelled' | 'disputed'
+  status: 'pending' | 'accepted' | 'rejected' | 'in_progress' | 'payment_pending' | 'completed' | 'cancelled' | 'disputed'
   scheduled_at: string | null
   created_at: string
+  payment_amount: number | null
+  payment_currency: string | null
+  payment_status: 'unpaid' | 'pending' | 'paid' | 'failed' | 'cancelled' | null
   customerName: string
   workerName: string
 }
@@ -191,7 +194,7 @@ export default function AdminDashboard() {
   const [customerSearch, setCustomerSearch] = useState('')
   const [bookingSearch, setBookingSearch] = useState('')
   const [bookingStatusFilter, setBookingStatusFilter] = useState<
-    'all' | 'pending' | 'accepted' | 'in_progress' | 'completed' | 'cancelled'
+    'all' | 'pending' | 'accepted' | 'in_progress' | 'payment_pending' | 'completed' | 'cancelled'
   >('all')
 
   // Analytics Chart Interactivity
@@ -259,6 +262,16 @@ export default function AdminDashboard() {
       if (error) throw error
 
       const rows = (data ?? []) as Omit<AdminBooking, 'customerName' | 'workerName'>[]
+      const paymentRows = rows.length
+        ? await supabase
+            .from('booking_payments')
+            .select('booking_id, amount, currency, status')
+            .in('booking_id', rows.map(row => row.id))
+        : { data: [], error: null }
+
+      if (paymentRows.error) throw paymentRows.error
+
+      const payments = new Map((paymentRows.data ?? []).map((payment: any) => [payment.booking_id, payment]))
       const profileIds = [...new Set(rows.flatMap(row => [row.customer_id, row.worker_id]))]
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
@@ -271,6 +284,9 @@ export default function AdminDashboard() {
       setBookings(
         rows.map(row => ({
           ...row,
+          payment_amount: payments.get(row.id)?.amount == null ? null : Number(payments.get(row.id).amount),
+          payment_currency: payments.get(row.id)?.currency ?? null,
+          payment_status: payments.get(row.id)?.status ?? null,
           customerName: names.get(row.customer_id) || 'Unknown customer',
           workerName: names.get(row.worker_id) || 'Unknown worker',
         }))
@@ -1627,6 +1643,8 @@ export default function AdminDashboard() {
                           variant={
                             booking.status === 'completed'
                               ? 'success'
+                              : booking.status === 'payment_pending'
+                              ? 'warning'
                               : booking.status === 'accepted' || booking.status === 'in_progress'
                               ? 'info'
                               : booking.status === 'pending'
@@ -1635,7 +1653,9 @@ export default function AdminDashboard() {
                           }
                           className="shrink-0 ml-2 capitalize"
                         >
-                          {booking.status}
+                          {booking.status === 'payment_pending'
+                            ? t('admin.bookingStatus.paymentPending', 'Payment Pending')
+                            : booking.status}
                         </Badge>
                       </div>
                     ))
@@ -2090,6 +2110,7 @@ export default function AdminDashboard() {
                       { key: 'pending', label: 'Pending' },
                       { key: 'accepted', label: 'Accepted' },
                       { key: 'in_progress', label: 'In Progress' },
+                      { key: 'payment_pending', label: t('admin.bookingStatus.paymentPending', 'Payment Pending') },
                       { key: 'completed', label: 'Completed' },
                       { key: 'cancelled', label: 'Cancelled' },
                     ] as const
@@ -2212,6 +2233,8 @@ export default function AdminDashboard() {
                             variant={
                               booking.status === 'completed'
                                 ? 'success'
+                                : booking.status === 'payment_pending'
+                                ? 'warning'
                                 : booking.status === 'accepted' || booking.status === 'in_progress'
                                 ? 'info'
                                 : booking.status === 'pending'
@@ -2220,8 +2243,15 @@ export default function AdminDashboard() {
                             }
                             className="capitalize"
                           >
-                            {booking.status}
+                            {booking.status === 'payment_pending'
+                              ? t('admin.bookingStatus.paymentPending', 'Payment Pending')
+                              : booking.status}
                           </Badge>
+                          {booking.payment_status && (
+                            <p className="mt-1 text-xs font-semibold text-semantic-text-secondary">
+                              {booking.payment_currency ?? 'INR'} {booking.payment_amount?.toFixed(2)} · {t(`bookings.paymentStatuses.${booking.payment_status}`, booking.payment_status)}
+                            </p>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -3091,6 +3121,8 @@ export default function AdminDashboard() {
                           variant={
                             b.status === 'completed'
                               ? 'success'
+                              : b.status === 'payment_pending'
+                              ? 'warning'
                               : b.status === 'accepted' || b.status === 'in_progress'
                               ? 'info'
                               : b.status === 'pending'
@@ -3098,7 +3130,9 @@ export default function AdminDashboard() {
                               : 'danger'
                           }
                         >
-                          {b.status}
+                          {b.status === 'payment_pending'
+                            ? t('admin.bookingStatus.paymentPending', 'Payment Pending')
+                            : b.status}
                         </Badge>
                       </div>
                     ))
