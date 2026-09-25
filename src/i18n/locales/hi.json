@@ -531,10 +531,8 @@
     }
     ,"paymentRequired": "भुगतान करना है"
     ,"amountToPay": "देय राशि"
-    ,"choosePaymentMethod": "भुगतान का तरीका चुनें"
-    ,"paymentMethodUpi": "UPI"
+    ,"paymentMethod": "भुगतान का तरीका"
     ,"paymentMethodCash": "कैश"
-    ,"upiComingSoon": "UPI भुगतान की सुविधा जल्द उपलब्ध होगी।"
     ,"cashPaymentTitle": "कैश भुगतान"
     ,"cashPaymentInstructions": "यह राशि सीधे कारीगर को दें।"
     ,"iHavePaidCash": "मैंने कैश दे दिया है"
@@ -543,6 +541,10 @@
     ,"customerCashConfirmed": "ग्राहक ने कैश देने की पुष्टि की है।"
     ,"confirmCashReceived": "कैश मिलने की पुष्टि करें"
     ,"cashPaymentCompleted": "कैश भुगतान की पुष्टि हो गई। बुकिंग पूरी हो गई।"
+    ,"paymentPaid": "भुगतान हो गया"
+    ,"receiptNumber": "रसीद"
+    ,"jobId": "जॉब आईडी"
+    ,"paidAt": "भुगतान का समय"
     ,"paymentActionFailed": "भुगतान अपडेट नहीं हो सका। कृपया फिर कोशिश करें।"
     ,"openInGoogleMaps": "Google Maps में खोलें"
     ,"customerLocationUnavailable": "इस बुकिंग के लिए ग्राहक का पता उपलब्ध नहीं है।"
@@ -709,7 +711,108 @@
     "reviewPendingWorkers": "कारीगर पंजीकरण की समीक्षा करें",
     "viewAlerts": "सत्यापन और पहचान पत्र अलर्ट"
     ,"bookingStatus": {
-      "paymentPending": "भुगतान बाकी है"
+      "pending": "लंबित",
+      "accepted": "स्वीकृत",
+      "rejected": "अस्वीकृत",
+      "inProgress": "काम जारी",
+      "paymentPending": "भुगतान बाकी है",
+      "completed": "पूर्ण",
+      "cancelled": "रद्द",
+      "disputed": "विवादित"
+    },
+    "jobDetails": {
+      "title": "जॉब विवरण",
+      "close": "बंद करें",
+      "loading": "जॉब इतिहास लोड हो रहा है...",
+      "loadError": "जॉब विवरण लोड नहीं हो सका",
+      "summary": "वर्तमान स्थिति सारांश",
+      "customer": "ग्राहक",
+      "worker": "कारीगर",
+      "scheduled": "निर्धारित समय",
+      "immediate": "तुरंत भेजें",
+      "amount": "राशि",
+      "unavailable": "जानकारी उपलब्ध नहीं",
+      "customerSection": "ग्राहक",
+      "workerSection": "कारीगर",
+      "name": "नाम",
+      "phone": "फोन",
+      "approval": "अनुमोदन",
+      "workerServices": "सेवाएँ / श्रेणियाँ",
+      "noCategories": "कोई श्रेणी आवंटित नहीं",
+      "bookingRelationship": "संबंध",
+      "bookingCustomer": "बुकिंग ग्राहक",
+      "assignedWorker": "नियुक्त कारीगर",
+      "customerUnavailable": "ग्राहक की जानकारी उपलब्ध नहीं",
+      "workerUnavailable": "कारीगर की जानकारी उपलब्ध नहीं",
+      "sourceRequest": "मूल सेवा अनुरोध",
+      "sourceUnavailable": "मूल अनुरोध उपलब्ध नहीं",
+      "requestId": "अनुरोध आईडी",
+      "requestStatus": "अनुरोध स्थिति",
+      "area": "क्षेत्र / पिनकोड",
+      "requestedFor": "अनुरोधित समय",
+      "created": "बनाया गया",
+      "updated": "अंतिम अपडेट",
+      "description": "विवरण / नोट्स",
+      "address": "पता",
+      "viewAttachment": "अटैचमेंट देखें",
+      "quoteHistory": "कोट इतिहास",
+      "quotesUnavailable": "कोट इतिहास उपलब्ध नहीं",
+      "noQuotes": "कोई कोट इतिहास नहीं",
+      "noQuoteSubmitted": "कोट जमा नहीं किया गया",
+      "acceptedQuote": "स्वीकृत कोट",
+      "requested": "अनुरोध किया गया",
+      "additionalCharges": "अतिरिक्त शुल्क",
+      "chargesUnavailable": "अतिरिक्त शुल्क इतिहास उपलब्ध नहीं",
+      "noCharges": "कोई अतिरिक्त शुल्क नहीं",
+      "approvedTotal": "स्वीकृत अतिरिक्त राशि",
+      "payment": "भुगतान",
+      "paymentUnavailable": "भुगतान विवरण उपलब्ध नहीं",
+      "paymentNotCreated": "भुगतान अभी बना नहीं है",
+      "status": "स्थिति",
+      "method": "तरीका",
+      "customerConfirmed": "ग्राहक पुष्टि",
+      "workerConfirmed": "कारीगर पुष्टि",
+      "paidAt": "भुगतान समय",
+      "receipt": "रसीद",
+      "receiptUnavailable": "रसीद विवरण उपलब्ध नहीं",
+      "receiptNotGenerated": "रसीद अभी नहीं बनी",
+      "receiptNumber": "रसीद नंबर",
+      "paymentReference": "भुगतान संदर्भ",
+      "review": "समीक्षा",
+      "reviewUnavailable": "समीक्षा विवरण उपलब्ध नहीं",
+      "noReview": "अभी कोई समीक्षा नहीं",
+      "timeline": "जॉब टाइमलाइन",
+      "noTimeline": "कोई प्रमाणित टाइमलाइन इवेंट उपलब्ध नहीं",
+      "viewJob": "जॉब देखें",
+      "statusValues": {
+        "open": "खुला",
+        "fulfilled": "पूरा हुआ",
+        "closed": "बंद",
+        "cancelled": "रद्द",
+        "pending": "लंबित",
+        "quoted": "कोट दिया गया",
+        "accepted": "स्वीकृत",
+        "rejected": "अस्वीकृत",
+        "expired": "समाप्त",
+        "submitted": "जमा किया गया",
+        "approved": "स्वीकृत",
+        "unpaid": "भुगतान बाकी",
+        "paid": "भुगतान हुआ",
+        "failed": "विफल",
+        "cash": "नकद",
+        "—": "—"
+      },
+      "events": {
+        "service-request-created": "सेवा अनुरोध बनाया गया",
+        "booking-created": "बुकिंग बनाई गई",
+        "quote-submitted": "कोट जमा किया गया",
+        "quote-accepted": "कोट स्वीकार किया गया",
+        "customer-cash-confirmed": "ग्राहक ने नकद भुगतान की पुष्टि की",
+        "worker-cash-confirmed": "कारीगर ने नकद प्राप्ति की पुष्टि की",
+        "payment-paid": "भुगतान हो गया",
+        "receipt-created": "रसीद बनाई गई",
+        "review-created": "समीक्षा जमा की गई"
+      }
     }
   },
   "notifications": {

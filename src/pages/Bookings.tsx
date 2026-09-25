@@ -30,7 +30,7 @@ import { getSupabaseClient } from '@/lib/supabase'
 import ContactModal from '@/components/ContactModal'
 import { buildCustomerToWorkerWhatsAppMessage } from '@/utils/contact'
 import { fetchCustomerReviewedBookingIds, submitBookingReview } from '@/services/reviews'
-import { BookingChangeRequest, BookingPaymentSummary, PaymentMethod, confirmCashPaymentByCustomer, decideBookingChangeRequest, fetchBookingChangeRequests, fetchBookingPaymentSummaries, selectBookingPaymentMethod } from '@/services/changeRequests'
+import { BookingChangeRequest, BookingPaymentSummary, confirmCashPaymentByCustomer, decideBookingChangeRequest, fetchBookingChangeRequests, fetchBookingPaymentSummaries, selectBookingPaymentMethod } from '@/services/changeRequests'
 import { acceptBookingQuote, BookingQuote, BookingQuoteRequest, cancelBookingQuoteRequest, fetchCustomerQuoteData } from '@/services/quotes'
 
 interface BookingRow {
@@ -309,11 +309,11 @@ export default function Bookings() {
     }
   }
 
-  const handlePaymentMethod = async (booking: BookingRow, method: PaymentMethod) => {
+  const handleCashPaymentMethod = async (booking: BookingRow) => {
     setPaymentActionBookingId(booking.id)
     setPaymentError('')
     try {
-      await selectBookingPaymentMethod(booking.id, method)
+      await selectBookingPaymentMethod(booking.id, 'cash')
       await loadBookings()
     } catch (error) {
       setPaymentError(error instanceof Error ? error.message : t('bookings.paymentActionFailed', 'Unable to update the payment. Please try again.'))
@@ -701,29 +701,17 @@ export default function Bookings() {
                 <p className="mt-1 text-xs text-slate-600 dark:text-zinc-400">{t('bookings.amountToPay', 'Amount to Pay')}: ₹{booking.paymentSummary.final_payable_amount.toFixed(2)}</p>
                 {!booking.paymentSummary.payment_method && (
                   <>
-                    <p className="mt-3 text-xs font-semibold text-slate-700 dark:text-zinc-300">{t('bookings.choosePaymentMethod', 'Choose Payment Method')}</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={Boolean(paymentActionBookingId)}
-                        onClick={() => void handlePaymentMethod(booking, 'upi')}
-                      >
-                        {t('bookings.paymentMethodUpi', 'UPI')}
-                      </Button>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        disabled={Boolean(paymentActionBookingId)}
-                        onClick={() => void handlePaymentMethod(booking, 'cash')}
-                      >
-                        {t('bookings.paymentMethodCash', 'Cash')}
-                      </Button>
-                    </div>
+                    <p className="mt-3 text-xs font-semibold text-slate-700 dark:text-zinc-300">{t('bookings.paymentMethod', 'Payment Method')}</p>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      className="mt-2"
+                      disabled={Boolean(paymentActionBookingId)}
+                      onClick={() => void handleCashPaymentMethod(booking)}
+                    >
+                      {t('bookings.paymentMethodCash', 'Cash')}
+                    </Button>
                   </>
-                )}
-                {booking.paymentSummary.payment_method === 'upi' && (
-                  <p className="mt-3 text-xs font-semibold text-amber-700 dark:text-amber-300">{t('bookings.upiComingSoon', 'UPI payment integration is coming soon.')}</p>
                 )}
                 {booking.paymentSummary.payment_method === 'cash' && booking.paymentSummary.payment_status === 'unpaid' && (
                   <>
@@ -746,6 +734,17 @@ export default function Bookings() {
                     <p className="mt-1 text-xs text-slate-600 dark:text-zinc-400">{t('bookings.workerConfirmationRequired', 'The worker needs to confirm that the cash was received.')}</p>
                   </div>
                 )}
+              </div>
+            )}
+            {booking.status === 'completed' && booking.paymentSummary.payment_status === 'paid' && booking.paymentSummary.receipt_number && (
+              <div className="mt-3 rounded-xl border border-emerald-500/25 bg-emerald-500/5 p-3 text-sm">
+                <p className="font-bold text-emerald-700 dark:text-emerald-300">{t('bookings.paymentPaid', 'Payment Paid')}</p>
+                <p className="mt-1">₹{booking.paymentSummary.final_payable_amount.toFixed(2)} · {t('bookings.paymentMethodCash', 'Cash')}</p>
+                <p className="mt-2 text-xs text-slate-600 dark:text-zinc-400">{t('bookings.serviceCategory', 'Service')}: {getCategoryName(getCategoryById(booking.category_id), i18n.language === 'hi' ? 'hi' : 'en')}</p>
+                <p className="text-xs text-slate-600 dark:text-zinc-400">{t('bookings.worker', 'Worker')}: {booking.worker?.name || '—'}</p>
+                <p className="text-xs text-slate-600 dark:text-zinc-400">{t('bookings.paidAt', 'Paid at')}: {booking.paymentSummary.receipt_paid_at || booking.paymentSummary.paid_at ? new Date(booking.paymentSummary.receipt_paid_at || booking.paymentSummary.paid_at || '').toLocaleString(i18n.language === 'hi' ? 'hi-IN' : 'en-IN') : '—'}</p>
+                <p className="mt-1 text-xs text-slate-600 dark:text-zinc-400">{t('bookings.receiptNumber', 'Receipt')}: {booking.paymentSummary.receipt_number}</p>
+                <p className="text-xs text-slate-600 dark:text-zinc-400">{t('bookings.jobId', 'Job ID')}: {formatJobReference(booking.id)}</p>
               </div>
             )}
             {paymentError && paymentActionBookingId === '' && booking.status === 'payment_pending' && (

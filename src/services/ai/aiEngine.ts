@@ -587,8 +587,8 @@ function resolveLocalQuery(query: string, persona: AssistantPersona): ChatMessag
         sender: 'assistant',
         persona,
         timestamp: new Date(),
-        textEn: `💵 **0% Platform Commission Guarantee**:\n\n- **100% Earnings are Yours**: For the first 3 months, Jugnu charges **₹0 commission** from artisans.\n- **Direct Customer Payment**: Collect your visiting fees and labour charges directly from the customer via **Cash** or your personal **UPI (PhonePe / Google Pay / Paytm QR)**.\n- Jugnu never holds or deducts your hard-earned money!`,
-        textHi: `💵 **0% कमीशन और भुगतान गारंटी**:\n\n- **पूरी कमाई आपकी**: पहले 3 महीनों के लिए जुगनू आपसे **0% कमीशन** लेता है।\n- **सीधा भुगतान**: अपना विजिटिंग चार्ज और मजदूरी ग्राहक से सीधे **कैश या अपने UPI (PhonePe/GPay/Paytm)** पर लें।\n- कंपनी आपकी मेहनत की कमाई में से एक भी रुपया नहीं काटती!`,
+        textEn: `💵 **0% Platform Commission Guarantee**:\n\n- **100% Earnings are Yours**: For the first 3 months, Jugnu charges **₹0 commission** from artisans.\n- **Direct Customer Payment**: Collect your visiting fees and labour charges directly from the customer in **Cash**.\n- Jugnu never holds or deducts your hard-earned money!`,
+        textHi: `💵 **0% कमीशन और भुगतान गारंटी**:\n\n- **पूरी कमाई आपकी**: पहले 3 महीनों के लिए जुगनू आपसे **0% कमीशन** लेता है।\n- **सीधा भुगतान**: अपना विजिटिंग चार्ज और मजदूरी ग्राहक से सीधे **कैश** में लें।\n- कंपनी आपकी मेहनत की कमाई में से एक भी रुपया नहीं काटती!`,
       }
     }
 

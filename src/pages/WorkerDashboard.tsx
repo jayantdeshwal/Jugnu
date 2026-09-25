@@ -1032,9 +1032,6 @@ export default function WorkerDashboard() {
                       {booking.status === 'payment_pending' && booking.paymentSummary.pending_additional_count === 0 && (
                         <>
                           <p className="mt-2 text-amber-700 dark:text-amber-300">{t('bookings.paymentPendingMsg', 'Service is finished. Payment is pending.')}</p>
-                          {booking.paymentSummary.payment_method === 'upi' && booking.paymentSummary.payment_status !== 'paid' && (
-                            <p className="mt-2 text-amber-700 dark:text-amber-300">{t('bookings.upiComingSoon', 'UPI payment integration is coming soon.')}</p>
-                          )}
                           {booking.paymentSummary.payment_method === 'cash' && booking.paymentSummary.payment_status === 'pending' && (
                             <div className="mt-3 rounded-lg border border-amber-500/25 bg-amber-500/5 p-2.5">
                               <p className="text-amber-700 dark:text-amber-300">{t('bookings.customerCashConfirmed', 'Customer says the cash was paid.')}</p>
@@ -1059,6 +1056,17 @@ export default function WorkerDashboard() {
                         <p className="mt-1 font-semibold text-slate-600 dark:text-zinc-300">
                           {t('bookings.paymentStatus', 'Payment status')}: {t(`bookings.paymentStatuses.${booking.paymentSummary.payment_status ?? 'unpaid'}`, 'Unpaid')}
                         </p>
+                      )}
+                      {booking.status === 'completed' && booking.paymentSummary.payment_status === 'paid' && booking.paymentSummary.receipt_number && (
+                        <div className="mt-3 rounded-lg border border-emerald-500/25 bg-emerald-500/5 p-2.5 text-sm">
+                          <p className="font-bold text-emerald-700 dark:text-emerald-300">{t('bookings.paymentPaid', 'Payment Paid')}</p>
+                          <p className="mt-1">₹{booking.paymentSummary.final_payable_amount.toFixed(2)} · {t('bookings.paymentMethodCash', 'Cash')}</p>
+                          <p className="mt-2 text-xs text-semantic-text-secondary">{t('bookings.serviceCategory', 'Service')}: {getCategoryName(CATEGORIES.find(c => c.id === booking.category_id), i18n.language === 'hi' ? 'hi' : 'en')}</p>
+                          <p className="text-xs text-semantic-text-secondary">{t('bookings.customer', 'Customer')}: {booking.customer?.name || '—'}</p>
+                          <p className="text-xs text-semantic-text-secondary">{t('bookings.paidAt', 'Paid at')}: {booking.paymentSummary.receipt_paid_at || booking.paymentSummary.paid_at ? new Date(booking.paymentSummary.receipt_paid_at || booking.paymentSummary.paid_at || '').toLocaleString(i18n.language === 'hi' ? 'hi-IN' : 'en-IN') : '—'}</p>
+                          <p className="mt-1 text-xs text-semantic-text-secondary">{t('bookings.receiptNumber', 'Receipt')}: {booking.paymentSummary.receipt_number}</p>
+                          <p className="text-xs text-semantic-text-secondary">{t('bookings.jobId', 'Job ID')}: {formatJobReference(booking.id)}</p>
+                        </div>
                       )}
                       {!booking.paymentSummary.is_final && booking.paymentSummary.pending_additional_count === 0 && booking.status !== 'completed' && booking.status !== 'payment_pending' && (
                         <p className="mt-2 text-semantic-text-tertiary">{t('bookings.finalAmountAfterCompletion', 'The final amount will be shown after the service is completed.')}</p>

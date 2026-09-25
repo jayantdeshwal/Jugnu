@@ -355,6 +355,100 @@
       "completed": "Completed",
       "cancelled": "Cancelled",
       "disputed": "Disputed"
+    },
+    "jobDetails": {
+      "title": "Job details",
+      "close": "Close",
+      "loading": "Loading Job history...",
+      "loadError": "Unable to load Job details",
+      "summary": "Current state summary",
+      "customer": "Customer",
+      "worker": "Worker",
+      "scheduled": "Scheduled",
+      "immediate": "Immediate dispatch",
+      "amount": "Amount",
+      "unavailable": "Information unavailable",
+      "customerSection": "Customer",
+      "workerSection": "Worker",
+      "name": "Name",
+      "phone": "Phone",
+      "approval": "Approval",
+      "workerServices": "Services / Categories",
+      "noCategories": "No categories assigned",
+      "bookingRelationship": "Relationship",
+      "bookingCustomer": "Booking customer",
+      "assignedWorker": "Assigned worker",
+      "customerUnavailable": "Customer information unavailable",
+      "workerUnavailable": "Worker information unavailable",
+      "sourceRequest": "Original service request",
+      "sourceUnavailable": "Source request unavailable",
+      "requestId": "Request ID",
+      "requestStatus": "Request status",
+      "area": "Area / pincode",
+      "requestedFor": "Requested for",
+      "created": "Created",
+      "updated": "Last updated",
+      "description": "Description / notes",
+      "address": "Address",
+      "viewAttachment": "View attachment",
+      "quoteHistory": "Quote history",
+      "quotesUnavailable": "Quote history unavailable",
+      "noQuotes": "No quote history",
+      "noQuoteSubmitted": "No quote submitted",
+      "acceptedQuote": "Accepted quote",
+      "requested": "Requested",
+      "additionalCharges": "Additional charges",
+      "chargesUnavailable": "Additional-charge history unavailable",
+      "noCharges": "No additional charges",
+      "approvedTotal": "Approved additions",
+      "payment": "Payment",
+      "paymentUnavailable": "Payment details unavailable",
+      "paymentNotCreated": "Payment not created yet",
+      "status": "Status",
+      "method": "Method",
+      "customerConfirmed": "Customer confirmed",
+      "workerConfirmed": "Worker confirmed",
+      "paidAt": "Paid at",
+      "receipt": "Receipt",
+      "receiptUnavailable": "Receipt details unavailable",
+      "receiptNotGenerated": "Receipt not generated",
+      "receiptNumber": "Receipt number",
+      "paymentReference": "Payment reference",
+      "review": "Review",
+      "reviewUnavailable": "Review details unavailable",
+      "noReview": "No review yet",
+      "timeline": "Job timeline",
+      "noTimeline": "No authoritative timeline events available",
+      "viewJob": "View Job",
+      "statusValues": {
+        "open": "Open",
+        "fulfilled": "Fulfilled",
+        "closed": "Closed",
+        "cancelled": "Cancelled",
+        "pending": "Pending",
+        "quoted": "Quoted",
+        "accepted": "Accepted",
+        "rejected": "Rejected",
+        "expired": "Expired",
+        "submitted": "Submitted",
+        "approved": "Approved",
+        "unpaid": "Unpaid",
+        "paid": "Paid",
+        "failed": "Failed",
+        "cash": "Cash",
+        "—": "—"
+      },
+      "events": {
+        "service-request-created": "Service request created",
+        "booking-created": "Booking created",
+        "quote-submitted": "Quote submitted",
+        "quote-accepted": "Quote accepted",
+        "customer-cash-confirmed": "Customer cash confirmation",
+        "worker-cash-confirmed": "Worker cash confirmation",
+        "payment-paid": "Payment paid",
+        "receipt-created": "Receipt generated",
+        "review-created": "Review submitted"
+      }
     }
   },
   "auth": {
@@ -531,10 +625,8 @@
     }
     ,"paymentRequired": "Payment Required"
     ,"amountToPay": "Amount to Pay"
-    ,"choosePaymentMethod": "Choose Payment Method"
-    ,"paymentMethodUpi": "UPI"
+    ,"paymentMethod": "Payment Method"
     ,"paymentMethodCash": "Cash"
-    ,"upiComingSoon": "UPI payment integration is coming soon."
     ,"cashPaymentTitle": "Cash Payment"
     ,"cashPaymentInstructions": "Pay this amount directly to the worker."
     ,"iHavePaidCash": "I Have Paid Cash"
@@ -543,6 +635,10 @@
     ,"customerCashConfirmed": "Customer says the cash was paid."
     ,"confirmCashReceived": "Confirm Cash Received"
     ,"cashPaymentCompleted": "Cash payment confirmed. Booking completed."
+    ,"paymentPaid": "Payment Paid"
+    ,"receiptNumber": "Receipt"
+    ,"jobId": "Job ID"
+    ,"paidAt": "Paid at"
     ,"paymentActionFailed": "Unable to update the payment. Please try again."
     ,"openInGoogleMaps": "Open in Google Maps"
     ,"customerLocationUnavailable": "Customer location is not available for this booking."
@@ -709,7 +805,14 @@
     "reviewPendingWorkers": "Review Worker Registrations",
     "viewAlerts": "Verification & ID Alerts"
     ,"bookingStatus": {
-      "paymentPending": "Payment Pending"
+      "pending": "Pending",
+      "accepted": "Accepted",
+      "rejected": "Rejected",
+      "inProgress": "In Progress",
+      "paymentPending": "Payment Pending",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "disputed": "Disputed"
     }
   },
   "notifications": {

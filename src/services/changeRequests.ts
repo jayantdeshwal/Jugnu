@@ -2,7 +2,9 @@ import type { JobId } from '@kaamgar/shared'
 import { getSupabaseClient } from '@/lib/supabase'
 
 export type ChangeRequestStatus = 'pending' | 'approved' | 'rejected' | 'cancelled'
-export type PaymentMethod = 'upi' | 'cash'
+// Cash is the only active payment method. Historical UPI rows remain a
+// database compatibility concern and are not selectable by the application.
+export type PaymentMethod = 'cash'
 export type PaymentStatus = 'unpaid' | 'pending' | 'paid' | 'failed' | 'cancelled'
 
 export interface BookingChangeRequest {
@@ -32,6 +34,8 @@ export interface BookingPaymentSummary {
   customer_confirmed_at: string | null
   worker_confirmed_at: string | null
   paid_at: string | null
+  receipt_number: string | null
+  receipt_paid_at: string | null
 }
 
 export async function fetchBookingPaymentSummary(bookingId: JobId): Promise<BookingPaymentSummary | null> {

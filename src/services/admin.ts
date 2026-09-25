@@ -16,8 +16,8 @@ export interface AdminWorkerRow {
   created_at: string
   categories: string[]
   areas: string[]
-  completed_jobs: number
-  total_bookings: number
+  completed_jobs: number | null
+  total_bookings: number | null
 }
 
 export interface AdminCustomerRow {
@@ -26,9 +26,9 @@ export interface AdminCustomerRow {
   phone: string
   avatar_url: string | null
   created_at: string
-  total_bookings: number
-  completed_bookings: number
-  active_bookings: number
+  total_bookings: number | null
+  completed_bookings: number | null
+  active_bookings: number | null
 }
 
 /**
@@ -58,8 +58,8 @@ export async function fetchAdminWorkers(): Promise<AdminWorkerRow[]> {
         created_at: row.created_at,
         categories: Array.isArray(row.categories) ? row.categories : [],
         areas: Array.isArray(row.areas) ? row.areas : [],
-        completed_jobs: Number(row.completed_jobs ?? 0),
-        total_bookings: Number(row.total_bookings ?? 0),
+        completed_jobs: row.completed_jobs == null ? null : Number(row.completed_jobs),
+        total_bookings: row.total_bookings == null ? null : Number(row.total_bookings),
       }))
     }
   } catch (err) {
@@ -100,6 +100,7 @@ export async function fetchAdminWorkers(): Promise<AdminWorkerRow[]> {
     )
 
     const bookings = (bookingsResult.data ?? []) as any[]
+    const bookingMetricsAvailable = !bookingsResult.error
     const totalBookingsByWorker = new Map<string, number>()
     const completedBookingsByWorker = new Map<string, number>()
 
@@ -135,8 +136,8 @@ export async function fetchAdminWorkers(): Promise<AdminWorkerRow[]> {
         created_at: w.created_at,
         categories: rawCategories.length > 0 ? rawCategories : dirFallback?.categories || [],
         areas: rawAreas.length > 0 ? rawAreas : dirFallback?.areas || [],
-        completed_jobs: completedBookingsByWorker.get(w.id) || 0,
-        total_bookings: totalBookingsByWorker.get(w.id) || 0,
+        completed_jobs: bookingMetricsAvailable ? completedBookingsByWorker.get(w.id) || 0 : null,
+        total_bookings: bookingMetricsAvailable ? totalBookingsByWorker.get(w.id) || 0 : null,
       }
     })
   } catch (fallbackErr) {
@@ -162,8 +163,8 @@ export async function fetchAdminWorkers(): Promise<AdminWorkerRow[]> {
       created_at: new Date().toISOString(),
       categories: d.categories || [],
       areas: d.areas || [],
-      completed_jobs: 0,
-      total_bookings: 0,
+      completed_jobs: null,
+      total_bookings: null,
     }))
   }
 }
@@ -185,9 +186,9 @@ export async function fetchAdminCustomers(): Promise<AdminCustomerRow[]> {
         phone: row.phone || 'No phone',
         avatar_url: row.avatar_url || null,
         created_at: row.created_at,
-        total_bookings: Number(row.total_bookings ?? 0),
-        completed_bookings: Number(row.completed_bookings ?? 0),
-        active_bookings: Number(row.active_bookings ?? 0),
+        total_bookings: row.total_bookings == null ? null : Number(row.total_bookings),
+        completed_bookings: row.completed_bookings == null ? null : Number(row.completed_bookings),
+        active_bookings: row.active_bookings == null ? null : Number(row.active_bookings),
       }))
     }
   } catch (err) {
@@ -206,6 +207,7 @@ export async function fetchAdminCustomers(): Promise<AdminCustomerRow[]> {
     ])
 
     const bookings = (bookingsResult.data ?? []) as any[]
+    const bookingMetricsAvailable = !bookingsResult.error
     const totalBookingsByCustomer = new Map<string, number>()
     const completedByCustomer = new Map<string, number>()
     const activeByCustomer = new Map<string, number>()
@@ -230,9 +232,9 @@ export async function fetchAdminCustomers(): Promise<AdminCustomerRow[]> {
         phone: c.phone || 'No phone',
         avatar_url: c.avatar_url || null,
         created_at: c.created_at || new Date().toISOString(),
-        total_bookings: totalBookingsByCustomer.get(c.id) || 0,
-        completed_bookings: completedByCustomer.get(c.id) || 0,
-        active_bookings: activeByCustomer.get(c.id) || 0,
+        total_bookings: bookingMetricsAvailable ? totalBookingsByCustomer.get(c.id) || 0 : null,
+        completed_bookings: bookingMetricsAvailable ? completedByCustomer.get(c.id) || 0 : null,
+        active_bookings: bookingMetricsAvailable ? activeByCustomer.get(c.id) || 0 : null,
       })
     }
 
@@ -245,9 +247,9 @@ export async function fetchAdminCustomers(): Promise<AdminCustomerRow[]> {
           phone: 'Registered Client',
           avatar_url: null,
           created_at: new Date().toISOString(),
-          total_bookings: totalBookingsByCustomer.get(b.customer_id) || 0,
-          completed_bookings: completedByCustomer.get(b.customer_id) || 0,
-          active_bookings: activeByCustomer.get(b.customer_id) || 0,
+          total_bookings: bookingMetricsAvailable ? totalBookingsByCustomer.get(b.customer_id) || 0 : null,
+          completed_bookings: bookingMetricsAvailable ? completedByCustomer.get(b.customer_id) || 0 : null,
+          active_bookings: bookingMetricsAvailable ? activeByCustomer.get(b.customer_id) || 0 : null,
         })
       }
     }
@@ -370,30 +372,11 @@ export interface CreateAdminParams {
   phone: string
 }
 
-export async function fetchAdminTeam(currentAdminUser?: {
-  id?: string
-  name?: string
-  email?: string | null
-  phone?: string | null
-  role?: string
-}): Promise<AdminTeamMember[]> {
+export async function fetchAdminTeam(): Promise<AdminTeamMember[]> {
   const supabase = getSupabaseClient()
   const adminMap = new Map<string, AdminTeamMember>()
 
-  // 1. If current active user in frontend is an admin, guarantee their presence in directory
-  if (currentAdminUser?.id) {
-    adminMap.set(currentAdminUser.id, {
-      id: currentAdminUser.id,
-      full_name: currentAdminUser.name || 'Platform Administrator (You)',
-      email: currentAdminUser.email || 'jayant.deshwal.56@gmail.com',
-      phone: (currentAdminUser.phone || '').replace(/\D/g, '').slice(-10),
-      role: (currentAdminUser.role as any) || 'super_admin',
-      avatar_url: null,
-      created_at: new Date().toISOString(),
-    })
-  }
-
-  // 2. Try get_admin_team RPC (executed securely on Supabase server)
+  // Try get_admin_team RPC (executed securely on Supabase server)
   try {
     const { data: rpcData, error: rpcError } = await (supabase as any).rpc('get_admin_team')
     if (!rpcError && Array.isArray(rpcData) && rpcData.length > 0) {
@@ -414,7 +397,7 @@ export async function fetchAdminTeam(currentAdminUser?: {
     console.warn('get_admin_team RPC notice:', err)
   }
 
-  // 3. Fallback: Query profiles table directly for admin roles
+  // Fallback: Query profiles table directly for admin roles
   try {
     const { data: directData } = await (supabase.from('profiles') as any)
       .select('id, full_name, email, phone, avatar_url, role, created_at')
@@ -438,19 +421,7 @@ export async function fetchAdminTeam(currentAdminUser?: {
     console.warn('Profiles admin direct query notice:', err)
   }
 
-  // 5. Default platform administrator fallback so 0 administrators is NEVER shown
-  if (adminMap.size === 0) {
-    adminMap.set('primary_platform_admin', {
-      id: '3216cdd3-aaea-45ab-944c-cfb30d6a6e0b',
-      full_name: 'Platform Administrator (Jayant Deshwal)',
-      email: 'jayant.deshwal.56@gmail.com',
-      phone: '9876543210',
-      role: 'super_admin',
-      avatar_url: null,
-      created_at: new Date().toISOString(),
-    })
-  }
-
+  if (adminMap.size === 0) throw new Error('Administrator directory unavailable')
   return Array.from(adminMap.values())
 }
 

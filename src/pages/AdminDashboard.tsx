@@ -62,6 +62,32 @@ import {
 } from '@/services/admin'
 import { getIdProofSignedUrl } from '@/services/storage'
 import { removePhoneFromRegisteredCache } from '@/services/authCheck'
+import { markAllNotificationsRead as markAllNotificationsReadRpc, markNotificationRead as markNotificationReadRpc } from '@/services/notifications'
+import AdminJobDetails from '@/components/admin/AdminJobDetails'
+
+type BookingStatus = 'pending' | 'accepted' | 'rejected' | 'in_progress' | 'payment_pending' | 'completed' | 'cancelled' | 'disputed'
+
+const BOOKING_STATUS_OPTIONS: Array<{ key: BookingStatus; labelKey: string; fallback: string }> = [
+  { key: 'pending', labelKey: 'admin.bookingStatus.pending', fallback: 'Pending' },
+  { key: 'accepted', labelKey: 'admin.bookingStatus.accepted', fallback: 'Accepted' },
+  { key: 'rejected', labelKey: 'admin.bookingStatus.rejected', fallback: 'Rejected' },
+  { key: 'in_progress', labelKey: 'admin.bookingStatus.inProgress', fallback: 'In Progress' },
+  { key: 'payment_pending', labelKey: 'admin.bookingStatus.paymentPending', fallback: 'Payment Pending' },
+  { key: 'completed', labelKey: 'admin.bookingStatus.completed', fallback: 'Completed' },
+  { key: 'cancelled', labelKey: 'admin.bookingStatus.cancelled', fallback: 'Cancelled' },
+  { key: 'disputed', labelKey: 'admin.bookingStatus.disputed', fallback: 'Disputed' },
+]
+
+function bookingStatusVariant(status: BookingStatus): 'success' | 'warning' | 'info' | 'danger' {
+  if (status === 'completed') return 'success'
+  if (status === 'pending' || status === 'payment_pending') return 'warning'
+  if (status === 'accepted' || status === 'in_progress') return 'info'
+  return 'danger'
+}
+
+function displayMetric(value: number | null): string | number {
+  return value == null ? '—' : value
+}
 
 interface ReviewWorkerRpc {
   rpc: (
@@ -75,21 +101,28 @@ interface AdminBooking {
   customer_id: string
   worker_id: string
   category_id: string
-  status: 'pending' | 'accepted' | 'rejected' | 'in_progress' | 'payment_pending' | 'completed' | 'cancelled' | 'disputed'
+  status: BookingStatus
   scheduled_at: string | null
   created_at: string
   payment_amount: number | null
   payment_currency: string | null
   payment_status: 'unpaid' | 'pending' | 'paid' | 'failed' | 'cancelled' | null
+  payment_method: string | null
+  paid_at: string | null
+  receipt_number: string | null
+  payment_details_unavailable: boolean
+  receipt_details_unavailable: boolean
+  profile_details_unavailable: boolean
   customerName: string
   workerName: string
 }
 
 interface AdminStats {
-  workers: number
-  customers: number
-  bookings: number
-  pendingApprovals: number
+  workers: number | null
+  customers: number | null
+  bookings: number | null
+  pendingApprovals: number | null
+  bookingStatusCounts: Record<BookingStatus, number | null>
 }
 
 export default function AdminDashboard() {
@@ -168,6 +201,7 @@ export default function AdminDashboard() {
   const [customerError, setCustomerError] = useState('')
 
   const [bookings, setBookings] = useState<AdminBooking[]>([])
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
   const [isLoadingBookings, setIsLoadingBookings] = useState(true)
   const [bookingError, setBookingError] = useState('')
 
@@ -193,9 +227,7 @@ export default function AdminDashboard() {
   const [workerStatusFilter, setWorkerStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
   const [customerSearch, setCustomerSearch] = useState('')
   const [bookingSearch, setBookingSearch] = useState('')
-  const [bookingStatusFilter, setBookingStatusFilter] = useState<
-    'all' | 'pending' | 'accepted' | 'in_progress' | 'payment_pending' | 'completed' | 'cancelled'
-  >('all')
+  const [bookingStatusFilter, setBookingStatusFilter] = useState<'all' | BookingStatus>('all')
 
   // Analytics Chart Interactivity
   const [hoveredTrendIdx, setHoveredTrendIdx] = useState<number | null>(null)
@@ -265,30 +297,37 @@ export default function AdminDashboard() {
       const paymentRows = rows.length
         ? await supabase
             .from('booking_payments')
-            .select('booking_id, amount, currency, status')
+            .select('booking_id, amount, currency, status, payment_method, paid_at')
             .in('booking_id', rows.map(row => row.id))
         : { data: [], error: null }
-
-      if (paymentRows.error) throw paymentRows.error
+      const receiptRows = rows.length
+        ? await supabase
+            .from('booking_receipts')
+            .select('booking_id, receipt_number')
+            .in('booking_id', rows.map(row => row.id))
+        : { data: [], error: null }
+      const profileIds = [...new Set(rows.flatMap(row => [row.customer_id, row.worker_id]))]
+      const profileRows = profileIds.length
+        ? await supabase.from('profiles').select('id, full_name').in('id', profileIds)
+        : { data: [], error: null }
 
       const payments = new Map((paymentRows.data ?? []).map((payment: any) => [payment.booking_id, payment]))
-      const profileIds = [...new Set(rows.flatMap(row => [row.customer_id, row.worker_id]))]
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, full_name')
-        .in('id', profileIds)
-
-      if (profilesError) throw profilesError
-
-      const names = new Map((profiles ?? []).map((profile: any) => [profile.id, profile.full_name || 'Unnamed user']))
+      const receipts = new Map((receiptRows.data ?? []).map((receipt: any) => [receipt.booking_id, receipt]))
+      const names = new Map((profileRows.data ?? []).map((profile: any) => [profile.id, profile.full_name || 'Name unavailable']))
       setBookings(
         rows.map(row => ({
           ...row,
           payment_amount: payments.get(row.id)?.amount == null ? null : Number(payments.get(row.id).amount),
           payment_currency: payments.get(row.id)?.currency ?? null,
           payment_status: payments.get(row.id)?.status ?? null,
-          customerName: names.get(row.customer_id) || 'Unknown customer',
-          workerName: names.get(row.worker_id) || 'Unknown worker',
+          payment_method: payments.get(row.id)?.payment_method ?? null,
+          paid_at: payments.get(row.id)?.paid_at ?? null,
+          receipt_number: receipts.get(row.id)?.receipt_number ?? null,
+          payment_details_unavailable: Boolean(paymentRows.error),
+          receipt_details_unavailable: Boolean(receiptRows.error),
+          profile_details_unavailable: Boolean(profileRows.error),
+          customerName: profileRows.error ? 'Name unavailable' : names.get(row.customer_id) || 'Name unavailable',
+          workerName: profileRows.error ? 'Name unavailable' : names.get(row.worker_id) || 'Name unavailable',
         }))
       )
     } catch (loadError) {
@@ -305,22 +344,31 @@ export default function AdminDashboard() {
 
     try {
       const supabase = getSupabaseClient()
-      const [workersResult, customersResult, bookingsResult, pendingResult] = await Promise.all([
+      const [workersResult, customersResult, bookingsResult, pendingResult, ...statusResults] = await Promise.all([
         supabase.from('worker_profiles').select('id', { count: 'exact', head: true }),
         supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'customer'),
         supabase.from('bookings').select('id', { count: 'exact', head: true }),
         supabase.from('worker_profiles').select('id', { count: 'exact', head: true }).eq('approval_status', 'pending'),
+        ...BOOKING_STATUS_OPTIONS.map(status => supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('status', status.key)),
       ])
 
-      const failedResult = [workersResult, customersResult, bookingsResult, pendingResult].find(result => result.error)
-      if (failedResult?.error) throw failedResult.error
+      const allResults = [workersResult, customersResult, bookingsResult, pendingResult, ...statusResults]
+      const firstError = allResults.find(result => result.error)?.error
+      const bookingStatusCounts = Object.fromEntries(
+        BOOKING_STATUS_OPTIONS.map((status, index) => [
+          status.key,
+          statusResults[index]?.error ? null : statusResults[index]?.count ?? 0,
+        ])
+      ) as Record<BookingStatus, number | null>
 
       setStats({
-        workers: workersResult.count ?? 0,
-        customers: customersResult.count ?? 0,
-        bookings: bookingsResult.count ?? 0,
-        pendingApprovals: pendingResult.count ?? 0,
+        workers: workersResult.error ? null : workersResult.count ?? 0,
+        customers: customersResult.error ? null : customersResult.count ?? 0,
+        bookings: bookingsResult.error ? null : bookingsResult.count ?? 0,
+        pendingApprovals: pendingResult.error ? null : pendingResult.count ?? 0,
+        bookingStatusCounts,
       })
+      if (firstError) setStatsError(firstError.message)
     } catch (loadError) {
       setStatsError(loadError instanceof Error ? loadError.message : 'Unable to load dashboard totals')
       setStats(null)
@@ -345,10 +393,7 @@ export default function AdminDashboard() {
 
   const markNotificationRead = async (id: string) => {
     try {
-      const supabase = getSupabaseClient()
-      await (supabase.from('notifications') as any)
-        .update({ read_at: new Date().toISOString() })
-        .eq('id', id)
+      await markNotificationReadRpc(id)
 
       setAdminNotifications(prev =>
         prev.map(n => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n))
@@ -360,13 +405,10 @@ export default function AdminDashboard() {
 
   const markAllNotificationsRead = async () => {
     try {
-      const supabase = getSupabaseClient()
       const unreadIds = adminNotifications.filter(n => !n.read_at).map(n => n.id)
       if (unreadIds.length === 0) return
 
-      await (supabase.from('notifications') as any)
-        .update({ read_at: new Date().toISOString() })
-        .in('id', unreadIds)
+      await markAllNotificationsReadRpc()
 
       setAdminNotifications(prev =>
         prev.map(n => ({ ...n, read_at: n.read_at || new Date().toISOString() }))
@@ -429,17 +471,7 @@ export default function AdminDashboard() {
     setIsLoadingAdminTeam(true)
     setAdminTeamError('')
     try {
-      const data = await fetchAdminTeam(
-        isAdmin
-          ? {
-              id: user?.id,
-              name: user?.name,
-              email: user?.email,
-              phone: user?.phone,
-              role: user?.role,
-            }
-          : undefined
-      )
+      const data = await fetchAdminTeam()
       setAdminTeam(data)
     } catch (err) {
       setAdminTeamError(err instanceof Error ? err.message : 'Unable to load administrator team')
@@ -1057,7 +1089,7 @@ export default function AdminDashboard() {
                   {t('admin.stats.totalWorkers')}
                 </span>
                 <p className="text-3xl font-extrabold text-slate-900 dark:text-white mt-1.5 font-mono">
-                  {isLoadingStats ? '...' : Math.max(stats?.workers ?? 0, allWorkers.length)}
+                  {isLoadingStats ? '...' : stats?.workers == null ? '—' : stats.workers}
                 </p>
               </div>
               <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-center text-amber-500 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-slate-950 transition-all shadow-xs">
@@ -1093,7 +1125,7 @@ export default function AdminDashboard() {
                   {t('admin.stats.totalCustomers')}
                 </span>
                 <p className="text-3xl font-extrabold text-slate-900 dark:text-white mt-1.5 font-mono">
-                  {isLoadingStats ? '...' : Math.max(stats?.customers ?? 0, customers.length)}
+                  {isLoadingStats ? '...' : stats?.customers == null ? '—' : stats.customers}
                 </p>
               </div>
               <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-500 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-slate-950 transition-all shadow-xs">
@@ -1129,7 +1161,7 @@ export default function AdminDashboard() {
                   {t('admin.stats.totalBookings')}
                 </span>
                 <p className="text-3xl font-extrabold text-slate-900 dark:text-white mt-1.5 font-mono">
-                  {isLoadingStats ? '...' : stats?.bookings ?? bookings.length}
+                  {isLoadingStats ? '...' : stats?.bookings == null ? '—' : stats.bookings}
                 </p>
               </div>
               <div className="w-12 h-12 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-center text-blue-500 group-hover:scale-110 group-hover:bg-blue-500 group-hover:text-slate-950 transition-all shadow-xs">
@@ -1139,7 +1171,7 @@ export default function AdminDashboard() {
             <div className="mt-4 pt-3 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between text-xs">
               <span className="text-blue-500 dark:text-blue-400 font-medium flex items-center gap-1">
                 <Activity className="w-3.5 h-3.5" />
-                {bookings.filter(b => b.status === 'completed').length} completed
+                {isLoadingStats ? '...' : stats?.bookingStatusCounts.completed == null ? '—' : stats.bookingStatusCounts.completed} completed
               </span>
               <span className="text-blue-600 dark:text-blue-400 font-semibold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
                 Inspect <ChevronRight className="w-3.5 h-3.5" />
@@ -1164,7 +1196,7 @@ export default function AdminDashboard() {
                   {t('admin.stats.pendingApprovals')}
                 </span>
                 <p className="text-3xl font-extrabold text-amber-600 dark:text-amber-400 mt-1.5 font-mono">
-                  {isLoadingStats ? '...' : stats?.pendingApprovals ?? pendingWorkers.length}
+                  {isLoadingStats ? '...' : stats?.pendingApprovals == null ? '—' : stats.pendingApprovals}
                 </p>
               </div>
               <div className="w-12 h-12 bg-amber-500/15 border border-amber-500/30 rounded-2xl flex items-center justify-center text-amber-500 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-slate-950 transition-all shadow-xs">
@@ -1640,22 +1672,13 @@ export default function AdminDashboard() {
                         </div>
 
                         <Badge
-                          variant={
-                            booking.status === 'completed'
-                              ? 'success'
-                              : booking.status === 'payment_pending'
-                              ? 'warning'
-                              : booking.status === 'accepted' || booking.status === 'in_progress'
-                              ? 'info'
-                              : booking.status === 'pending'
-                              ? 'warning'
-                              : 'danger'
-                          }
+                          variant={bookingStatusVariant(booking.status)}
                           className="shrink-0 ml-2 capitalize"
                         >
-                          {booking.status === 'payment_pending'
-                            ? t('admin.bookingStatus.paymentPending', 'Payment Pending')
-                            : booking.status}
+                          {t(
+                            BOOKING_STATUS_OPTIONS.find(status => status.key === booking.status)?.labelKey ?? '',
+                            BOOKING_STATUS_OPTIONS.find(status => status.key === booking.status)?.fallback ?? booking.status,
+                          )}
                         </Badge>
                       </div>
                     ))
@@ -1832,7 +1855,7 @@ export default function AdminDashboard() {
                           )}
                         </td>
                         <td className="px-6 py-4 text-sm text-semantic-text-primary">
-                          {worker.completed_jobs}
+                          {displayMetric(worker.completed_jobs)}
                         </td>
                         <td className="px-6 py-4">
                           <Badge
@@ -1896,7 +1919,7 @@ export default function AdminDashboard() {
                                   name: worker.name,
                                   phone: worker.phone,
                                   role: 'worker',
-                                  statsHint: `${worker.completed_jobs} completed jobs, ${worker.total_bookings} total bookings`,
+                                  statsHint: `${displayMetric(worker.completed_jobs)} completed jobs, ${displayMetric(worker.total_bookings)} total bookings`,
                                 })
                               }
                               title="Permanently Delete Worker"
@@ -2015,10 +2038,10 @@ export default function AdminDashboard() {
                         </td>
                         <td className="px-6 py-4 text-sm text-semantic-text-primary">{customer.phone}</td>
                         <td className="px-6 py-4 text-sm text-semantic-text-primary">
-                          <Badge variant="outline">{customer.total_bookings} bookings</Badge>
+                          <Badge variant="outline">{displayMetric(customer.total_bookings)} bookings</Badge>
                         </td>
                         <td className="px-6 py-4 text-sm text-emerald-400 font-medium">
-                          {customer.completed_bookings}
+                          {displayMetric(customer.completed_bookings)}
                         </td>
                         <td className="px-6 py-4 text-sm text-semantic-text-secondary">
                           {new Date(customer.created_at).toLocaleDateString('en-IN', {
@@ -2046,7 +2069,7 @@ export default function AdminDashboard() {
                                   name: customer.name,
                                   phone: customer.phone,
                                   role: 'customer',
-                                  statsHint: `${customer.total_bookings} bookings (${customer.completed_bookings} completed)`,
+                                  statsHint: `${displayMetric(customer.total_bookings)} bookings (${displayMetric(customer.completed_bookings)} completed)`,
                                 })
                               }
                               title="Permanently Delete Customer"
@@ -2104,22 +2127,12 @@ export default function AdminDashboard() {
                 {/* Status Filter Pills */}
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase mr-1">Status:</span>
-                  {(
-                    [
-                      { key: 'all', label: 'All' },
-                      { key: 'pending', label: 'Pending' },
-                      { key: 'accepted', label: 'Accepted' },
-                      { key: 'in_progress', label: 'In Progress' },
-                      { key: 'payment_pending', label: t('admin.bookingStatus.paymentPending', 'Payment Pending') },
-                      { key: 'completed', label: 'Completed' },
-                      { key: 'cancelled', label: 'Cancelled' },
-                    ] as const
-                  ).map(st => {
+                  {([{ key: 'all', labelKey: '', fallback: 'All' }, ...BOOKING_STATUS_OPTIONS] as const).map(st => {
                     const isSelected = bookingStatusFilter === st.key
                     const count =
                       st.key === 'all'
-                        ? bookings.length
-                        : bookings.filter(b => b.status === st.key).length
+                        ? stats?.bookings
+                        : stats?.bookingStatusCounts[st.key]
 
                     return (
                       <button
@@ -2131,13 +2144,13 @@ export default function AdminDashboard() {
                             : 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100'
                         }`}
                       >
-                        <span>{st.label}</span>
+                          <span>{st.labelKey ? t(st.labelKey, st.fallback) : st.fallback}</span>
                         <span
                           className={`text-[10px] px-1.5 py-0.2 rounded-full ${
                             isSelected ? 'bg-slate-950/20 text-slate-950 font-bold' : 'bg-slate-200 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400'
                           }`}
                         >
-                          {count}
+                          {count == null ? '—' : count}
                         </span>
                       </button>
                     )
@@ -2189,19 +2202,22 @@ export default function AdminDashboard() {
                       <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">
                         Status
                       </th>
+                      <th className="px-6 py-3.5 text-right text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">
+                        {t('admin.jobDetails.viewJob', 'Job')}
+                      </th>
                     </tr>
                   </thead>
                 <tbody className="divide-y divide-semantic-border-light">
                   {isLoadingBookings ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-8 text-center text-semantic-text-secondary">
+                      <td colSpan={7} className="px-6 py-8 text-center text-semantic-text-secondary">
                         <RefreshCw className="w-5 h-5 mx-auto animate-spin text-brand-400 mb-2" />
                         Loading bookings directory...
                       </td>
                     </tr>
                   ) : filteredBookings.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-8 text-center text-semantic-text-secondary">
+                      <td colSpan={7} className="px-6 py-8 text-center text-semantic-text-secondary">
                         No bookings found matching your filters.
                       </td>
                     </tr>
@@ -2230,28 +2246,37 @@ export default function AdminDashboard() {
                         </td>
                         <td className="px-6 py-4">
                           <Badge
-                            variant={
-                              booking.status === 'completed'
-                                ? 'success'
-                                : booking.status === 'payment_pending'
-                                ? 'warning'
-                                : booking.status === 'accepted' || booking.status === 'in_progress'
-                                ? 'info'
-                                : booking.status === 'pending'
-                                ? 'warning'
-                                : 'danger'
-                            }
+                            variant={bookingStatusVariant(booking.status)}
                             className="capitalize"
                           >
-                            {booking.status === 'payment_pending'
-                              ? t('admin.bookingStatus.paymentPending', 'Payment Pending')
-                              : booking.status}
+                            {t(
+                              BOOKING_STATUS_OPTIONS.find(status => status.key === booking.status)?.labelKey ?? '',
+                              BOOKING_STATUS_OPTIONS.find(status => status.key === booking.status)?.fallback ?? booking.status,
+                            )}
                           </Badge>
-                          {booking.payment_status && (
+                          {booking.payment_details_unavailable ? (
+                            <p className="mt-1 text-xs font-semibold text-amber-600 dark:text-amber-300">Payment details unavailable</p>
+                          ) : booking.payment_status ? (
                             <p className="mt-1 text-xs font-semibold text-semantic-text-secondary">
                               {booking.payment_currency ?? 'INR'} {booking.payment_amount?.toFixed(2)} · {t(`bookings.paymentStatuses.${booking.payment_status}`, booking.payment_status)}
+                              {booking.payment_method ? ` · ${booking.payment_method === 'cash' ? t('bookings.paymentMethodCash', 'Cash') : 'Historical payment'}` : ''}
+                              {booking.paid_at ? ` · ${new Date(booking.paid_at).toLocaleString('en-IN')}` : ''}
+                              {booking.receipt_number ? ` · ${t('bookings.receiptNumber', 'Receipt')}: ${booking.receipt_number}` : ''}
+                              {booking.receipt_details_unavailable ? ' · Receipt details unavailable' : ''}
                             </p>
-                          )}
+                          ) : booking.receipt_details_unavailable ? (
+                            <p className="mt-1 text-xs font-semibold text-amber-600 dark:text-amber-300">Receipt details unavailable</p>
+                          ) : null}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedJobId(booking.id)}
+                            title={t('admin.jobDetails.viewJob', 'View Job')}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
                         </td>
                       </tr>
                     ))
@@ -2823,13 +2848,13 @@ export default function AdminDashboard() {
               <div className="p-3 bg-surface-200/60 rounded-xl border border-semantic-border-light">
                 <p className="text-xs text-semantic-text-tertiary">Completed Jobs</p>
                 <p className="text-lg font-bold text-emerald-400 mt-0.5">
-                  {inspectWorker.completed_jobs}
+                  {displayMetric(inspectWorker.completed_jobs)}
                 </p>
               </div>
               <div className="p-3 bg-surface-200/60 rounded-xl border border-semantic-border-light">
                 <p className="text-xs text-semantic-text-tertiary">Total Bookings</p>
                 <p className="text-lg font-bold text-semantic-text-primary mt-0.5">
-                  {inspectWorker.total_bookings}
+                  {displayMetric(inspectWorker.total_bookings)}
                 </p>
               </div>
             </div>
@@ -3005,7 +3030,7 @@ export default function AdminDashboard() {
                       name: w.name,
                       phone: w.phone,
                       role: 'worker',
-                      statsHint: `${w.completed_jobs} completed jobs, ${w.total_bookings} total bookings`,
+                      statsHint: `${displayMetric(w.completed_jobs)} completed jobs, ${displayMetric(w.total_bookings)} total bookings`,
                     })
                   }}
                   className="text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
@@ -3073,19 +3098,19 @@ export default function AdminDashboard() {
               <div className="p-3 bg-surface-200/60 rounded-xl border border-semantic-border-light">
                 <p className="text-xs text-semantic-text-tertiary">Total Bookings</p>
                 <p className="text-xl font-bold text-semantic-text-primary mt-0.5">
-                  {inspectCustomer.total_bookings}
+                  {displayMetric(inspectCustomer.total_bookings)}
                 </p>
               </div>
               <div className="p-3 bg-surface-200/60 rounded-xl border border-semantic-border-light">
                 <p className="text-xs text-semantic-text-tertiary">Completed</p>
                 <p className="text-xl font-bold text-emerald-400 mt-0.5">
-                  {inspectCustomer.completed_bookings}
+                  {displayMetric(inspectCustomer.completed_bookings)}
                 </p>
               </div>
               <div className="p-3 bg-surface-200/60 rounded-xl border border-semantic-border-light">
                 <p className="text-xs text-semantic-text-tertiary">Active / In Progress</p>
                 <p className="text-xl font-bold text-brand-400 mt-0.5">
-                  {inspectCustomer.active_bookings}
+                  {displayMetric(inspectCustomer.active_bookings)}
                 </p>
               </div>
             </div>
@@ -3118,21 +3143,12 @@ export default function AdminDashboard() {
                           </p>
                         </div>
                         <Badge
-                          variant={
-                            b.status === 'completed'
-                              ? 'success'
-                              : b.status === 'payment_pending'
-                              ? 'warning'
-                              : b.status === 'accepted' || b.status === 'in_progress'
-                              ? 'info'
-                              : b.status === 'pending'
-                              ? 'warning'
-                              : 'danger'
-                          }
+                          variant={bookingStatusVariant(b.status)}
                         >
-                          {b.status === 'payment_pending'
-                            ? t('admin.bookingStatus.paymentPending', 'Payment Pending')
-                            : b.status}
+                          {t(
+                            BOOKING_STATUS_OPTIONS.find(status => status.key === b.status)?.labelKey ?? '',
+                            BOOKING_STATUS_OPTIONS.find(status => status.key === b.status)?.fallback ?? b.status,
+                          )}
                         </Badge>
                       </div>
                     ))
@@ -3151,7 +3167,7 @@ export default function AdminDashboard() {
                     name: c.name,
                     phone: c.phone,
                     role: 'customer',
-                    statsHint: `${c.total_bookings} bookings (${c.completed_bookings} completed)`,
+                    statsHint: `${displayMetric(c.total_bookings)} bookings (${displayMetric(c.completed_bookings)} completed)`,
                   })
                 }}
                 className="text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
@@ -3426,6 +3442,10 @@ export default function AdminDashboard() {
           </div>
         </form>
       </Modal>
+
+      {selectedJobId && (
+        <AdminJobDetails bookingId={selectedJobId} onClose={() => setSelectedJobId(null)} />
+      )}
     </div>
   )
 }
